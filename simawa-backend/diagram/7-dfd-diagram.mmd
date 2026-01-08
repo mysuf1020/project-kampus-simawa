@@ -1,0 +1,106 @@
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#e8f5e9', 'primaryTextColor': '#1b5e20', 'primaryBorderColor': '#4caf50', 'lineColor': '#2e7d32'}}}%%
+
+flowchart TB
+    subgraph DFD["📊 Data Flow Diagram - SIMAWA Level 0"]
+        
+        %% External Entities
+        Admin["👤 Admin"]
+        OrgAdmin["👤 Org Admin"]
+        User["👤 User"]
+        PublicUser["👤 Public User"]
+        
+        %% Main Process
+        SIMAWA(("🎓 SIMAWA\nSistem Informasi\nKemahasiswaan"))
+        
+        %% Data Stores
+        DS1[("🗄️ D1: Users")]
+        DS2[("🗄️ D2: Organizations")]
+        DS3[("🗄️ D3: Surat")]
+        DS4[("🗄️ D4: Activities")]
+        DS5[("🗄️ D5: LPJ")]
+        DS6[("🗄️ D6: Notifications")]
+        DS7[("📦 D7: File Storage")]
+        
+        %% Data Flows from Admin
+        Admin -->|"Login Request"| SIMAWA
+        Admin -->|"User Management Data"| SIMAWA
+        Admin -->|"Role Assignment"| SIMAWA
+        Admin -->|"Approval Decision"| SIMAWA
+        SIMAWA -->|"User List"| Admin
+        SIMAWA -->|"Dashboard Data"| Admin
+        SIMAWA -->|"Pending Items"| Admin
+        
+        %% Data Flows from Org Admin
+        OrgAdmin -->|"Login Request"| SIMAWA
+        OrgAdmin -->|"Org Profile Data"| SIMAWA
+        OrgAdmin -->|"Surat Data"| SIMAWA
+        OrgAdmin -->|"Activity Data"| SIMAWA
+        OrgAdmin -->|"LPJ Data"| SIMAWA
+        SIMAWA -->|"Org Details"| OrgAdmin
+        SIMAWA -->|"Member List"| OrgAdmin
+        SIMAWA -->|"Surat Status"| OrgAdmin
+        
+        %% Data Flows from User
+        User -->|"Login Request"| SIMAWA
+        User -->|"Profile Update"| SIMAWA
+        SIMAWA -->|"User Profile"| User
+        SIMAWA -->|"Notifications"| User
+        
+        %% Data Flows from Public
+        PublicUser -->|"View Request"| SIMAWA
+        PublicUser -->|"Join Request"| SIMAWA
+        SIMAWA -->|"Public Activities"| PublicUser
+        SIMAWA -->|"Org Public Page"| PublicUser
+        
+        %% Data Flows to/from Data Stores
+        SIMAWA <-->|"User Data"| DS1
+        SIMAWA <-->|"Org Data"| DS2
+        SIMAWA <-->|"Surat Data"| DS3
+        SIMAWA <-->|"Activity Data"| DS4
+        SIMAWA <-->|"LPJ Data"| DS5
+        SIMAWA <-->|"Notification Data"| DS6
+        SIMAWA <-->|"Files (PDF, Images)"| DS7
+    end
+
+    subgraph DFD1["📊 Data Flow Diagram - Level 1 (Surat Module)"]
+        
+        %% External Entities
+        OA1["👤 Org Admin"]
+        AD1["👤 Admin"]
+        
+        %% Processes
+        P1(("1.0\nBuat Surat"))
+        P2(("2.0\nGenerate PDF"))
+        P3(("3.0\nSubmit Surat"))
+        P4(("4.0\nReview Surat"))
+        P5(("5.0\nKelola Template"))
+        
+        %% Data Stores
+        D1[("🗄️ Surat")]
+        D2[("🗄️ Templates")]
+        D3[("📦 MinIO")]
+        D4[("🗄️ Notifications")]
+        
+        %% Flows
+        OA1 -->|"Form Data"| P1
+        OA1 -->|"Template Selection"| P5
+        P5 <-->|"Template Data"| D2
+        P5 -->|"Template Payload"| P1
+        
+        P1 -->|"Surat Payload"| P2
+        P2 -->|"PDF File"| D3
+        P2 -->|"File Key"| P1
+        P1 -->|"Surat Metadata"| D1
+        
+        OA1 -->|"Submit Request"| P3
+        P3 <-->|"Update Status"| D1
+        P3 -->|"Notification"| D4
+        
+        AD1 -->|"Approval Decision"| P4
+        P4 <-->|"Update Status"| D1
+        P4 -->|"Notification"| D4
+        D4 -->|"Alert"| OA1
+        
+        D1 -->|"Surat List"| OA1
+        D3 -->|"PDF Download"| OA1
+    end

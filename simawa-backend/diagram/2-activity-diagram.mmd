@@ -1,0 +1,69 @@
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#e8f5e9', 'primaryTextColor': '#1b5e20', 'primaryBorderColor': '#4caf50', 'lineColor': '#2e7d32'}}}%%
+
+flowchart TD
+    subgraph SuratFlow["📧 Activity Diagram - Pembuatan Surat"]
+        Start([🟢 Mulai])
+        Login{Sudah Login?}
+        LoginPage[Halaman Login]
+        DoLogin[Proses Login]
+        Dashboard[Dashboard]
+        
+        SelectOrg[Pilih Organisasi]
+        FillForm[Isi Form Surat]
+        UploadLogo[Upload Logo/TTD]
+        Preview{Preview Surat?}
+        GeneratePDF[Generate PDF Preview]
+        ViewPDF[Lihat PDF]
+        
+        Satisfied{Puas dengan Preview?}
+        EditForm[Edit Form]
+        
+        SaveDraft{Simpan Draft?}
+        CreateDraft[Simpan sebagai Draft]
+        SubmitSurat[Submit Surat]
+        
+        NotifyAdmin[Notifikasi ke Admin]
+        AdminReview{Admin Review}
+        Approve[Approve Surat]
+        Reject[Reject Surat]
+        
+        DownloadPDF[Download PDF Final]
+        NotifyUser[Notifikasi ke User]
+        
+        End([🔴 Selesai])
+        
+        Start --> Login
+        Login -->|Tidak| LoginPage
+        LoginPage --> DoLogin
+        DoLogin --> Dashboard
+        Login -->|Ya| Dashboard
+        
+        Dashboard --> SelectOrg
+        SelectOrg --> FillForm
+        FillForm --> UploadLogo
+        UploadLogo --> Preview
+        
+        Preview -->|Ya| GeneratePDF
+        GeneratePDF --> ViewPDF
+        ViewPDF --> Satisfied
+        Preview -->|Tidak| SaveDraft
+        
+        Satisfied -->|Tidak| EditForm
+        EditForm --> FillForm
+        Satisfied -->|Ya| SaveDraft
+        
+        SaveDraft -->|Ya| CreateDraft
+        CreateDraft --> End
+        SaveDraft -->|Tidak| SubmitSurat
+        
+        SubmitSurat --> NotifyAdmin
+        NotifyAdmin --> AdminReview
+        
+        AdminReview -->|Approve| Approve
+        AdminReview -->|Reject| Reject
+        
+        Approve --> DownloadPDF
+        DownloadPDF --> NotifyUser
+        Reject --> NotifyUser
+        NotifyUser --> End
+    end

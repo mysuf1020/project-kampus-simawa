@@ -1,0 +1,32 @@
+@startuml
+actor AdminOrg
+actor Bem
+participant "SIMAWA API" as API
+database "Postgres" as DB
+collections "Minio" as S3
+
+AdminOrg -> API : POST /auth/login\n(login, password)
+API -> DB : validate user
+API --> AdminOrg : access+refresh token
+
+AdminOrg -> API : POST /v1/activities/upload (PDF)
+API -> S3 : store proposal.pdf
+API --> AdminOrg : file_key
+
+AdminOrg -> API : POST /v1/activities (draft)
+API -> DB : insert Activity (DRAFT)
+
+AdminOrg -> API : POST /v1/activities/:id/submit
+API -> DB : update status=PENDING, history
+API -> DB : insert Notification for BEM/DEMA
+
+Bem -> API : GET /v1/activities/org/:org_id?status=PENDING
+API -> DB : select pending activities
+API --> Bem : list pending
+
+Bem -> API : POST /v1/activities/:id/approve
+API -> DB : update status=APPROVED, save note, history
+API -> DB : insert Notification for AdminOrg
+API --> Bem : ok
+@enduml
+

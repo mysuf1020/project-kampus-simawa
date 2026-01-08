@@ -1,0 +1,191 @@
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#e8f5e9', 'primaryTextColor': '#1b5e20', 'primaryBorderColor': '#4caf50', 'lineColor': '#2e7d32'}}}%%
+
+classDiagram
+    class User {
+        +UUID id
+        +String username
+        +String first_name
+        +String second_name
+        +Boolean organisasi
+        +String ukm
+        +String hmj
+        +String jurusan
+        +String nim
+        +String email
+        +String phone
+        +String alamat
+        +Date birth_date
+        +String password_hash
+        +DateTime created_at
+        +DateTime updated_at
+    }
+    
+    class Organization {
+        +UUID id
+        +String name
+        +String slug
+        +OrganizationType type
+        +String description
+        +String logo_key
+        +String logo_url
+        +String hero_image
+        +String contact_email
+        +String contact_phone
+        +String website_url
+        +String instagram_url
+        +String twitter_url
+        +String linkedin_url
+        +JSON links
+        +JSON gallery_urls
+        +DateTime created_at
+        +DateTime updated_at
+    }
+    
+    class Role {
+        +UUID id
+        +String code
+        +String name
+        +DateTime created_at
+        +DateTime updated_at
+    }
+    
+    class UserRole {
+        +UUID user_id
+        +String role_code
+        +UUID org_id
+        +DateTime created_at
+    }
+    
+    class OrgMember {
+        +UUID org_id
+        +UUID user_id
+        +String role
+        +DateTime created_at
+    }
+    
+    class OrgJoinRequest {
+        +UUID id
+        +UUID org_id
+        +UUID user_id
+        +String applicant_name
+        +String applicant_email
+        +String applicant_nim
+        +String applicant_phone
+        +String jurusan
+        +String message
+        +String status
+        +String decision_note
+        +DateTime reviewed_at
+        +UUID reviewed_by
+        +DateTime created_at
+    }
+    
+    class Surat {
+        +Uint id
+        +UUID org_id
+        +UUID target_org_id
+        +String variant
+        +String status
+        +String number
+        +String subject
+        +String to_role
+        +String to_name
+        +String to_place
+        +String to_city
+        +String file_key
+        +String file_url
+        +String approval_note
+        +UUID created_by
+        +UUID submitted_by
+        +UUID approved_by
+        +JSON meta_json
+        +DateTime created_at
+        +DateTime updated_at
+    }
+    
+    class SuratTemplate {
+        +Uint id
+        +String name
+        +String variant
+        +JSON theme_json
+        +JSON payload_json
+        +String description
+        +UUID created_by
+        +DateTime created_at
+        +DateTime updated_at
+    }
+    
+    class Activity {
+        +UUID id
+        +UUID org_id
+        +String title
+        +String description
+        +String location
+        +String type
+        +Boolean public
+        +String status
+        +String approval_note
+        +Boolean cover_approved
+        +DateTime start_at
+        +DateTime end_at
+        +String cover_key
+        +JSON metadata
+        +UUID created_by
+        +UUID updated_by
+        +DateTime created_at
+        +DateTime updated_at
+    }
+    
+    class LPJ {
+        +UUID id
+        +UUID activity_id
+        +UUID org_id
+        +String summary
+        +Float budget_plan
+        +Float budget_real
+        +String report_key
+        +Int64 file_size
+        +JSON photos
+        +String status
+        +String note
+        +UUID submitted_by
+        +Int revision_no
+        +UUID reviewed_by
+        +DateTime reviewed_at
+        +DateTime created_at
+        +DateTime updated_at
+    }
+    
+    class Notification {
+        +UUID id
+        +UUID user_id
+        +String title
+        +String body
+        +JSON data
+        +DateTime read_at
+        +DateTime created_at
+    }
+    
+    class RefreshToken {
+        +UUID id
+        +UUID user_id
+        +String token
+        +DateTime expires_at
+        +DateTime created_at
+    }
+    
+    User "1" --> "*" UserRole : has
+    User "1" --> "*" OrgMember : belongs to
+    User "1" --> "*" Notification : receives
+    User "1" --> "*" RefreshToken : has
+    
+    Organization "1" --> "*" OrgMember : has members
+    Organization "1" --> "*" OrgJoinRequest : receives
+    Organization "1" --> "*" Surat : creates
+    Organization "1" --> "*" Activity : organizes
+    Organization "1" --> "*" LPJ : submits
+    
+    Role "1" --> "*" UserRole : assigned to
+    
+    Surat "*" --> "1" SuratTemplate : uses
+    Activity "1" --> "0..1" LPJ : has

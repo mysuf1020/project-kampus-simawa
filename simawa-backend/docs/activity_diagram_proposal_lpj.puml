@@ -1,0 +1,36 @@
+@startuml
+start
+:Admin login;
+if (Login valid?) then (yes)
+  :Buat draft proposal;
+  :Upload file PDF proposal;
+  :Submit proposal;
+  :Status = Pending;
+  -> BEM/DEMA;
+  if (Setujui atau tolak?) then (Setujui)
+    :Status = Approved;
+  else (Tolak)
+    :Status = Rejected;
+    :Catatan revisi;
+    stop
+  endif
+
+  :Kegiatan dilaksanakan;
+  :Kegiatan selesai;
+  :Admin isi & upload LPJ (PDF);
+  :Submit LPJ;
+  :Status LPJ = Pending;
+  -> BEM/DEMA;
+  if (Setujui LPJ?) then (Setujui)
+    :Status LPJ = Approved;
+  else (Tolak)
+    :Status LPJ = Rejected;
+    :Catatan revisi LPJ;
+  endif
+  :Optional generate surat (PDF) via template;
+  stop
+else (no)
+  :Tampil error;
+  stop
+endif
+@enduml
