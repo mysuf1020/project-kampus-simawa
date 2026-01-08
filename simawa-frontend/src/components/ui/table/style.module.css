@@ -1,0 +1,69 @@
+.table-row-overlay {
+  width: 100%;
+  background-color: transparent;
+  grid-column: 1 / -1;
+  position: relative;
+  z-index: 1;
+  transition: background-color 0.1s;
+}
+.table-cell {
+  position: relative;
+  z-index: 2;
+  transition: background-color 0.1s;
+  background-color: #fff;
+}
+
+@media screen and (min-width: 640px) {
+  .table-row:hover .table-cell,
+  .table-row:hover .table-row-overlay {
+    background-color: var(--brand-30);
+    cursor: pointer;
+  }
+  .table-row:hover .table-action {
+    display: flex;
+    height: auto;
+    padding-top: 4px;
+    padding-bottom: 4px;
+    background-color: #f8fafc;
+  }
+}
+.table-action {
+  position: absolute;
+  z-index: 20;
+  right: 16px;
+  height: 100%;
+  top: 0;
+  bottom: 0;
+  /* background-color: #000; */
+  display: none;
+}
+
+.table-action::before {
+  content: '...';
+  color: var(--neutral-500);
+  position: absolute;
+  width: 24px;
+  left: -24px;
+  top: 14px;
+  padding-left: 4px;
+  background-color: #f8fafc;
+}
+
+.table-action::after {
+  content: ' ';
+  z-index: 20;
+  background-color: #f8fafc;
+  position: absolute;
+  left: calc(-24px + -16px);
+  min-width: 16px;
+  min-height: 20px;
+  top: 0;
+  bottom: 0;
+  -webkit-mask-image: -webkit-gradient(
+    linear,
+    right center,
+    left center,
+    from(rgba(0, 0, 0, 1)),
+    to(rgba(0, 0, 0, 0))
+  );
+}

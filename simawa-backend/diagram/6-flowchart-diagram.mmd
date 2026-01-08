@@ -1,0 +1,125 @@
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#e8f5e9', 'primaryTextColor': '#1b5e20', 'primaryBorderColor': '#4caf50', 'lineColor': '#2e7d32'}}}%%
+
+flowchart TD
+    subgraph MainFlow["🎓 SIMAWA - Flowchart Sistem"]
+        Start([🟢 Start])
+        
+        subgraph AuthFlow["🔐 Authentication Flow"]
+            A1{User sudah login?}
+            A2[Tampilkan Login Page]
+            A3[Input Email & Password]
+            A4{Kredensial Valid?}
+            A5[Generate JWT Token]
+            A6[Simpan Session]
+            A7[Tampilkan Error]
+        end
+        
+        subgraph DashboardFlow["📊 Dashboard Flow"]
+            D1[Tampilkan Dashboard]
+            D2{Pilih Menu}
+            D3[Surat]
+            D4[Aktivitas]
+            D5[Organisasi]
+            D6[LPJ]
+            D7[Users]
+            D8[Settings]
+        end
+        
+        subgraph SuratFlow["📧 Surat Flow"]
+            S1[Pilih Organisasi]
+            S2[Isi Form Surat]
+            S3[Upload Logo/TTD]
+            S4{Preview?}
+            S5[Generate PDF Preview]
+            S6{Simpan Draft?}
+            S7[Simpan sebagai Draft]
+            S8[Submit Surat]
+            S9[Status: PENDING]
+            S10{Admin Review}
+            S11[Approve]
+            S12[Reject]
+            S13[Status: APPROVED]
+            S14[Status: REJECTED]
+            S15[Download PDF]
+            S16[Kirim Notifikasi]
+        end
+        
+        subgraph ActivityFlow["📅 Activity Flow"]
+            AC1[Buat Aktivitas Baru]
+            AC2[Isi Detail Aktivitas]
+            AC3[Upload Cover Image]
+            AC4[Submit untuk Review]
+            AC5{Admin Approve?}
+            AC6[Publish ke Public]
+            AC7[Request Revision]
+        end
+        
+        subgraph OrgFlow["🏢 Organization Flow"]
+            O1[Lihat Profil Organisasi]
+            O2{Edit Profil?}
+            O3[Update Data Organisasi]
+            O4[Upload Logo/Hero]
+            O5[Kelola Anggota]
+            O6[Review Pendaftaran]
+        end
+        
+        End([🔴 End])
+        
+        Start --> A1
+        A1 -->|Tidak| A2
+        A2 --> A3
+        A3 --> A4
+        A4 -->|Tidak| A7
+        A7 --> A2
+        A4 -->|Ya| A5
+        A5 --> A6
+        A6 --> D1
+        A1 -->|Ya| D1
+        
+        D1 --> D2
+        D2 --> D3 & D4 & D5 & D6 & D7 & D8
+        
+        D3 --> S1
+        S1 --> S2
+        S2 --> S3
+        S3 --> S4
+        S4 -->|Ya| S5
+        S5 --> S4
+        S4 -->|Tidak| S6
+        S6 -->|Ya| S7
+        S7 --> End
+        S6 -->|Tidak| S8
+        S8 --> S9
+        S9 --> S10
+        S10 -->|Approve| S11
+        S10 -->|Reject| S12
+        S11 --> S13
+        S12 --> S14
+        S13 --> S15
+        S15 --> S16
+        S14 --> S16
+        S16 --> End
+        
+        D4 --> AC1
+        AC1 --> AC2
+        AC2 --> AC3
+        AC3 --> AC4
+        AC4 --> AC5
+        AC5 -->|Ya| AC6
+        AC5 -->|Tidak| AC7
+        AC6 --> End
+        AC7 --> AC2
+        
+        D5 --> O1
+        O1 --> O2
+        O2 -->|Ya| O3
+        O3 --> O4
+        O4 --> O5
+        O5 --> O6
+        O6 --> End
+        O2 -->|Tidak| End
+        
+        D6 --> End
+        D7 --> End
+        D8 --> End
+    end

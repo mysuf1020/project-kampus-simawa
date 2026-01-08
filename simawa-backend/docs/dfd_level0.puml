@@ -1,0 +1,44 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+
+actor "Admin Org" as AO
+actor "BEM/DEMA" as BD
+actor "Mahasiswa/Dosen" as PUB
+
+rectangle "SIMAWA" {
+  rectangle "Modul Auth" as AUTH
+  rectangle "Modul Organisasi" as ORG
+  rectangle "Modul Kegiatan/LPJ/Surat" as ACT
+  rectangle "Modul Notifikasi" as NOTIF
+  rectangle "Modul Publik" as PUBMOD
+}
+
+database "DB Postgres" as DB
+collections "Minio" as S3
+collections "Redis" as RED
+
+AO --> AUTH : kredensial login
+AUTH --> DB : verifikasi user
+AUTH --> RED : rate-limit / lockout
+AUTH --> AO : token
+
+AO --> ORG : kelola profil/anggota
+ORG --> DB : CRUD organisasi/anggota
+
+AO --> ACT : proposal, LPJ, surat\n(upload PDF)
+ACT --> S3 : simpan file
+ACT --> DB : CRUD activity/LPJ/surat + history
+ACT --> NOTIF : buat notifikasi
+
+BD --> ACT : approve/ reject
+ACT --> DB
+ACT --> NOTIF
+
+NOTIF --> DB : simpan notifikasi
+AO --> NOTIF : baca notifikasi
+
+PUB --> PUBMOD : lihat kalender/galeri/org
+PUBMOD --> DB
+PUBMOD --> S3 : baca cover
+@enduml
