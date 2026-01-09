@@ -627,7 +627,7 @@ export default function OrgPublicPage() {
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <Label>Email Kampus <span className="text-red-500">*</span></Label>
+                      <Label> <span className="text-red-500">*</span></Label>
                       <Input
                         type="email"
                         placeholder="nama@raharja.info"
