@@ -148,7 +148,7 @@ export function UserCreateCard() {
             Hanya admin yang dapat membuat akun baru.
           </div>
         )}
-        
+
         <form
           className="space-y-5"
           onSubmit={handleCreate}
@@ -221,7 +221,7 @@ export function UserCreateCard() {
                 }}
               />
             </div>
-            
+
             {createPayload.organisasi && (
               <div className="pt-2 animate-in slide-in-from-top-2 fade-in duration-200">
                 <div className="space-y-2">
@@ -305,13 +305,11 @@ export function UserCreateCard() {
                 <Input
                   type="email"
                   placeholder="nama@raharja.info"
-                  className="pl-9"
                   value={createPayload.email}
                   onChange={(e) =>
                     setCreatePayload((prev) => ({ ...prev, email: e.target.value }))
                   }
                 />
-                <div className="absolute left-3 top-2.5 text-neutral-400">@</div>
               </div>
             </div>
             <div className="space-y-2">
@@ -375,12 +373,12 @@ export function RoleManagementCard() {
   const userOptions = [
     ...(selectedUser
       ? [
-          {
-            value: selectedUser.id,
-            label: `${selectedUser.username} • ${selectedUser.email}`,
-            user: selectedUser,
-          },
-        ]
+        {
+          value: selectedUser.id,
+          label: `${selectedUser.username} • ${selectedUser.email}`,
+          user: selectedUser,
+        },
+      ]
       : []),
     ...(userSearchQuery.data ?? [])
       .filter((u) => u.id !== selectedUser?.id)
@@ -479,7 +477,7 @@ export function RoleManagementCard() {
                 }}
               />
             </div>
-            
+
             <div className="space-y-2">
               <Label>Role yang Diberikan</Label>
               <AutoComplete
@@ -492,7 +490,7 @@ export function RoleManagementCard() {
                   setSelectedRoles((prev) => [...prev, value])
                 }}
               />
-              
+
               <div className="min-h-[32px] flex flex-wrap gap-2 pt-1">
                 {selectedRoles.length === 0 && (
                   <span className="text-xs text-neutral-400 italic">Belum ada role dipilih</span>
@@ -513,7 +511,7 @@ export function RoleManagementCard() {
               </div>
             </div>
           </div>
-          
+
           <Button type="submit" size="sm" className="bg-brand-600 hover:bg-brand-700 text-white w-full sm:w-auto" disabled={!isAdmin || isAssigning}>
             {isAssigning ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />

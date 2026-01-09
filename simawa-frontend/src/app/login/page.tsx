@@ -109,7 +109,7 @@ function LoginContent() {
       <div className="hidden lg:flex flex-col justify-between bg-brand-900 p-12 text-white relative overflow-hidden">
         <div className="absolute top-0 right-0 -mr-20 -mt-20 h-96 w-96 bg-brand-500 rounded-full blur-[100px] opacity-20"></div>
         <div className="absolute bottom-0 left-0 -ml-20 -mb-20 h-96 w-96 bg-blue-600 rounded-full blur-[100px] opacity-20"></div>
-        
+
         <div className="relative z-10">
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 bg-white rounded-xl flex items-center justify-center shadow-lg shadow-black/10">
@@ -130,10 +130,6 @@ function LoginContent() {
             <div className="flex items-center gap-2 bg-white/10 px-4 py-2 rounded-full backdrop-blur-sm border border-white/10">
               <ShieldCheck className="h-4 w-4 text-green-400" />
               <span className="text-sm font-medium">Secure Access</span>
-            </div>
-            <div className="flex items-center gap-2 bg-white/10 px-4 py-2 rounded-full backdrop-blur-sm border border-white/10">
-              <Lock className="h-4 w-4 text-amber-400" />
-              <span className="text-sm font-medium">RBAC System</span>
             </div>
           </div>
         </div>
@@ -157,7 +153,7 @@ function LoginContent() {
             <CardContent className="pt-6">
               <form className="space-y-5" onSubmit={form.handleSubmit(onSubmit)}>
                 <div className="space-y-2">
-                  <Label htmlFor="login">Email Kampus</Label>
+                  <Label htmlFor="login">Email</Label>
                   <div className="relative">
                     <Input
                       id="login"
@@ -175,12 +171,12 @@ function LoginContent() {
                     </p>
                   )}
                 </div>
-                
+
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <Label htmlFor="password">Password</Label>
-                    <Link 
-                      href="#" 
+                    <Link
+                      href="#"
                       className="text-xs font-medium text-brand-600 hover:text-brand-700 hover:underline"
                       onClick={(e) => {
                         e.preventDefault()
