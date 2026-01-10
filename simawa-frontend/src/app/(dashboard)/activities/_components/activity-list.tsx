@@ -1,3 +1,5 @@
+'use client'
+
 import { Activity } from '@/lib/apis/activity'
 import {
   Badge,
@@ -8,6 +10,7 @@ import {
   CardHeader,
   CardTitle,
   Spinner,
+  InfiniteScrollLoader,
 } from '@/components/ui'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Calendar, Check, Loader2, MapPin, Send } from 'lucide-react'
@@ -27,6 +30,9 @@ type Props = {
   page?: number
   onChangePage?: (page: number) => void
   total?: number
+  hasNextPage?: boolean
+  onLoadMore?: () => void
+  isFetchingNextPage?: boolean
 }
 
 export function ActivityList({
@@ -44,12 +50,15 @@ export function ActivityList({
   page = 1,
   onChangePage,
   total,
+  hasNextPage,
+  onLoadMore,
+  isFetchingNextPage,
 }: Props) {
   return (
     <Card className="border-neutral-200 shadow-sm">
-      <CardHeader className="flex flex-row items-center justify-between border-b border-neutral-100 bg-neutral-50/50 pb-4">
+      <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-neutral-100 bg-neutral-50/50 pb-4">
         <div className="space-y-0.5">
-          <CardTitle className="text-base font-semibold text-neutral-900">Daftar Aktivitas</CardTitle>
+          <CardTitle className="text-sm sm:text-base font-semibold text-neutral-900">Daftar Aktivitas</CardTitle>
           <CardDescription className="text-xs text-neutral-500">
             Kelola dan pantau status kegiatan organisasi Anda.
           </CardDescription>
@@ -58,7 +67,7 @@ export function ActivityList({
           variant="outline" 
           size="sm" 
           onClick={onRefresh} 
-          className="h-8 gap-2 bg-white text-xs font-medium text-neutral-700 hover:bg-neutral-50"
+          className="h-8 gap-2 bg-white text-xs font-medium text-neutral-700 hover:bg-neutral-50 w-full sm:w-auto"
         >
           {isFetching ? (
             <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -112,11 +121,11 @@ export function ActivityList({
           </div>
         )}
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {activities?.map((activity) => (
             <div
               key={activity.id}
-              className="group rounded-2xl border border-neutral-100 bg-white/80 p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md hover:border-brand-200"
+              className="group rounded-xl sm:rounded-2xl border border-neutral-100 bg-white/80 p-3 sm:p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md hover:border-brand-200"
             >
               <div>
                 <div className="flex items-start justify-between gap-3 mb-2">
@@ -220,11 +229,23 @@ export function ActivityList({
           ))}
         </div>
 
+        {/* Mobile: Infinite Scroll */}
+        {hasNextPage && onLoadMore && (
+          <div className="sm:hidden">
+            <InfiniteScrollLoader
+              onLoadMore={onLoadMore}
+              isLoading={isFetchingNextPage}
+              hasMore={hasNextPage}
+            />
+          </div>
+        )}
+
+        {/* Desktop: Pagination */}
         {onChangePage && (
-          <div className="flex items-center justify-between border-t border-neutral-100 pt-4 mt-2">
+          <div className="hidden sm:flex flex-row items-center justify-between gap-3 border-t border-neutral-100 pt-4 mt-2">
             <span className="text-xs text-neutral-500">
               Halaman <span className="font-medium text-neutral-900">{page}</span>
-              {typeof total === 'number' && ` dari total ${Math.ceil(total / 10)} halaman`}
+              {typeof total === 'number' && ` dari ${Math.ceil(total / 10)}`}
             </span>
             <div className="flex gap-2">
               <Button
@@ -241,7 +262,7 @@ export function ActivityList({
                 variant="outline"
                 className="h-8 text-xs"
                 onClick={() => onChangePage(page + 1)}
-                disabled={activities && activities.length < 10} // Simple check, ideally check total
+                disabled={activities && activities.length < 10}
               >
                 Berikutnya
               </Button>

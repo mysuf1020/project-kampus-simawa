@@ -54,7 +54,7 @@ export const submitLPJ = async (payload: SubmitLPJPayload) => {
 }
 
 export const approveLPJ = async (lpjId: string, approve: boolean, note?: string) => {
-  const { data } = await api.post<ApiResponse<LPJ>>(`/v1/lpj/${lpjId}/review`, {
+  const { data } = await api.post<ApiResponse<LPJ>>(`/v1/lpj/${lpjId}/approve`, {
     approve,
     note,
   })
@@ -62,8 +62,7 @@ export const approveLPJ = async (lpjId: string, approve: boolean, note?: string)
 }
 
 export const addLPJRevision = async (lpjId: string, note: string) => {
-  const { data } = await api.post<ApiResponse<LPJ>>(`/v1/lpj/${lpjId}/review`, {
-    approve: false,
+  const { data } = await api.post<ApiResponse<LPJ>>(`/v1/lpj/${lpjId}/revision`, {
     note,
   })
   return data.data

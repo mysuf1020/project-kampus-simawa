@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useEffect, useMemo, useState } from 'react'
+import { useQuery, useInfiniteQuery } from '@tanstack/react-query'
 import { RefreshCcw, Mail, Plus } from 'lucide-react'
 import Link from 'next/link'
 
@@ -42,6 +42,7 @@ function SuratPageInner() {
     queryKey: ['surat-inbox'],
     queryFn: () => listInboxSurat(),
   })
+  // Desktop: useQuery with pagination
   const outboxQuery = useQuery({
     queryKey: ['surat-outbox', orgId, outboxPage, outboxPageSize, outboxStatus],
     queryFn: () =>
@@ -53,7 +54,39 @@ function SuratPageInner() {
     enabled: Boolean(orgId),
   })
 
+  // Mobile: useInfiniteQuery for infinite scroll
+  const outboxInfiniteQuery = useInfiniteQuery({
+    queryKey: ['surat-outbox-infinite', orgId, outboxStatus],
+    queryFn: ({ pageParam = 1 }) =>
+      listOutboxSurat(orgId, {
+        page: String(pageParam),
+        size: '10',
+        status: outboxStatus,
+      }),
+    enabled: Boolean(orgId),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage, allPages) => {
+      if (lastPage && lastPage.length >= 10) {
+        return allPages.length + 1
+      }
+      return undefined
+    },
+  })
+
+  const allInfiniteOutbox = useMemo(
+    () => outboxInfiniteQuery.data?.pages.flat() ?? [],
+    [outboxInfiniteQuery.data?.pages]
+  )
+
   const filteredOutbox = (outboxQuery.data || []).filter((item) => {
+    if (!outboxSearch) return true
+    const q = outboxSearch.toLowerCase()
+    const inSubject = item.subject?.toLowerCase().includes(q)
+    const inNumber = item.number?.toLowerCase().includes(q)
+    return Boolean(inSubject || inNumber)
+  })
+
+  const filteredInfiniteOutbox = allInfiniteOutbox.filter((item) => {
     if (!outboxSearch) return true
     const q = outboxSearch.toLowerCase()
     const inSubject = item.subject?.toLowerCase().includes(q)
@@ -107,9 +140,9 @@ function SuratPageInner() {
             }}
             className="w-full space-y-6"
           >
-            <TabsList className="bg-neutral-100/50 border border-neutral-200 p-1">
-              <TabsTrigger value="inbox" className="gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm">
-                Surat Masuk
+            <TabsList className="w-full flex-wrap h-auto gap-1 p-1 bg-neutral-100/50 border border-neutral-200">
+              <TabsTrigger value="inbox" className="flex-1 min-w-[90px] gap-1.5 text-xs sm:text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm">
+                <span className="hidden sm:inline">Surat</span> Masuk
                 {pendingInboxCount > 0 && (
                   <Badge
                     variant="secondary"
@@ -119,8 +152,10 @@ function SuratPageInner() {
                   </Badge>
                 )}
               </TabsTrigger>
-              <TabsTrigger value="outbox" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">Riwayat Keluar</TabsTrigger>
-              <TabsTrigger value="all" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">Semua Surat</TabsTrigger>
+              <TabsTrigger value="outbox" className="flex-1 min-w-[90px] text-xs sm:text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm">
+                <span className="hidden sm:inline">Riwayat</span> Keluar
+              </TabsTrigger>
+              <TabsTrigger value="all" className="flex-1 min-w-[80px] text-xs sm:text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm">Semua</TabsTrigger>
             </TabsList>
 
             <TabsContent value="inbox" className="animate-in fade-in-50 duration-300">
@@ -140,14 +175,27 @@ function SuratPageInner() {
                   queryParams={queryParams}
                   setQueryParams={setQueryParams}
                 />
-                <OutboxListCard
-                  data={filteredOutbox}
-                  isLoading={outboxQuery.isLoading}
-                  page={Number(outboxPage || '1') || 1}
-                  onChangePage={(next) =>
-                    setQueryParams({ outboxPage: String(Math.max(1, next)) })
-                  }
-                />
+                {/* Desktop View */}
+                <div className="hidden sm:block">
+                  <OutboxListCard
+                    data={filteredOutbox}
+                    isLoading={outboxQuery.isLoading}
+                    page={Number(outboxPage || '1') || 1}
+                    onChangePage={(next) =>
+                      setQueryParams({ outboxPage: String(Math.max(1, next)) })
+                    }
+                  />
+                </div>
+                {/* Mobile View with Infinite Scroll */}
+                <div className="sm:hidden">
+                  <OutboxListCard
+                    data={filteredInfiniteOutbox}
+                    isLoading={outboxInfiniteQuery.isLoading}
+                    hasNextPage={outboxInfiniteQuery.hasNextPage}
+                    onLoadMore={() => outboxInfiniteQuery.fetchNextPage()}
+                    isFetchingNextPage={outboxInfiniteQuery.isFetchingNextPage}
+                  />
+                </div>
               </div>
             </TabsContent>
 

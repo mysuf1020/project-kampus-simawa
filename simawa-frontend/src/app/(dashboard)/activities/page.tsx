@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo } from 'react'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient, useInfiniteQuery } from '@tanstack/react-query'
 import { Plus } from 'lucide-react'
 
 import { Badge, Button, Container, Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui'
@@ -44,6 +44,7 @@ function ActivitiesPageInner() {
     if (!orgId && orgs?.length) setOrgId(orgs[0].id)
   }, [orgId, orgs, setOrgId])
 
+  // Desktop: useQuery with pagination
   const {
     data: activitiesResp,
     isLoading,
@@ -60,6 +61,33 @@ function ActivitiesPageInner() {
         type,
       } as ListActivitiesParams),
     enabled: Boolean(orgId),
+  })
+
+  // Mobile: useInfiniteQuery for infinite scroll
+  const {
+    data: infiniteData,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
+    queryKey: ['activities-infinite', orgId, status, type],
+    queryFn: ({ pageParam = 1 }) =>
+      listActivitiesByOrg(orgId, {
+        page: pageParam,
+        size: 10,
+        status,
+        type,
+      } as ListActivitiesParams),
+    enabled: Boolean(orgId),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage, allPages) => {
+      const totalItems = lastPage.total ?? 0
+      const loadedItems = allPages.reduce((acc, p) => acc + (p.items?.length ?? 0), 0)
+      if (loadedItems < totalItems) {
+        return allPages.length + 1
+      }
+      return undefined
+    },
   })
 
   const { mutateAsync: create, isPending: isCreating } = useMutation({
@@ -114,7 +142,21 @@ function ActivitiesPageInner() {
   const activities = activitiesResp?.items || []
   const totalActivities = activitiesResp?.total ?? activities.length
 
+  // Combine all pages for mobile infinite scroll
+  const allInfiniteActivities = useMemo(
+    () => infiniteData?.pages.flatMap((p) => p.items ?? []) ?? [],
+    [infiniteData?.pages]
+  )
+
   const filteredActivities = activities.filter((a) => {
+    if (!search) return true
+    const q = search.toLowerCase()
+    const inTitle = a.title?.toLowerCase().includes(q)
+    const inDesc = a.description?.toLowerCase().includes(q)
+    return Boolean(inTitle || inDesc)
+  })
+
+  const filteredInfiniteActivities = allInfiniteActivities.filter((a) => {
     if (!search) return true
     const q = search.toLowerCase()
     const inTitle = a.title?.toLowerCase().includes(q)
@@ -144,11 +186,11 @@ function ActivitiesPageInner() {
       
       <Page.Body>
         <Container>
-          <Tabs defaultValue="list" className="w-full space-y-6">
-            <TabsList>
-              <TabsTrigger value="list">Daftar Aktivitas</TabsTrigger>
-              <TabsTrigger value="create">Buat Aktivitas</TabsTrigger>
-              <TabsTrigger value="review">Review Sampul</TabsTrigger>
+          <Tabs defaultValue="list" className="w-full space-y-4 sm:space-y-6">
+            <TabsList className="w-full flex-wrap h-auto gap-1 p-1">
+              <TabsTrigger value="list" className="flex-1 min-w-[100px] text-xs sm:text-sm">Daftar Aktivitas</TabsTrigger>
+              <TabsTrigger value="create" className="flex-1 min-w-[100px] text-xs sm:text-sm">Buat Aktivitas</TabsTrigger>
+              <TabsTrigger value="review" className="flex-1 min-w-[100px] text-xs sm:text-sm">Review Sampul</TabsTrigger>
             </TabsList>
 
             <TabsContent value="list" className="space-y-6">
@@ -162,22 +204,44 @@ function ActivitiesPageInner() {
                 queryParams={queryParams}
                 setQueryParams={setQueryParams}
               />
-              <ActivityList
-                activities={filteredActivities}
-                isLoading={isLoading}
-                isFetching={isFetching}
-                isError={isError}
-                onRefresh={() => refetch()}
-                onSubmit={handleSubmit}
-                onApprove={handleApprove}
-                onRevise={handleRevise}
-                isSubmitting={isSubmittingActivity}
-                isApproving={isApproving}
-                isRevising={isRevising}
-                page={Number(page || '1') || 1}
-                total={totalActivities}
-                onChangePage={(next) => setQueryParams({ page: String(Math.max(1, next)) })}
-              />
+              {/* Desktop View */}
+              <div className="hidden sm:block">
+                <ActivityList
+                  activities={filteredActivities}
+                  isLoading={isLoading}
+                  isFetching={isFetching}
+                  isError={isError}
+                  onRefresh={() => refetch()}
+                  onSubmit={handleSubmit}
+                  onApprove={handleApprove}
+                  onRevise={handleRevise}
+                  isSubmitting={isSubmittingActivity}
+                  isApproving={isApproving}
+                  isRevising={isRevising}
+                  page={Number(page || '1') || 1}
+                  total={totalActivities}
+                  onChangePage={(next) => setQueryParams({ page: String(Math.max(1, next)) })}
+                />
+              </div>
+              {/* Mobile View with Infinite Scroll */}
+              <div className="sm:hidden">
+                <ActivityList
+                  activities={filteredInfiniteActivities}
+                  isLoading={isLoading}
+                  isFetching={isFetching}
+                  isError={isError}
+                  onRefresh={() => refetch()}
+                  onSubmit={handleSubmit}
+                  onApprove={handleApprove}
+                  onRevise={handleRevise}
+                  isSubmitting={isSubmittingActivity}
+                  isApproving={isApproving}
+                  isRevising={isRevising}
+                  hasNextPage={hasNextPage}
+                  onLoadMore={() => fetchNextPage()}
+                  isFetchingNextPage={isFetchingNextPage}
+                />
+              </div>
             </TabsContent>
 
             <TabsContent value="create" className="space-y-6">

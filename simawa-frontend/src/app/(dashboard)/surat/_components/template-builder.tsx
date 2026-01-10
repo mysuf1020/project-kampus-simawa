@@ -330,9 +330,9 @@ export function TemplateBuilder({ onClose }: Props) {
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[300px,1fr]">
+    <div className="flex flex-col lg:grid lg:grid-cols-[280px,1fr] gap-4 lg:gap-6">
       {/* Sidebar Templates */}
-      <Card className="border-neutral-200 shadow-sm h-fit">
+      <Card className="border-neutral-200 shadow-sm h-fit order-2 lg:order-1">
         <CardHeader className="p-4 border-b border-neutral-100">
           <div className="flex items-center gap-2">
             <LayoutTemplate className="h-4 w-4 text-brand-600" />
@@ -385,37 +385,37 @@ export function TemplateBuilder({ onClose }: Props) {
       </Card>
 
       {/* Main Builder Form */}
-      <Card className="border-neutral-200 shadow-sm">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 p-6 border-b border-neutral-100 bg-neutral-50/50">
+      <Card className="border-neutral-200 shadow-sm order-1 lg:order-2">
+        <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 sm:p-6 border-b border-neutral-100 bg-neutral-50/50">
           <div>
-            <CardTitle className="text-lg flex items-center gap-2">
+            <CardTitle className="text-base sm:text-lg flex items-center gap-2">
               <FileSignature className="h-5 w-5 text-brand-600" />
-              Builder Template Surat
+              <span className="hidden sm:inline">Builder</span> Template Surat
             </CardTitle>
-            <CardDescription>
-              Buat dan simpan struktur surat untuk digunakan kembali.
+            <CardDescription className="text-xs sm:text-sm">
+              Buat dan simpan struktur surat.
             </CardDescription>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 w-full sm:w-auto">
             <Button
               variant="outline"
               size="sm"
               onClick={handlePreview}
               disabled={isPreviewLoading}
-              className="bg-white"
+              className="bg-white flex-1 sm:flex-none"
             >
               {isPreviewLoading ? (
-                <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
+                <Loader2 className="sm:mr-2 h-3.5 w-3.5 animate-spin" />
               ) : (
-                <Eye className="mr-2 h-3.5 w-3.5" />
+                <Eye className="sm:mr-2 h-3.5 w-3.5" />
               )}
-              Preview
+              <span className="hidden sm:inline">Preview</span>
             </Button>
             <Popover>
               <PopoverTrigger asChild>
-                <Button size="sm" className="bg-brand-600 hover:bg-brand-700 text-white">
-                  <Save className="mr-2 h-3.5 w-3.5" />
-                  Simpan Template
+                <Button size="sm" className="bg-brand-600 hover:bg-brand-700 text-white flex-1 sm:flex-none">
+                  <Save className="sm:mr-2 h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Simpan</span>
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-80 p-4" align="end">

@@ -17,7 +17,7 @@ type User struct {
 	HMJ        *string `gorm:"size:64;not null;default:''" json:"hmj"` // tergantung jenis organisasi
 
 	Jurusan string `gorm:"size:128;not null" json:"jurusan"`
-	NIM     string `gorm:"size:32;index;not null" json:"nim"`
+	NIM     string `gorm:"size:32;index;default:''" json:"nim"`
 	Email   string `gorm:"uniqueIndex;size:128;not null" json:"email"`
 	Phone   string `gorm:"size:32;not null;default:''" json:"phone"`
 	Alamat  string `gorm:"size:255;not null;default:''" json:"alamat"`

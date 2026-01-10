@@ -85,14 +85,13 @@ export function UserCreateCard() {
       !username ||
       !first_name ||
       !jurusan ||
-      !nim ||
       !email ||
       !phone ||
       !alamat ||
       !tanggal_lahir ||
       !password
     ) {
-      toast.error('Semua field wajib diisi (termasuk phone, alamat, tanggal lahir)')
+      toast.error('Semua field wajib diisi (termasuk phone, alamat, tanggal lahir). NIP/NIM opsional.')
       return
     }
     const emailLower = email.toLowerCase().trim()
@@ -188,13 +187,16 @@ export function UserCreateCard() {
               />
             </div>
             <div className="space-y-2">
-              <Label>NIM</Label>
+              <Label>NIP / NIM (Opsional)</Label>
               <Input
                 placeholder="1921xxxx"
                 value={createPayload.nim ?? ''}
-                onChange={(e) =>
-                  setCreatePayload((prev) => ({ ...prev, nim: e.target.value }))
-                }
+                onChange={(e) => {
+                  const value = e.target.value.replace(/\D/g, '')
+                  setCreatePayload((prev) => ({ ...prev, nim: value }))
+                }}
+                inputMode="numeric"
+                pattern="[0-9]*"
               />
             </div>
           </div>
@@ -281,9 +283,12 @@ export function UserCreateCard() {
               <Input
                 placeholder="08xxxxxxxxxx"
                 value={createPayload.phone}
-                onChange={(e) =>
-                  setCreatePayload((prev) => ({ ...prev, phone: e.target.value }))
-                }
+                onChange={(e) => {
+                  const value = e.target.value.replace(/\D/g, '')
+                  setCreatePayload((prev) => ({ ...prev, phone: value }))
+                }}
+                inputMode="numeric"
+                pattern="[0-9]*"
               />
             </div>
             <div className="space-y-2">

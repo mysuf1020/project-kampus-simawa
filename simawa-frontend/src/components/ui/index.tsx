@@ -56,3 +56,4 @@ export * from './form-leave-dialog'
 
 export * from './query-renderer'
 export * from './sticky-button-container'
+export * from './infinite-scroll-loader'

@@ -91,30 +91,62 @@ export function OrgCard({ org, canManage, isPending, onSubmit }: OrgCardProps) {
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
+    
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Ukuran file maksimal 5MB')
+      return
+    }
+    
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('File harus berupa gambar')
+      return
+    }
+    
     setLogoUploading(true)
     try {
       await uploadOrganizationImage(org.id, 'logo', file)
       await queryClient.invalidateQueries({ queryKey: ['orgs'] })
       toast.success('Logo berhasil diupload')
-    } catch {
-      toast.error('Gagal upload logo')
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Gagal upload logo'
+      toast.error(message)
     } finally {
       setLogoUploading(false)
+      // Reset input to allow re-uploading same file
+      e.target.value = ''
     }
   }
 
   const handleHeroUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
+    
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Ukuran file maksimal 5MB')
+      return
+    }
+    
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('File harus berupa gambar')
+      return
+    }
+    
     setHeroUploading(true)
     try {
       await uploadOrganizationImage(org.id, 'hero', file)
       await queryClient.invalidateQueries({ queryKey: ['orgs'] })
       toast.success('Hero image berhasil diupload')
-    } catch {
-      toast.error('Gagal upload hero image')
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Gagal upload hero image'
+      toast.error(message)
     } finally {
       setHeroUploading(false)
+      // Reset input to allow re-uploading same file
+      e.target.value = ''
     }
   }
 
