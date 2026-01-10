@@ -29,6 +29,9 @@ export type SuratTemplate = {
   name: string
   variant?: string
   description?: string
+  payload_json?: Record<string, unknown>
+  theme_json?: Record<string, unknown>
+  created_by?: string
   created_at?: string
   updated_at?: string
 }
@@ -134,7 +137,15 @@ export const downloadSurat = async (id: number | string) => {
   return data
 }
 
-export const createTemplate = async (payload: Record<string, unknown>) => {
+export type CreateTemplatePayload = {
+  name: string
+  variant?: string
+  description?: string
+  payload_json?: Record<string, unknown>
+  theme_json?: Record<string, unknown>
+}
+
+export const createTemplate = async (payload: CreateTemplatePayload) => {
   const { data } = await api.post<ApiResponse<SuratTemplate>>(
     '/v1/surat/templates',
     payload,

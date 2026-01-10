@@ -92,13 +92,13 @@ export default function OrganizationsPage() {
       
       <Page.Body>
         <Container>
-          <Tabs defaultValue="profile" className="w-full space-y-6">
-            <TabsList>
-              <TabsTrigger value="profile">Profil Organisasi</TabsTrigger>
+          <Tabs defaultValue="profile" className="w-full space-y-4 sm:space-y-6">
+            <TabsList className="w-full flex-wrap h-auto gap-1 p-1">
+              <TabsTrigger value="profile" className="flex-1 min-w-[80px] text-xs sm:text-sm">Profil</TabsTrigger>
               {canManageAnyOrg ? (
                 <>
-                  <TabsTrigger value="members">Anggota Organisasi</TabsTrigger>
-                  <TabsTrigger value="join">Pendaftaran Anggota</TabsTrigger>
+                  <TabsTrigger value="members" className="flex-1 min-w-[80px] text-xs sm:text-sm">Anggota</TabsTrigger>
+                  <TabsTrigger value="join" className="flex-1 min-w-[80px] text-xs sm:text-sm">Pendaftaran</TabsTrigger>
                 </>
               ) : null}
             </TabsList>
@@ -110,8 +110,17 @@ export default function OrganizationsPage() {
                     <Spinner size="sm" /> Memuat organisasi...
                   </div>
                 )}
-                <div className="grid gap-6 lg:grid-cols-2">
-                  {orgsQuery.data?.map((org) => (
+                {!orgsQuery.isLoading && manageableOrgs.length === 0 && (
+                  <div className="rounded-xl border border-dashed border-neutral-200 bg-neutral-50/50 p-8 text-center">
+                    <Building2 className="mx-auto h-10 w-10 text-neutral-300 mb-3" />
+                    <p className="text-sm font-medium text-neutral-900">Tidak ada organisasi</p>
+                    <p className="text-xs text-neutral-500 mt-1">
+                      Anda tidak memiliki akses untuk mengelola organisasi manapun.
+                    </p>
+                  </div>
+                )}
+                <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
+                  {manageableOrgs.map((org) => (
                     <OrgCard
                       key={org.id}
                       org={org}

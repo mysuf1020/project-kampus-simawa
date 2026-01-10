@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useInfiniteQuery } from '@tanstack/react-query'
 import { Search, RotateCw, Users as UsersIcon, Filter } from 'lucide-react'
 
 import {
@@ -16,6 +16,7 @@ import {
   Input,
   Spinner,
   Button,
+  InfiniteScrollLoader,
 } from '@/components/ui'
 import { Page } from '@/components/commons'
 import {
@@ -30,6 +31,8 @@ import { listOrganizations, type Organization } from '@/lib/apis/org'
 export default function UsersPage() {
   const [search, setSearch] = useState('')
   const [orgFilterId, setOrgFilterId] = useState('')
+  const [page, setPage] = useState(1)
+  const pageSize = 20
 
   const orgsQuery = useQuery({
     queryKey: ['orgs'],
@@ -46,23 +49,54 @@ export default function UsersPage() {
     [orgsQuery.data],
   )
 
+  // Desktop: useQuery with pagination
   const { data, isLoading, isError, refetch, isFetching } = useQuery({
-    queryKey: ['users', search, orgFilterId],
+    queryKey: ['users', search, orgFilterId, page],
     queryFn: () =>
       listUsers({
-        page: 1,
-        size: 20,
+        page,
+        size: pageSize,
         q: search,
         ...(orgFilterId ? { org_id: orgFilterId, role_prefix: 'ORG_' } : {}),
       }),
   })
 
+  // Mobile: useInfiniteQuery for infinite scroll
+  const usersInfiniteQuery = useInfiniteQuery({
+    queryKey: ['users-infinite', search, orgFilterId],
+    queryFn: ({ pageParam = 1 }) =>
+      listUsers({
+        page: pageParam,
+        size: pageSize,
+        q: search,
+        ...(orgFilterId ? { org_id: orgFilterId, role_prefix: 'ORG_' } : {}),
+      }),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage, allPages) => {
+      const totalItems = lastPage.total ?? 0
+      const loadedItems = allPages.reduce((acc, p) => acc + (p.items?.length ?? 0), 0)
+      if (loadedItems < totalItems) {
+        return allPages.length + 1
+      }
+      return undefined
+    },
+  })
+
+  const allInfiniteUsers = useMemo(
+    () => usersInfiniteQuery.data?.pages.flatMap((p) => p.items ?? []) ?? [],
+    [usersInfiniteQuery.data?.pages]
+  )
+
   const items = data?.items ?? []
+  const total = data?.total ?? 0
+  const totalPages = Math.ceil(total / pageSize)
 
   const totalText = useMemo(() => {
     if (!data) return ''
-    return `Menampilkan ${items.length} dari total ${data.total}`
-  }, [data, items.length])
+    const start = (page - 1) * pageSize + 1
+    const end = Math.min(page * pageSize, total)
+    return `Menampilkan ${start}-${end} dari total ${total}`
+  }, [data, page, pageSize, total])
 
   return (
     <Page>
@@ -89,10 +123,10 @@ export default function UsersPage() {
             {/* Stats / Overview could go here if needed */}
             
             <Card className="border-neutral-200 shadow-sm">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+              <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4">
                 <div className="space-y-1">
-                  <CardTitle className="text-base font-semibold">Pengguna Terdaftar</CardTitle>
-                  <CardDescription>
+                  <CardTitle className="text-sm sm:text-base font-semibold">Pengguna Terdaftar</CardTitle>
+                  <CardDescription className="text-xs">
                     Semua pengguna yang memiliki akun di SIMAWA.
                   </CardDescription>
                 </div>
@@ -162,16 +196,56 @@ export default function UsersPage() {
                     <p className="mt-1 text-xs text-neutral-500">Coba ubah kata kunci pencarian atau filter Anda.</p>
                   </div>
                 ) : (
-                  <div className="space-y-4">
-                     <div className="rounded-lg border border-neutral-200 divide-y divide-neutral-100">
-                      {items.map((user) => (
-                        <UserRow key={user.id} user={user} />
-                      ))}
+                  <>
+                    {/* Desktop View */}
+                    <div className="hidden sm:block space-y-4">
+                      <div className="rounded-lg border border-neutral-200 divide-y divide-neutral-100">
+                        {items.map((user) => (
+                          <UserRow key={user.id} user={user} />
+                        ))}
+                      </div>
+                      <div className="flex items-center justify-between border-t border-neutral-100 pt-4 mt-2">
+                        <span className="text-xs text-neutral-500">
+                          {totalText}
+                        </span>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-8 text-xs"
+                            disabled={page <= 1}
+                            onClick={() => setPage((p) => Math.max(1, p - 1))}
+                          >
+                            Sebelumnya
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            className="h-8 text-xs"
+                            onClick={() => setPage((p) => p + 1)}
+                            disabled={page >= totalPages}
+                          >
+                            Berikutnya
+                          </Button>
+                        </div>
+                      </div>
                     </div>
-                    <div className="text-xs text-neutral-500 text-center pt-2">
-                      {totalText}
+                    {/* Mobile View with Infinite Scroll */}
+                    <div className="sm:hidden space-y-4">
+                      <div className="rounded-lg border border-neutral-200 divide-y divide-neutral-100">
+                        {allInfiniteUsers.map((user) => (
+                          <UserRow key={user.id} user={user} />
+                        ))}
+                      </div>
+                      {usersInfiniteQuery.hasNextPage && (
+                        <InfiniteScrollLoader
+                          onLoadMore={() => usersInfiniteQuery.fetchNextPage()}
+                          isLoading={usersInfiniteQuery.isFetchingNextPage}
+                          hasMore={usersInfiniteQuery.hasNextPage}
+                        />
+                      )}
                     </div>
-                  </div>
+                  </>
                 )}
               </CardContent>
             </Card>
@@ -205,7 +279,7 @@ function UserRow({ user }: { user: UserWithRoles }) {
         <div className="space-y-1">
           <div className="flex items-center gap-2">
              <p className="text-sm font-medium text-neutral-900 leading-none">
-              {user.first_name ? `${user.first_name} ${user.last_name || ''}` : user.username}
+              {user.first_name ? `${user.first_name} ${user.second_name || ''}` : user.username}
             </p>
             {user.nim && (
                <span className="hidden sm:inline-flex rounded bg-neutral-100 px-1.5 py-0.5 text-[10px] font-medium text-neutral-600">

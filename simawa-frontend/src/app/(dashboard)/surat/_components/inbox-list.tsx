@@ -38,15 +38,17 @@ export function InboxListCard({ data, isLoading }: Props) {
   return (
     <>
       <Card className="border-neutral-200 shadow-sm h-full flex flex-col">
-        <CardHeader className="flex flex-row items-center gap-3 border-b border-neutral-100 bg-neutral-50/50 px-6 py-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
-            <Inbox className="h-5 w-5" />
-          </div>
-          <div>
-            <CardTitle className="text-base font-semibold text-neutral-900">Surat Masuk</CardTitle>
-            <CardDescription className="text-xs text-neutral-500">
-              Daftar surat yang menunggu persetujuan Anda.
-            </CardDescription>
+        <CardHeader className="flex flex-col sm:flex-row sm:items-center gap-3 border-b border-neutral-100 bg-neutral-50/50 px-4 sm:px-6 py-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-50 text-brand-600 shrink-0">
+              <Inbox className="h-5 w-5" />
+            </div>
+            <div>
+              <CardTitle className="text-sm sm:text-base font-semibold text-neutral-900">Surat Masuk</CardTitle>
+              <CardDescription className="text-xs text-neutral-500">
+                Daftar surat yang menunggu persetujuan.
+              </CardDescription>
+            </div>
           </div>
         </CardHeader>
         <CardContent className="p-0 flex-1">
@@ -96,7 +98,7 @@ export function InboxListCard({ data, isLoading }: Props) {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2 self-end sm:self-auto pl-11 sm:pl-0">
+                    <div className="flex flex-wrap items-center gap-2 self-end sm:self-auto pl-11 sm:pl-0">
                       <Button
                         size="sm"
                         variant="ghost"
@@ -111,8 +113,8 @@ export function InboxListCard({ data, isLoading }: Props) {
                           }
                         }}
                       >
-                        <Download className="h-3.5 w-3.5 mr-1.5" />
-                        Preview
+                        <Download className="h-3.5 w-3.5 sm:mr-1.5" />
+                        <span className="hidden sm:inline">Preview</span>
                       </Button>
                       
                       {item.status === 'PENDING' && (
@@ -123,8 +125,8 @@ export function InboxListCard({ data, isLoading }: Props) {
                             className="h-7 text-xs border-green-200 text-green-700 hover:bg-green-50 hover:text-green-800 hover:border-green-300"
                             onClick={() => item.id && handleDecide(item.id, 'approve')}
                           >
-                            <Check className="h-3.5 w-3.5 mr-1.5" />
-                            Approve
+                            <Check className="h-3.5 w-3.5 sm:mr-1.5" />
+                            <span className="hidden sm:inline">Approve</span>
                           </Button>
                           <Button
                             size="sm"
@@ -132,8 +134,8 @@ export function InboxListCard({ data, isLoading }: Props) {
                             className="h-7 text-xs border-red-200 text-red-700 hover:bg-red-50 hover:text-red-800 hover:border-red-300"
                             onClick={() => item.id && handleDecide(item.id, 'reject')}
                           >
-                            <X className="h-3.5 w-3.5 mr-1.5" />
-                            Tolak
+                            <X className="h-3.5 w-3.5 sm:mr-1.5" />
+                            <span className="hidden sm:inline">Tolak</span>
                           </Button>
                         </>
                       )}

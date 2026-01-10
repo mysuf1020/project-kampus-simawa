@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useInfiniteQuery } from '@tanstack/react-query'
 import { Upload } from 'lucide-react'
 
 import {
@@ -43,6 +43,7 @@ function LPJPageInner() {
     }
   }, [orgId, orgs, setOrgId])
 
+  // Desktop: useQuery with pagination
   const {
     data: lpjItems,
     isLoading,
@@ -61,6 +62,31 @@ function LPJPageInner() {
     enabled: Boolean(orgId),
   })
 
+  // Mobile: useInfiniteQuery for infinite scroll
+  const lpjInfiniteQuery = useInfiniteQuery({
+    queryKey: ['lpj-infinite', orgId, status],
+    queryFn: ({ pageParam = 1 }) =>
+      listLPJByOrg(
+        orgId,
+        status || undefined,
+        pageParam,
+        10,
+      ),
+    enabled: Boolean(orgId),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage, allPages) => {
+      if (lastPage && lastPage.length >= 10) {
+        return allPages.length + 1
+      }
+      return undefined
+    },
+  })
+
+  const allInfiniteLpj = useMemo(
+    () => lpjInfiniteQuery.data?.pages.flat() ?? [],
+    [lpjInfiniteQuery.data?.pages]
+  )
+
   const [submitOpen, setSubmitOpen] = useState(false)
 
   const filteredItems = useMemo(() => {
@@ -73,6 +99,17 @@ function LPJPageInner() {
       return Boolean(inSummary || inActivity)
     })
   }, [lpjItems, search])
+
+  const filteredInfiniteItems = useMemo(() => {
+    if (!allInfiniteLpj.length) return []
+    if (!search) return allInfiniteLpj
+    const q = search.toLowerCase()
+    return allInfiniteLpj.filter((item) => {
+      const inSummary = item.summary?.toLowerCase().includes(q)
+      const inActivity = item.activity_id?.toLowerCase().includes(q)
+      return Boolean(inSummary || inActivity)
+    })
+  }, [allInfiniteLpj, search])
 
   return (
     <Page>
@@ -122,15 +159,31 @@ function LPJPageInner() {
               setQueryParams={setQueryParams}
             />
             
-            <LPJListCard
-              items={filteredItems}
-              isLoading={isLoading}
-              isError={isError}
-              isFetching={isFetching}
-              onRefresh={() => refetch()}
-              page={Number(page || '1') || 1}
-              onChangePage={(next) => setQueryParams({ page: String(Math.max(1, next)) })}
-            />
+            {/* Desktop View */}
+            <div className="hidden sm:block">
+              <LPJListCard
+                items={filteredItems}
+                isLoading={isLoading}
+                isError={isError}
+                isFetching={isFetching}
+                onRefresh={() => refetch()}
+                page={Number(page || '1') || 1}
+                onChangePage={(next) => setQueryParams({ page: String(Math.max(1, next)) })}
+              />
+            </div>
+            {/* Mobile View with Infinite Scroll */}
+            <div className="sm:hidden">
+              <LPJListCard
+                items={filteredInfiniteItems}
+                isLoading={lpjInfiniteQuery.isLoading}
+                isError={lpjInfiniteQuery.isError}
+                isFetching={lpjInfiniteQuery.isFetching}
+                onRefresh={() => lpjInfiniteQuery.refetch()}
+                hasNextPage={lpjInfiniteQuery.hasNextPage}
+                onLoadMore={() => lpjInfiniteQuery.fetchNextPage()}
+                isFetchingNextPage={lpjInfiniteQuery.isFetchingNextPage}
+              />
+            </div>
           </div>
         </Container>
       </Page.Body>

@@ -11,7 +11,7 @@ type CreateUserRequest struct {
 	UKM          string `json:"ukm"` // optional, empty allowed
 	HMJ          string `json:"hmj"` // optional, empty allowed
 	Jurusan      string `json:"jurusan" binding:"required"`
-	NIM          string `json:"nim" binding:"required"`
+	NIM          string `json:"nim"`
 	Email        string `json:"email" binding:"required,email"`
 	Phone        string `json:"phone" binding:"required"`
 	Alamat       string `json:"alamat" binding:"required"`

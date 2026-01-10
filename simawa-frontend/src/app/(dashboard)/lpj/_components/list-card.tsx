@@ -13,6 +13,7 @@ import {
   CardHeader,
   CardTitle,
   Spinner,
+  InfiniteScrollLoader,
 } from '@/components/ui'
 import { Skeleton } from '@/components/ui/skeleton'
 import { approveLPJ, addLPJRevision, getLPJDownloadURL, type LPJ } from '@/lib/apis/lpj'
@@ -29,6 +30,9 @@ type Props = {
   page?: number
   onChangePage?: (page: number) => void
   onRefresh?: () => void
+  hasNextPage?: boolean
+  onLoadMore?: () => void
+  isFetchingNextPage?: boolean
 }
 
 export function LPJListCard({
@@ -39,6 +43,9 @@ export function LPJListCard({
   page = 1,
   onChangePage,
   onRefresh,
+  hasNextPage,
+  onLoadMore,
+  isFetchingNextPage,
 }: Props) {
   const queryClient = useQueryClient()
 
@@ -67,10 +74,11 @@ export function LPJListCard({
       addLPJRevision(lpjId, note),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['lpj'] })
-      toast.success('Catatan revisi LPJ tersimpan')
+      toast.success('Status LPJ diubah menjadi "Diminta Revisi"')
     },
-    onError: () => {
-      toast.error('Gagal menambahkan revisi LPJ')
+    onError: (error: Error) => {
+      console.error('Revision error:', error)
+      toast.error(`Gagal menambahkan revisi LPJ: ${error.message || 'Unknown error'}`)
     },
   })
 
@@ -146,18 +154,18 @@ export function LPJListCard({
 
   return (
     <Card className="border-neutral-200 shadow-sm">
-      <CardHeader className="flex flex-row items-center justify-between border-b border-neutral-100 bg-neutral-50/50 pb-4">
+      <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-neutral-100 bg-neutral-50/50 pb-4">
         <div className="space-y-0.5">
-          <CardTitle className="text-base font-semibold text-neutral-900">Daftar LPJ</CardTitle>
+          <CardTitle className="text-sm sm:text-base font-semibold text-neutral-900">Daftar LPJ</CardTitle>
           <CardDescription className="text-xs text-neutral-500">
-            Daftar laporan pertanggungjawaban yang masuk.
+            Daftar laporan pertanggungjawaban.
           </CardDescription>
         </div>
         <Button 
           variant="outline" 
           size="sm" 
           onClick={onRefresh} 
-          className="h-8 gap-2 bg-white text-xs font-medium text-neutral-700 hover:bg-neutral-50"
+          className="h-8 gap-2 bg-white text-xs font-medium text-neutral-700 hover:bg-neutral-50 w-full sm:w-auto"
         >
           {isFetching ? (
             <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -211,11 +219,11 @@ export function LPJListCard({
           </div>
         )}
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {items?.map((lpj) => (
             <div
               key={lpj.id}
-              className="group flex flex-col justify-between rounded-xl border border-neutral-200 bg-white p-4 shadow-sm transition-all hover:border-brand-200 hover:shadow-md"
+              className="group flex flex-col justify-between rounded-xl border border-neutral-200 bg-white p-3 sm:p-4 shadow-sm transition-all hover:border-brand-200 hover:shadow-md"
             >
               <div>
                 <div className="flex items-start justify-between gap-3 mb-2">
@@ -309,7 +317,11 @@ export function LPJListCard({
                       onClick={() => handleRevision(lpj)}
                       title="Minta Revisi"
                     >
-                        <Info className="h-3.5 w-3.5" />
+                        {isRevising ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Info className="h-3.5 w-3.5" />
+                        )}
                     </Button>
                   </>
                 )}
@@ -318,8 +330,20 @@ export function LPJListCard({
           ))}
         </div>
 
+        {/* Mobile: Infinite Scroll */}
+        {hasNextPage && onLoadMore && (
+          <div className="sm:hidden">
+            <InfiniteScrollLoader
+              onLoadMore={onLoadMore}
+              isLoading={isFetchingNextPage}
+              hasMore={hasNextPage}
+            />
+          </div>
+        )}
+
+        {/* Desktop: Pagination */}
         {onChangePage && (
-          <div className="flex items-center justify-between border-t border-neutral-100 pt-4 mt-2">
+          <div className="hidden sm:flex flex-row items-center justify-between border-t border-neutral-100 pt-4 mt-2">
             <span className="text-xs text-neutral-500">
               Halaman <span className="font-medium text-neutral-900">{page}</span>
             </span>
@@ -338,7 +362,7 @@ export function LPJListCard({
                 variant="outline"
                 className="h-8 text-xs"
                 onClick={() => onChangePage(page + 1)}
-                disabled={items && items.length < 10} // Simple check
+                disabled={items && items.length < 10}
               >
                 Berikutnya
               </Button>

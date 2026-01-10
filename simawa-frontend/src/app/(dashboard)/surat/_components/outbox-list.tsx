@@ -1,3 +1,5 @@
+'use client'
+
 import {
   Badge,
   Button,
@@ -7,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
   Spinner,
+  InfiniteScrollLoader,
 } from '@/components/ui'
 import { Download, Outdent, FileText, Send } from 'lucide-react'
 import { downloadSurat, type Surat } from '@/lib/apis/surat'
@@ -16,20 +19,25 @@ type Props = {
   isLoading?: boolean
   page?: number
   onChangePage?: (page: number) => void
+  hasNextPage?: boolean
+  onLoadMore?: () => void
+  isFetchingNextPage?: boolean
 }
 
-export function OutboxListCard({ data, isLoading, page = 1, onChangePage }: Props) {
+export function OutboxListCard({ data, isLoading, page = 1, onChangePage, hasNextPage, onLoadMore, isFetchingNextPage }: Props) {
   return (
     <Card className="border-neutral-200 shadow-sm">
-      <CardHeader className="flex flex-row items-center gap-3 border-b border-neutral-100 bg-neutral-50/50 px-6 py-4">
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-50 text-orange-600">
-          <Outdent className="h-5 w-5" />
-        </div>
-        <div>
-          <CardTitle className="text-base font-semibold text-neutral-900">Riwayat Surat Keluar</CardTitle>
-          <CardDescription className="text-xs text-neutral-500">
-            Daftar surat yang sudah dikirim dari organisasi ini.
-          </CardDescription>
+      <CardHeader className="flex flex-col sm:flex-row sm:items-center gap-3 border-b border-neutral-100 bg-neutral-50/50 px-4 sm:px-6 py-4">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-50 text-orange-600 shrink-0">
+            <Outdent className="h-5 w-5" />
+          </div>
+          <div>
+            <CardTitle className="text-sm sm:text-base font-semibold text-neutral-900">Riwayat Surat Keluar</CardTitle>
+            <CardDescription className="text-xs text-neutral-500">
+              Daftar surat yang sudah dikirim.
+            </CardDescription>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="p-0">
@@ -54,7 +62,7 @@ export function OutboxListCard({ data, isLoading, page = 1, onChangePage }: Prop
               return (
                 <div
                   key={item.id}
-                  className="group flex items-center justify-between p-4 hover:bg-neutral-50/50 transition-colors"
+                  className="group flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 sm:p-4 hover:bg-neutral-50/50 transition-colors"
                 >
                   <div className="flex items-start gap-3 overflow-hidden">
                     <div className="mt-0.5 h-8 w-8 rounded-lg bg-orange-50 flex items-center justify-center text-orange-600 shrink-0 border border-orange-100">
@@ -86,7 +94,7 @@ export function OutboxListCard({ data, isLoading, page = 1, onChangePage }: Prop
                   <Button
                     size="sm"
                     variant="ghost"
-                    className="h-8 text-xs text-neutral-500 hover:text-brand-600 hover:bg-brand-50"
+                    className="h-8 text-xs text-neutral-500 hover:text-brand-600 hover:bg-brand-50 self-end sm:self-auto"
                     disabled={!item.id}
                     onClick={async () => {
                       if (!item.id) return
@@ -97,8 +105,8 @@ export function OutboxListCard({ data, isLoading, page = 1, onChangePage }: Prop
                       }
                     }}
                   >
-                    <Download className="h-3.5 w-3.5 mr-1.5" />
-                    Unduh
+                    <Download className="h-3.5 w-3.5 sm:mr-1.5" />
+                    <span className="hidden sm:inline">Unduh</span>
                   </Button>
                 </div>
               )
@@ -106,8 +114,20 @@ export function OutboxListCard({ data, isLoading, page = 1, onChangePage }: Prop
           </div>
         )}
         
+        {/* Mobile: Infinite Scroll */}
+        {hasNextPage && onLoadMore && (
+          <div className="sm:hidden px-4 py-2">
+            <InfiniteScrollLoader
+              onLoadMore={onLoadMore}
+              isLoading={isFetchingNextPage}
+              hasMore={hasNextPage}
+            />
+          </div>
+        )}
+
+        {/* Desktop: Pagination */}
         {onChangePage && (
-          <div className="flex items-center justify-between border-t border-neutral-100 bg-neutral-50/30 px-4 py-3">
+          <div className="hidden sm:flex flex-row items-center justify-between border-t border-neutral-100 bg-neutral-50/30 px-4 py-3">
             <span className="text-xs text-neutral-500">Halaman {page}</span>
             <div className="flex gap-2">
               <Button
