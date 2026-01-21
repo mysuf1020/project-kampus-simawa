@@ -61,7 +61,9 @@ export function ActivityCreateForm({ orgId, onCreate, isLoading }: Props) {
   return (
     <Card className="border-neutral-200 shadow-sm h-fit">
       <CardHeader className="bg-neutral-50/50 border-b border-neutral-100 pb-4">
-        <CardTitle className="text-base font-semibold text-neutral-900">Buat Aktivitas</CardTitle>
+        <CardTitle className="text-base font-semibold text-neutral-900">
+          Buat Aktivitas
+        </CardTitle>
         <CardDescription className="text-xs text-neutral-500">
           Isi formulir berikut untuk membuat kegiatan baru.
         </CardDescription>
@@ -69,12 +71,15 @@ export function ActivityCreateForm({ orgId, onCreate, isLoading }: Props) {
       <CardContent className="pt-4 space-y-4">
         <form className="space-y-4" onSubmit={form.handleSubmit(handleSubmit)}>
           <input type="hidden" {...form.register('org_id')} />
-          
+
           <div className="space-y-1.5">
-            <Label className="text-xs font-medium text-neutral-700">Judul Kegiatan</Label>
-            <Input 
-              placeholder="Contoh: Rapat Koordinasi Awal Tahun" 
-              {...form.register('title')} 
+            <Label htmlFor="title" className="text-xs font-medium text-neutral-700">
+              Judul Kegiatan
+            </Label>
+            <Input
+              id="title"
+              placeholder="Contoh: Rapat Koordinasi Awal Tahun"
+              {...form.register('title')}
               className="h-9 text-sm"
             />
             {form.formState.errors.title && (
@@ -85,8 +90,11 @@ export function ActivityCreateForm({ orgId, onCreate, isLoading }: Props) {
           </div>
 
           <div className="space-y-1.5">
-            <Label className="text-xs font-medium text-neutral-700">Deskripsi</Label>
+            <Label htmlFor="description" className="text-xs font-medium text-neutral-700">
+              Deskripsi
+            </Label>
             <TextArea
+              id="description"
               rows={3}
               placeholder="Jelaskan detail kegiatan secara singkat..."
               {...form.register('description')}
@@ -96,18 +104,24 @@ export function ActivityCreateForm({ orgId, onCreate, isLoading }: Props) {
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-neutral-700">Lokasi</Label>
-              <Input 
-                placeholder="Gedung / Ruangan" 
-                {...form.register('location')} 
+              <Label htmlFor="location" className="text-xs font-medium text-neutral-700">
+                Lokasi
+              </Label>
+              <Input
+                id="location"
+                placeholder="Gedung / Ruangan"
+                {...form.register('location')}
                 className="h-9 text-sm"
               />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-neutral-700">Tipe</Label>
-              <Input 
-                placeholder="Rapat / Seminar / Lomba" 
-                {...form.register('type')} 
+              <Label htmlFor="type" className="text-xs font-medium text-neutral-700">
+                Tipe
+              </Label>
+              <Input
+                id="type"
+                placeholder="Rapat / Seminar / Lomba"
+                {...form.register('type')}
                 className="h-9 text-sm"
               />
             </div>
@@ -115,24 +129,34 @@ export function ActivityCreateForm({ orgId, onCreate, isLoading }: Props) {
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-neutral-700">Waktu Mulai</Label>
-              <Input 
-                type="datetime-local" 
-                {...form.register('start_at')} 
+              <Label htmlFor="start_at" className="text-xs font-medium text-neutral-700">
+                Waktu Mulai
+              </Label>
+              <Input
+                id="start_at"
+                type="datetime-local"
+                {...form.register('start_at')}
                 className="h-9 text-sm"
               />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-neutral-700">Waktu Selesai</Label>
-              <Input 
-                type="datetime-local" 
-                {...form.register('end_at')} 
+              <Label htmlFor="end_at" className="text-xs font-medium text-neutral-700">
+                Waktu Selesai
+              </Label>
+              <Input
+                id="end_at"
+                type="datetime-local"
+                {...form.register('end_at')}
                 className="h-9 text-sm"
               />
             </div>
           </div>
 
-          <Button type="submit" className="w-full bg-brand-600 hover:bg-brand-700 text-white" disabled={isLoading}>
+          <Button
+            type="submit"
+            className="w-full bg-brand-600 hover:bg-brand-700 text-white"
+            disabled={isLoading}
+          >
             {isLoading ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (

@@ -1,8 +1,49 @@
 package dto
 
 type LoginRequest struct {
-	Login    string `json:"login" binding:"required,email"` // email only
-	Password string `json:"password" binding:"required"` // plaintext, validated by service
+	Login        string `json:"login" binding:"required"`
+	Password     string `json:"password" binding:"required"` // plaintext, validated by service
+	CaptchaToken string `json:"captcha_token"` // Optional reCAPTCHA token
+}
+
+type LoginOTPRequest struct {
+	Login string `json:"login" binding:"required"`
+	OTP   string `json:"otp" binding:"required"`
+}
+
+type RegisterRequest struct {
+	Username     string `json:"username" binding:"required,min=4,max=64"`
+	FirstName    string `json:"first_name" binding:"required"`
+	Email        string `json:"email" binding:"required,email"`
+	Password     string `json:"password" binding:"required,min=8"`
+	ConfirmPassword string `json:"confirm_password" binding:"required,eqfield=Password"`
+	CaptchaToken string `json:"captcha_token"`
+}
+
+type VerifyEmailRequest struct {
+	Email string `json:"email" binding:"required,email"`
+	OTP   string `json:"otp" binding:"required"`
+}
+
+type ForgotPasswordRequest struct {
+	Email string `json:"email" binding:"required,email"`
+}
+
+type ResetPasswordRequest struct {
+	Email           string `json:"email" binding:"required,email"`
+	OTP             string `json:"otp" binding:"required"`
+	NewPassword     string `json:"new_password" binding:"required,min=8"`
+	ConfirmPassword string `json:"confirm_password" binding:"required,eqfield=NewPassword"`
+}
+
+type ChangePasswordRequest struct {
+	OldPassword     string `json:"old_password" binding:"required"`
+	NewPassword     string `json:"new_password" binding:"required,min=8"`
+	ConfirmPassword string `json:"confirm_password" binding:"required,eqfield=NewPassword"`
+}
+
+type ResendOTPRequest struct {
+	Email string `json:"email" binding:"required,email"`
 }
 
 type RefreshRequest struct {

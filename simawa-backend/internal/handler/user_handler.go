@@ -15,11 +15,12 @@ import (
 
 type UserHandler struct {
 	svc     *service.UserService
+	authSvc *service.AuthService
 	rbacSvc *service.RBACService
 }
 
-func NewUserHandler(s *service.UserService, rbac *service.RBACService) *UserHandler {
-	return &UserHandler{svc: s, rbacSvc: rbac}
+func NewUserHandler(s *service.UserService, auth *service.AuthService, rbac *service.RBACService) *UserHandler {
+	return &UserHandler{svc: s, authSvc: auth, rbacSvc: rbac}
 }
 
 type assignRolesRequest struct {
@@ -181,6 +182,35 @@ func (h *UserHandler) UpdateMe(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"data": u})
+}
+
+// ---------- Change Password ----------
+func (h *UserHandler) ChangePassword(c *gin.Context) {
+	sub, _ := c.Get("sub")
+	uidStr, _ := sub.(string)
+	uid, err := uuid.Parse(uidStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "invalid user id"})
+		return
+	}
+
+	var req dto.ChangePasswordRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		return
+	}
+
+	if h.authSvc == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "auth service not available"})
+		return
+	}
+
+	if err := h.authSvc.ChangePassword(c.Request.Context(), uid, &req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "password updated successfully"})
 }
 
 // ---------- Get by ID (admin) ----------

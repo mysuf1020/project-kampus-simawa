@@ -8,26 +8,33 @@ import { cn } from '@/lib/utils'
 import { Spinner } from './spinner'
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none',
+  'inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-lg text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/30 focus-visible:ring-offset-1 disabled:pointer-events-none disabled:opacity-50',
   {
     variants: {
       variant: {
         default:
-          'bg-brand-500 text-white shadow-sm hover:bg-brand-600 disabled:bg-neutral-200',
+          'bg-brand-600 text-white shadow-sm hover:bg-brand-700 active:bg-brand-800',
+        destructive: 'bg-red-600 text-white shadow-sm hover:bg-red-700 active:bg-red-800',
+        success:
+          'bg-green-600 text-white shadow-sm hover:bg-green-700 active:bg-green-800',
+        warning:
+          'bg-amber-500 text-white shadow-sm hover:bg-amber-600 active:bg-amber-700',
         outline:
-          'border border-main-500 text-main-600 hover:bg-main-50 disabled:border-neutral-200 disabled:text-neutral-400',
+          'border border-neutral-200 bg-white text-neutral-700 shadow-sm hover:bg-neutral-50 hover:border-neutral-300 active:bg-neutral-100',
         secondary:
-          'bg-neutral-100 text-neutral-900 hover:bg-neutral-200 disabled:text-neutral-400',
-        ghost: 'hover:bg-neutral-100 text-neutral-900',
-        link: 'text-blue-500 underline-offset-4 hover:underline',
-        icon: 'h-9 w-9 rounded-full text-neutral-700 hover:bg-neutral-100 disabled:text-neutral-400',
+          'bg-neutral-100 text-neutral-700 hover:bg-neutral-200 active:bg-neutral-300',
+        ghost:
+          'text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900 active:bg-neutral-200',
+        link: 'text-brand-600 underline-offset-4 hover:underline',
+        icon: 'h-8 w-8 rounded-lg text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900',
       },
       size: {
-        xs: 'h-7 px-2 text-xs',
-        sm: 'h-8 px-3',
-        default: 'h-10 px-4 py-2',
-        lg: 'h-11 px-8',
-        icon: 'h-9 w-9',
+        xs: 'h-6 px-2 text-xs rounded-md',
+        sm: 'h-7 px-2.5 text-xs',
+        default: 'h-8 px-3 py-1.5',
+        lg: 'h-9 px-4',
+        xl: 'h-10 px-5',
+        icon: 'h-8 w-8',
       },
     },
     defaultVariants: {

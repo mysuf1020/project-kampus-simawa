@@ -95,7 +95,7 @@ export const suratSchema = z.object({
         role: z.string().min(1, 'Jabatan wajib diisi'),
         name: z.string().min(1, 'Nama wajib diisi'),
         nip: z.string().optional(),
-      })
+      }),
     )
     .min(1, 'Minimal satu penandatangan'),
 })
@@ -134,21 +134,21 @@ export const useSuratCreateState = () => {
         isValid = false
       }
       if (!form.toRole && !form.toName) {
-         // At least one recipient info
-         newErrors.toRole = 'Minimal jabatan atau nama penerima diisi'
-         isValid = false
+        // At least one recipient info
+        newErrors.toRole = 'Minimal jabatan atau nama penerima diisi'
+        isValid = false
       }
     } else if (currentStep === 2) {
-       form.signers.forEach((s, idx) => {
-         if (!s.role) {
-           newErrors[`signers.${idx}.role`] = 'Jabatan wajib diisi'
-           isValid = false
-         }
-         if (!s.name) {
-           newErrors[`signers.${idx}.name`] = 'Nama wajib diisi'
-           isValid = false
-         }
-       })
+      form.signers.forEach((s, idx) => {
+        if (!s.role) {
+          newErrors[`signers.${idx}.role`] = 'Jabatan wajib diisi'
+          isValid = false
+        }
+        if (!s.name) {
+          newErrors[`signers.${idx}.name`] = 'Nama wajib diisi'
+          isValid = false
+        }
+      })
     }
 
     setErrors(newErrors)

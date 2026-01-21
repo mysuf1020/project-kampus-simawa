@@ -22,9 +22,7 @@ const PageHeader: FC<PageHeaderProps> = ({
   separator = true,
 }) => {
   return (
-    <div
-      className={cn('mb-8 w-full', className)}
-    >
+    <div className={cn('mb-8 w-full', className)}>
       <Container>
         {breadcrumbs && breadcrumbs.length > 0 && (
           <Breadcrumb className="mb-4">
@@ -39,9 +37,7 @@ const PageHeader: FC<PageHeaderProps> = ({
             ))}
           </Breadcrumb>
         )}
-        <div className="space-y-1">
-          {children}
-        </div>
+        <div className="space-y-1">{children}</div>
       </Container>
       {separator && <Separator className="mt-6 opacity-50" />}
     </div>

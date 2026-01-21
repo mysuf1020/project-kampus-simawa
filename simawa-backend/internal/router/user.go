@@ -15,6 +15,7 @@ func RegisterUserRoutes(r *gin.Engine, cfg *config.Env, uh *handler.UserHandler,
 	v1.Use(middleware.AuthJWT(cfg))
 
 	v1.GET("/users/search", uh.Search)
+	v1.PUT("/users/change-password", uh.ChangePassword)
 
 	// Admin roles that can manage users: ADMIN, BEM_ADMIN, DEMA_ADMIN
 	adminRoles := []string{model.RoleAdmin, model.RoleBEMAdmin, model.RoleDEMAAdmin}

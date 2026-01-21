@@ -90,6 +90,37 @@ export const fetchPublicActivityById = async (id: string) => {
   return data.data
 }
 
+export const fetchPublicGallery = async (params?: { page?: number; size?: number }) => {
+  const { data } = await api.get<ListActivitiesResponse>('/public/activities/gallery', {
+    params,
+  })
+  return data
+}
+
+export const fetchActivityPhotos = async (id: string) => {
+  const { data } = await api.get<ApiResponse<{ cover: string; gallery: string[] }>>(
+    `/public/activities/${id}/photos`,
+  )
+  return data.data
+}
+
+export const addGalleryPhoto = async (id: string, url: string) => {
+  const { data } = await api.post<ApiResponse<Activity>>(`/v1/activities/${id}/gallery`, {
+    url,
+  })
+  return data.data
+}
+
+export const removeGalleryPhoto = async (id: string, url: string) => {
+  const { data } = await api.delete<ApiResponse<Activity>>(
+    `/v1/activities/${id}/gallery`,
+    {
+      data: { url },
+    },
+  )
+  return data.data
+}
+
 export const createActivity = async (payload: CreateActivityPayload) => {
   const body = {
     org_id: payload.org_id,

@@ -91,7 +91,9 @@ export function UserCreateCard() {
       !tanggal_lahir ||
       !password
     ) {
-      toast.error('Semua field wajib diisi (termasuk phone, alamat, tanggal lahir). NIP/NIM opsional.')
+      toast.error(
+        'Semua field wajib diisi (termasuk phone, alamat, tanggal lahir). NIP/NIM opsional.',
+      )
       return
     }
     const emailLower = email.toLowerCase().trim()
@@ -139,7 +141,9 @@ export function UserCreateCard() {
           <UserPlus className="h-5 w-5 text-brand-600" />
           Buat Akun Baru
         </CardTitle>
-        <CardDescription>Khusus admin untuk mendaftarkan pengguna baru secara manual.</CardDescription>
+        <CardDescription>
+          Khusus admin untuk mendaftarkan pengguna baru secara manual.
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         {!isAdmin && (
@@ -148,10 +152,7 @@ export function UserCreateCard() {
           </div>
         )}
 
-        <form
-          className="space-y-5"
-          onSubmit={handleCreate}
-        >
+        <form className="space-y-5" onSubmit={handleCreate}>
           <div className="grid gap-5 sm:grid-cols-2">
             <div className="space-y-2">
               <Label>Username</Label>
@@ -204,9 +205,12 @@ export function UserCreateCard() {
           <div className="rounded-xl border border-neutral-200 bg-neutral-50/50 p-4 space-y-4">
             <div className="flex items-center justify-between gap-3">
               <div className="space-y-0.5">
-                <Label className="text-sm font-semibold text-neutral-900">Akun Organisasi?</Label>
+                <Label className="text-sm font-semibold text-neutral-900">
+                  Akun Organisasi?
+                </Label>
                 <p className="text-xs text-neutral-500">
-                  Aktifkan jika user ini adalah akun sistem untuk UKM/HMJ (bukan perorangan).
+                  Aktifkan jika user ini adalah akun sistem untuk UKM/HMJ (bukan
+                  perorangan).
                 </p>
               </div>
               <Switch
@@ -341,7 +345,11 @@ export function UserCreateCard() {
             />
           </div>
 
-          <Button type="submit" className="w-full bg-brand-600 hover:bg-brand-700 text-white" disabled={isCreating}>
+          <Button
+            type="submit"
+            className="w-full bg-brand-600 hover:bg-brand-700 text-white"
+            disabled={isCreating}
+          >
             {isCreating ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
@@ -378,12 +386,12 @@ export function RoleManagementCard() {
   const userOptions = [
     ...(selectedUser
       ? [
-        {
-          value: selectedUser.id,
-          label: `${selectedUser.username} • ${selectedUser.email}`,
-          user: selectedUser,
-        },
-      ]
+          {
+            value: selectedUser.id,
+            label: `${selectedUser.username} • ${selectedUser.email}`,
+            user: selectedUser,
+          },
+        ]
       : []),
     ...(userSearchQuery.data ?? [])
       .filter((u) => u.id !== selectedUser?.id)
@@ -433,7 +441,9 @@ export function RoleManagementCard() {
           <Shield className="h-5 w-5 text-brand-600" />
           Kelola Akses Global
         </CardTitle>
-        <CardDescription>Atur peran sistem (ADMIN, USER, dll) untuk pengguna.</CardDescription>
+        <CardDescription>
+          Atur peran sistem (ADMIN, USER, dll) untuk pengguna.
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         {!isAdmin && (
@@ -442,10 +452,7 @@ export function RoleManagementCard() {
           </div>
         )}
 
-        <form
-          className="space-y-5"
-          onSubmit={handleAssignRoles}
-        >
+        <form className="space-y-5" onSubmit={handleAssignRoles}>
           <div className="grid gap-5 sm:grid-cols-2">
             <div className="space-y-2">
               <Label>Cari Pengguna</Label>
@@ -498,7 +505,9 @@ export function RoleManagementCard() {
 
               <div className="min-h-[32px] flex flex-wrap gap-2 pt-1">
                 {selectedRoles.length === 0 && (
-                  <span className="text-xs text-neutral-400 italic">Belum ada role dipilih</span>
+                  <span className="text-xs text-neutral-400 italic">
+                    Belum ada role dipilih
+                  </span>
                 )}
                 {selectedRoles.map((r) => (
                   <Badge
@@ -517,7 +526,12 @@ export function RoleManagementCard() {
             </div>
           </div>
 
-          <Button type="submit" size="sm" className="bg-brand-600 hover:bg-brand-700 text-white w-full sm:w-auto" disabled={!isAdmin || isAssigning}>
+          <Button
+            type="submit"
+            size="sm"
+            className="bg-brand-600 hover:bg-brand-700 text-white w-full sm:w-auto"
+            disabled={!isAdmin || isAssigning}
+          >
             {isAssigning ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
@@ -533,11 +547,22 @@ export function RoleManagementCard() {
             Admin Organisasi Spesifik
           </h4>
           <p className="text-xs text-blue-800/80 mb-3 leading-relaxed">
-            Untuk menjadikan user sebagai admin di organisasi tertentu (misal: hanya BEM atau UKM tertentu), jangan gunakan menu ini.
-            Gunakan menu <Link href="/organizations" className="font-semibold underline underline-offset-2 hover:text-blue-900">Organisasi</Link>, pilih organisasi, lalu masuk ke tab <strong>Anggota</strong>.
+            Untuk menjadikan user sebagai admin di organisasi tertentu (misal: hanya BEM
+            atau UKM tertentu), jangan gunakan menu ini. Gunakan menu{' '}
+            <Link
+              href="/organizations"
+              className="font-semibold underline underline-offset-2 hover:text-blue-900"
+            >
+              Organisasi
+            </Link>
+            , pilih organisasi, lalu masuk ke tab <strong>Anggota</strong>.
           </p>
           <Link href="/organizations">
-            <Button size="sm" variant="outline" className="h-8 bg-white border-blue-200 text-blue-700 hover:bg-blue-50 text-xs">
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-8 bg-white border-blue-200 text-blue-700 hover:bg-blue-50 text-xs"
+            >
               Ke Menu Organisasi
             </Button>
           </Link>

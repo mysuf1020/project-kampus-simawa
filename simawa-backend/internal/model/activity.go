@@ -29,6 +29,9 @@ type Activity struct {
 	StartAt       time.Time         `json:"start_at"`
 	EndAt         time.Time         `json:"end_at"`
 	CoverKey      string            `gorm:"size:255" json:"cover_key"`
+	ProposalKey   string            `gorm:"size:255" json:"proposal_key"`
+	ProposalURL   string            `gorm:"size:512" json:"proposal_url"`
+	GalleryURLs   datatypes.JSON    `gorm:"type:jsonb" json:"gallery_urls"`
 	Metadata      datatypes.JSONMap `json:"metadata"`
 	CreatedBy     uuid.UUID         `gorm:"type:uuid" json:"created_by"`
 	UpdatedBy     uuid.UUID         `gorm:"type:uuid" json:"updated_by"`

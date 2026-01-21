@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Calendar, MapPin, ArrowLeft, Clock, Share2, Tag, Building2 } from 'lucide-react'
+import { toast } from 'sonner'
 
 import { Button, Container, Spinner, Badge, Card, CardContent } from '@/components/ui'
 import { fetchPublicActivityById, type Activity } from '@/lib/apis/activity'
@@ -13,9 +14,17 @@ export default function PublicActivityDetailPage() {
   const router = useRouter()
   const id = params?.id as string
 
-  const { data: activity, isLoading, isError } = useQuery<Activity>({
+  const {
+    data: activity,
+    isLoading,
+    isError,
+  } = useQuery({
     queryKey: ['public-activity', id],
-    queryFn: () => fetchPublicActivityById(id),
+    queryFn: async (): Promise<Activity> => {
+      const result = await fetchPublicActivityById(id)
+      if (!result) throw new Error('Activity not found')
+      return result
+    },
     enabled: !!id,
   })
 
@@ -34,11 +43,14 @@ export default function PublicActivityDetailPage() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-neutral-50">
         <div className="text-center max-w-md px-6">
-          <h2 className="text-xl font-bold text-neutral-900">Aktivitas Tidak Ditemukan</h2>
+          <h2 className="text-xl font-bold text-neutral-900">
+            Aktivitas Tidak Ditemukan
+          </h2>
           <p className="mt-2 text-sm text-neutral-500">
-            Aktivitas yang Anda cari mungkin sudah dihapus atau tidak tersedia untuk publik.
+            Aktivitas yang Anda cari mungkin sudah dihapus atau tidak tersedia untuk
+            publik.
           </p>
-          <Button 
+          <Button
             className="mt-6 bg-brand-600 hover:bg-brand-700 text-white"
             onClick={() => router.push('/public')}
           >
@@ -56,11 +68,19 @@ export default function PublicActivityDetailPage() {
         <Container>
           <div className="flex items-center justify-between h-16">
             <Link href="/" className="flex items-center gap-2 group">
-              <div className="h-8 w-8 bg-brand-600 rounded-lg flex items-center justify-center text-white font-bold shadow-lg shadow-brand-500/20 group-hover:bg-brand-700 transition-colors">S</div>
-              <span className="font-bold text-xl tracking-tight text-neutral-900">SIMAWA</span>
+              <div className="h-8 w-8 bg-brand-600 rounded-lg flex items-center justify-center text-white font-bold shadow-lg shadow-brand-500/20 group-hover:bg-brand-700 transition-colors">
+                S
+              </div>
+              <span className="font-bold text-xl tracking-tight text-neutral-900">
+                SIMAWA
+              </span>
             </Link>
             <Link href="/public">
-              <Button variant="ghost" size="sm" className="hidden sm:flex font-medium text-neutral-600 hover:text-neutral-900">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="hidden sm:flex font-medium text-neutral-600 hover:text-neutral-900"
+              >
                 <ArrowLeft className="mr-2 h-4 w-4" /> Kembali ke Daftar
               </Button>
             </Link>
@@ -73,16 +93,22 @@ export default function PublicActivityDetailPage() {
           {/* Header Section */}
           <div className="space-y-6 mb-8">
             <div className="flex flex-wrap gap-2 items-center">
-              <Badge variant="secondary" className="bg-brand-50 text-brand-700 border-brand-100 hover:bg-brand-100">
+              <Badge
+                variant="secondary"
+                className="bg-brand-50 text-brand-700 border-brand-100 hover:bg-brand-100"
+              >
                 {activity.type || 'Kegiatan Umum'}
               </Badge>
               {activity.status === 'COMPLETED' && (
-                <Badge variant="secondary" className="bg-green-50 text-green-700 border-green-100">
+                <Badge
+                  variant="secondary"
+                  className="bg-green-50 text-green-700 border-green-100"
+                >
                   Selesai
                 </Badge>
               )}
             </div>
-            
+
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-neutral-900 leading-tight">
               {activity.title}
             </h1>
@@ -96,7 +122,7 @@ export default function PublicActivityDetailPage() {
                       weekday: 'long',
                       day: 'numeric',
                       month: 'long',
-                      year: 'numeric'
+                      year: 'numeric',
                     })}
                   </span>
                 </div>
@@ -107,9 +133,12 @@ export default function PublicActivityDetailPage() {
                   <span>
                     {new Date(activity.start_at).toLocaleTimeString('id-ID', {
                       hour: '2-digit',
-                      minute: '2-digit'
+                      minute: '2-digit',
                     })}
-                    {activity.end_at ? ` - ${new Date(activity.end_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}` : ''} WIB
+                    {activity.end_at
+                      ? ` - ${new Date(activity.end_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}`
+                      : ''}{' '}
+                    WIB
                   </span>
                 </div>
               )}
@@ -132,9 +161,12 @@ export default function PublicActivityDetailPage() {
 
               {/* Description */}
               <div className="prose prose-neutral max-w-none">
-                <h3 className="text-xl font-bold text-neutral-900 mb-4">Tentang Kegiatan</h3>
+                <h3 className="text-xl font-bold text-neutral-900 mb-4">
+                  Tentang Kegiatan
+                </h3>
                 <p className="text-neutral-600 leading-relaxed whitespace-pre-wrap">
-                  {activity.description || 'Tidak ada deskripsi lengkap untuk kegiatan ini.'}
+                  {activity.description ||
+                    'Tidak ada deskripsi lengkap untuk kegiatan ini.'}
                 </p>
               </div>
             </div>
@@ -177,7 +209,7 @@ export default function PublicActivityDetailPage() {
                   </div>
 
                   <div className="pt-6 border-t border-neutral-100">
-                    <Button 
+                    <Button
                       className="w-full bg-white border border-neutral-200 text-neutral-700 hover:bg-neutral-50 hover:text-neutral-900"
                       onClick={() => {
                         if (navigator.share) {

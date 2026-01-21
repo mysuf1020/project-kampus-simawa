@@ -12,6 +12,7 @@ import (
 	"github.com/minio/minio-go/v7"
 	"gorm.io/gorm"
 	"simawa-backend/internal/service"
+	"simawa-backend/internal/util/sanitize"
 	"simawa-backend/pkg/response"
 )
 
@@ -195,6 +196,25 @@ func (h *OrganizationHandler) Update(c *gin.Context) {
 	if req.Name != nil && len(strings.TrimSpace(*req.Name)) > 128 {
 		c.JSON(http.StatusBadRequest, response.Err("Nama organisasi maksimal 128 karakter."))
 		return
+	}
+
+	// Sanitize input
+	if req.Name != nil {
+		s := sanitize.String(*req.Name)
+		req.Name = &s
+	}
+	if req.Description != nil {
+		s := sanitize.String(*req.Description)
+		req.Description = &s
+	}
+	if req.Contact != nil {
+		s := sanitize.String(*req.Contact)
+		req.Contact = &s
+	}
+	// URLs and Emails are usually validated by structure, but cleaning them doesn't hurt
+	if req.WebsiteURL != nil {
+		s := sanitize.String(*req.WebsiteURL)
+		req.WebsiteURL = &s
 	}
 
 	updated, err := h.svc.Update(c.Request.Context(), userID, org, service.UpdateOrgInput{

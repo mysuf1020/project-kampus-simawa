@@ -9,6 +9,11 @@ import {
   TextArea,
   Button,
   Text,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from '@/components/ui'
 import { Eye, SendHorizonal } from 'lucide-react'
 import { useState } from 'react'
@@ -70,7 +75,7 @@ export function DraftFormCard({ orgId, onSent }: Props & { onSent?: () => void }
       org_id: orgId,
       status: 'DRAFT',
       payload: {
-        variant: 'non_academic',
+        variant: draft.variant.toLowerCase(), // Map to backend variant
         created_at: new Date().toISOString(),
         // header sengaja tidak diisi di FE;
         // backend akan prefille berdasarkan data organisasi (logo, nama, dsb).
@@ -144,26 +149,51 @@ export function DraftFormCard({ orgId, onSent }: Props & { onSent?: () => void }
   return (
     <Card className="border-neutral-200 shadow-sm">
       <CardHeader className="border-b border-neutral-100 bg-neutral-50/50 pb-4">
-        <CardTitle className="text-base font-semibold text-neutral-900">Draft Cepat</CardTitle>
+        <CardTitle className="text-base font-semibold text-neutral-900">
+          Draft Cepat
+        </CardTitle>
         <CardDescription className="text-xs text-neutral-500">
           Buat surat singkat lalu kirim untuk diproses.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4 pt-4">
         <div className="flex items-center gap-2 text-xs text-neutral-500 mb-2">
-          <span className={step === 'FORM' ? 'font-semibold text-brand-600' : ''}>1. Isi Detail</span>
+          <span className={step === 'FORM' ? 'font-semibold text-brand-600' : ''}>
+            1. Isi Detail
+          </span>
           <span>→</span>
-          <span className={step === 'REVIEW' ? 'font-semibold text-brand-600' : ''}>2. Tinjau</span>
+          <span className={step === 'REVIEW' ? 'font-semibold text-brand-600' : ''}>
+            2. Tinjau
+          </span>
         </div>
 
-        <div className="space-y-2">
-          <Label className="text-xs font-medium">Judul / Perihal</Label>
-          <Input
-            placeholder="Undangan rapat"
-            value={draft.title}
-            onChange={(e) => setDraft({ ...draft, title: e.target.value })}
-            className="h-9"
-          />
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="space-y-2">
+            <Label className="text-xs font-medium">Jenis Surat</Label>
+            <Select
+              value={draft.variant}
+              onValueChange={(val: any) => setDraft({ ...draft, variant: val })}
+            >
+              <SelectTrigger className="h-9 w-full bg-white border-neutral-200 text-sm">
+                <SelectValue placeholder="Pilih jenis surat" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="UNDANGAN">Surat Undangan</SelectItem>
+                <SelectItem value="PEMINJAMAN">Surat Peminjaman</SelectItem>
+                <SelectItem value="PENGAJUAN">Surat Pengajuan</SelectItem>
+                <SelectItem value="PERMOHONAN">Surat Permohonan</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs font-medium">Judul / Perihal</Label>
+            <Input
+              placeholder="Undangan rapat"
+              value={draft.title}
+              onChange={(e) => setDraft({ ...draft, title: e.target.value })}
+              className="h-9"
+            />
+          </div>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">

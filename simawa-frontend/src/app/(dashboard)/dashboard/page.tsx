@@ -2,14 +2,12 @@
 
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Download, FileText, CheckCircle2, Clock, Building2, Users } from 'lucide-react'
+import { Download, FileText, Clock, Building2, Users } from 'lucide-react'
 
 import { Button, Container } from '@/components/ui'
 import { Page } from '@/components/commons'
 import { fetchDashboardSummary } from '@/lib/apis/dashboard'
 import { StatsGrid } from './_components/stats-grid'
-import { LatestActivityCard } from './_components/latest-activity'
-import { NotificationsCard } from './_components/notifications-card'
 
 export default function DashboardPage() {
   const { data, isLoading, isError, refetch, isFetching } = useQuery({
@@ -22,12 +20,12 @@ export default function DashboardPage() {
       {
         label: 'Aktivitas Pending',
         value: data?.activities_pending ?? '-',
-        trend: data ? `${data.activities_pending} tasks` : '...',
+        trend: data ? `${data.activities_pending} menunggu` : '...',
         icon: Clock,
         variant: 'warning' as const,
       },
       {
-        label: 'Surat Masuk',
+        label: 'Surat Pending',
         value: data?.surat_pending ?? '-',
         trend: data ? `${data.surat_pending} surat` : '...',
         icon: FileText,
@@ -39,13 +37,6 @@ export default function DashboardPage() {
         trend: data ? `${data.lpj_pending} laporan` : '...',
         icon: FileText,
         variant: 'warning' as const,
-      },
-      {
-        label: 'Cover Letter',
-        value: data?.cover_pending ?? '-',
-        trend: data ? `${data.cover_pending} dokumen` : '...',
-        icon: CheckCircle2,
-        variant: 'success' as const,
       },
       {
         label: 'Total Organisasi',
@@ -78,14 +69,13 @@ export default function DashboardPage() {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="hidden sm:flex"
-            >
+            <Button variant="outline" size="sm" className="hidden sm:flex">
               Unduh Laporan
             </Button>
-            <Button size="sm" className="bg-brand-600 hover:bg-brand-700 text-white gap-2 shadow-sm shadow-brand-500/20">
+            <Button
+              size="sm"
+              className="bg-brand-600 hover:bg-brand-700 text-white gap-2 shadow-sm shadow-brand-500/20"
+            >
               <Download className="h-4 w-4" />
               Export Data
             </Button>
@@ -97,17 +87,6 @@ export default function DashboardPage() {
         <Container>
           <div className="flex flex-col gap-8">
             <StatsGrid items={stats} />
-
-            <div className="grid gap-6 lg:grid-cols-2">
-              <LatestActivityCard
-                items={data?.last_achievements}
-                isLoading={isLoading}
-                isFetching={isFetching}
-                isError={isError}
-                onRefresh={() => refetch()}
-              />
-              <NotificationsCard />
-            </div>
           </div>
         </Container>
       </Page.Body>

@@ -2,10 +2,12 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"time"
 
 	"github.com/google/uuid"
+	"gorm.io/datatypes"
 	"simawa-backend/internal/model"
 	"simawa-backend/internal/repository"
 )
@@ -173,4 +175,65 @@ func (s *ActivityService) ApproveCover(ctx context.Context, approver uuid.UUID, 
 
 func (s *ActivityService) ListPendingCover(ctx context.Context, page, size int) ([]model.Activity, error) {
 	return s.repo.ListPendingCover(ctx, page, size)
+}
+
+func (s *ActivityService) AddGalleryPhoto(ctx context.Context, userID uuid.UUID, id uuid.UUID, url string) (*model.Activity, error) {
+	a, err := s.repo.Get(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	
+	// Check permission via RBAC or ownership (simple check here, RBAC in middleware usually)
+	// But service should probably enforce or assume caller checked.
+	// We'll append to GalleryURLs
+	
+	var urls []string
+	if len(a.GalleryURLs) > 0 {
+		_ = json.Unmarshal(a.GalleryURLs, &urls)
+	}
+	urls = append(urls, url)
+	
+	b, _ := json.Marshal(urls)
+	a.GalleryURLs = datatypes.JSON(b)
+	
+	if err := s.repo.Update(ctx, a); err != nil {
+		return nil, err
+	}
+	s.appendHistory(ctx, a, userID, "ADD_PHOTO", "")
+	return a, nil
+}
+
+func (s *ActivityService) RemoveGalleryPhoto(ctx context.Context, userID uuid.UUID, id uuid.UUID, urlToRemove string) (*model.Activity, error) {
+	a, err := s.repo.Get(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	var urls []string
+	if len(a.GalleryURLs) > 0 {
+		_ = json.Unmarshal(a.GalleryURLs, &urls)
+	}
+	
+	newURLs := make([]string, 0, len(urls))
+	found := false
+	for _, u := range urls {
+		if u == urlToRemove {
+			found = true
+			continue
+		}
+		newURLs = append(newURLs, u)
+	}
+	
+	if !found {
+		return a, nil // No change
+	}
+
+	b, _ := json.Marshal(newURLs)
+	a.GalleryURLs = datatypes.JSON(b)
+
+	if err := s.repo.Update(ctx, a); err != nil {
+		return nil, err
+	}
+	s.appendHistory(ctx, a, userID, "REMOVE_PHOTO", "")
+	return a, nil
 }

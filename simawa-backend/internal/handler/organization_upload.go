@@ -40,7 +40,7 @@ func (h *OrganizationHandler) UploadImage(c *gin.Context) {
 	}
 
 	kind := strings.ToLower(strings.TrimSpace(c.DefaultQuery("kind", "hero")))
-	if kind != "hero" && kind != "logo" {
+	if kind != "hero" && kind != "logo" && kind != "gallery" {
 		c.JSON(http.StatusBadRequest, response.Err("invalid kind"))
 		return
 	}
@@ -132,5 +132,44 @@ func (h *OrganizationHandler) UploadImage(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"file_key": key, "url": url})
+}
+
+// DeleteHero removes the hero image from an organization.
+func (h *OrganizationHandler) DeleteHero(c *gin.Context) {
+	sub, _ := c.Get("sub")
+	userID, err := uuid.Parse(fmt.Sprint(sub))
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, response.Err("invalid user context"))
+		return
+	}
+
+	id, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.Err("invalid id"))
+		return
+	}
+
+	org, err := h.svc.Get(c.Request.Context(), id)
+	if err != nil {
+		c.JSON(http.StatusNotFound, response.Err(err.Error()))
+		return
+	}
+
+	empty := ""
+	if _, err := h.svc.Update(c.Request.Context(), userID, org, service.UpdateOrgInput{
+		HeroImage: &empty,
+	}); err != nil {
+		status, msg := mapOrgUpdateError(err)
+		c.JSON(status, response.Err(msg))
+		return
+	}
+
+	// Optional: Delete from storage if we track the key? 
+	// Org model stores full URL or Key? It stores "HeroImage" which seems to be the key or URL.
+	// Looking at UploadImage: "HeroImage: &urlCopy". So it stores the URL.
+	// To delete from MinIO we need the key. We might parse it from URL or just leave it (orphan).
+	// For now, just clearing the DB reference is sufficient for the feature.
+
+	c.JSON(http.StatusOK, response.OK(gin.H{"message": "Hero image removed"}))
 }
 

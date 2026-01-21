@@ -38,7 +38,9 @@ export function NotificationsCard() {
     <Card className="border-neutral-200 shadow-sm h-full flex flex-col">
       <CardHeader className="flex flex-row items-center justify-between pb-4 border-b border-neutral-100 bg-neutral-50/50">
         <div className="space-y-1">
-          <CardTitle className="text-base font-semibold text-neutral-900">Notifikasi</CardTitle>
+          <CardTitle className="text-base font-semibold text-neutral-900">
+            Notifikasi
+          </CardTitle>
           <CardDescription className="text-xs text-neutral-500">
             Pemberitahuan terbaru untuk Anda.
           </CardDescription>
@@ -65,7 +67,7 @@ export function NotificationsCard() {
             <span className="text-xs">Memuat notifikasi...</span>
           </div>
         )}
-        
+
         {isError && (
           <div className="flex flex-col items-center justify-center py-12 text-red-500">
             <span className="text-xs">Gagal memuat notifikasi.</span>
@@ -86,10 +88,14 @@ export function NotificationsCard() {
                 key={n.id}
                 className={`group flex items-start gap-3 p-4 transition-colors ${!n.read_at ? 'bg-brand-50/30 hover:bg-brand-50/60' : 'hover:bg-neutral-50/50'}`}
               >
-                <div className={`mt-1 h-2 w-2 rounded-full shrink-0 ${!n.read_at ? 'bg-brand-500' : 'bg-neutral-300'}`} />
+                <div
+                  className={`mt-1 h-2 w-2 rounded-full shrink-0 ${!n.read_at ? 'bg-brand-500' : 'bg-neutral-300'}`}
+                />
                 <div className="flex-1 space-y-1 min-w-0">
                   <div className="flex items-center justify-between gap-2">
-                    <p className={`text-sm ${!n.read_at ? 'font-semibold text-neutral-900' : 'font-medium text-neutral-700'}`}>
+                    <p
+                      className={`text-sm ${!n.read_at ? 'font-semibold text-neutral-900' : 'font-medium text-neutral-700'}`}
+                    >
                       {n.title}
                     </p>
                     {!n.read_at && (
@@ -122,9 +128,11 @@ export function NotificationsCard() {
           </div>
         )}
       </CardContent>
-      
+
       <div className="p-3 border-t border-neutral-100 bg-neutral-50/30 flex items-center justify-between text-xs text-neutral-500">
-        <span>{unread.length > 0 ? `${unread.length} belum dibaca` : 'Semua sudah dibaca'}</span>
+        <span>
+          {unread.length > 0 ? `${unread.length} belum dibaca` : 'Semua sudah dibaca'}
+        </span>
         {data && data.length > 0 && (
           <Button
             size="sm"

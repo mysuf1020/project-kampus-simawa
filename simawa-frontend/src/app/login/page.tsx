@@ -9,6 +9,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
 import { signIn, useSession } from 'next-auth/react'
 import { ArrowRight, Lock, Mail, ShieldCheck } from 'lucide-react'
+import ReCAPTCHA from 'react-google-recaptcha'
 
 import {
   Button,
@@ -41,6 +42,8 @@ function LoginContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [step, setStep] = useState<'credentials' | 'otp'>('credentials')
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null)
   const { status, data: session } = useSession()
 
   const form = useForm<LoginForm>({
@@ -48,6 +51,11 @@ function LoginContent() {
     defaultValues: { login: '', password: '' },
     mode: 'onChange',
   })
+
+  // Only require captcha if configured
+  const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY
+
+  const [otp, setOtp] = useState('')
 
   useEffect(() => {
     const reason = searchParams.get('reason')
@@ -65,39 +73,69 @@ function LoginContent() {
     router.replace(callbackUrl)
   }, [router, searchParams, session, status])
 
-  const onSubmit = async (values: LoginForm) => {
+  const onCredentialsSubmit = async (values: LoginForm) => {
+    setIsSubmitting(true)
+    try {
+      // Step 1: Call API to validate creds and trigger OTP
+      const { login } = await import('@/lib/apis/auth') // Dynamic import to avoid server issues if any
+      await login({
+        login: values.login,
+        password: values.password,
+        captcha_token: captchaToken || undefined,
+      })
+
+      toast.success('Kredensial valid. Silakan masukan kode OTP yang dikirim ke email.')
+      setStep('otp')
+    } catch (err: any) {
+      // Extract detailed error message
+      const message =
+        err?.response?.data?.message ||
+        err?.displayMessage ||
+        err?.message ||
+        'Gagal login'
+      toast.error(`Login gagal: ${message}`)
+      console.error('[Login Error]', err?.response?.data || err)
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const onOtpSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!otp || otp.length < 6) {
+      toast.error('Kode OTP tidak valid')
+      return
+    }
+
     setIsSubmitting(true)
     try {
       const callbackUrl = searchParams.get('callbackUrl') || '/dashboard'
+      // Step 2: SignIn with NextAuth (which calls loginVerify)
       const result = await signIn('credentials', {
-        email: values.login,
-        password: values.password,
+        email: form.getValues('login'),
+        otp: otp,
         redirect: false,
       })
 
       if (!result?.ok) {
         const message =
           result?.error === 'CredentialsSignin'
-            ? 'Email atau password salah'
-            : result?.error || 'Gagal login'
+            ? 'Kode OTP salah atau kadaluarsa'
+            : result?.error || 'Gagal verifikasi'
         throw new Error(message)
       }
 
       toast.success('Berhasil masuk')
-      // Hard navigate agar cookie/session terbaca oleh semua halaman (menghindari loop AuthGuard).
       const safeTarget =
         callbackUrl.startsWith('/') && !callbackUrl.startsWith('//')
           ? callbackUrl
           : '/dashboard'
       window.location.assign(safeTarget)
-    } catch (err) {
-      let message = 'Gagal login'
-      if (err instanceof Error) {
-        message = err.message
-      }
-      toast.error(message)
-      form.setError('login', { message: '' })
-      form.setError('password', { message: '' })
+    } catch (err: any) {
+      // Extract detailed error message for OTP verification
+      const message = err?.message || 'Gagal verifikasi OTP'
+      toast.error(`Verifikasi gagal: ${message}`)
+      console.error('[OTP Verify Error]', err)
     } finally {
       setIsSubmitting(false)
     }
@@ -124,7 +162,8 @@ function LoginContent() {
             Platform Terpadu Manajemen Organisasi Mahasiswa
           </h1>
           <p className="text-brand-100 text-lg leading-relaxed">
-            Kelola surat menyurat, proposal kegiatan, laporan pertanggungjawaban, dan anggota organisasi dalam satu dashboard yang efisien.
+            Kelola surat menyurat, proposal kegiatan, laporan pertanggungjawaban, dan
+            anggota organisasi dalam satu dashboard yang efisien.
           </p>
           <div className="flex gap-4 pt-4">
             <div className="flex items-center gap-2 bg-white/10 px-4 py-2 rounded-full backdrop-blur-sm border border-white/10">
@@ -143,85 +182,133 @@ function LoginContent() {
       <div className="flex items-center justify-center p-6 lg:p-12">
         <div className="w-full max-w-md space-y-8">
           <div className="text-center lg:text-left">
-            <h2 className="text-3xl font-bold text-neutral-900 tracking-tight">Selamat Datang Kembali</h2>
+            <h2 className="text-3xl font-bold text-neutral-900 tracking-tight">
+              Selamat Datang Kembali
+            </h2>
             <p className="mt-2 text-neutral-500">
-              Masuk ke akun Anda untuk mengakses dashboard.
+              {step === 'credentials'
+                ? 'Masuk ke akun Anda untuk mengakses dashboard.'
+                : 'Masukan kode OTP yang dikirim ke email Anda.'}
             </p>
           </div>
 
           <Card className="border-neutral-200 shadow-lg shadow-neutral-200/50">
             <CardContent className="pt-6">
-              <form className="space-y-5" onSubmit={form.handleSubmit(onSubmit)}>
-                <div className="space-y-2">
-                  <Label htmlFor="login">Email</Label>
-                  <div className="relative">
-                    <Input
-                      id="login"
-                      type="email"
-                      autoComplete="username"
-                      placeholder="nama@raharja.info"
-                      className="pl-10 h-11"
-                      {...form.register('login')}
-                    />
-                    <Mail className="absolute left-3 top-3 h-5 w-5 text-neutral-400" />
-                  </div>
-                  {form.formState.errors.login && (
-                    <p className="text-xs text-red-600 font-medium ml-1">
-                      {form.formState.errors.login.message}
-                    </p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="password">Password</Label>
-                    <Link
-                      href="#"
-                      className="text-xs font-medium text-brand-600 hover:text-brand-700 hover:underline"
-                      onClick={(e) => {
-                        e.preventDefault()
-                        toast.info('Silakan hubungi admin untuk reset password.')
-                      }}
-                    >
-                      Lupa password?
-                    </Link>
-                  </div>
-                  <InputPassword
-                    id="password"
-                    autoComplete="current-password"
-                    placeholder="Masukan password Anda"
-                    className="h-11"
-                    {...form.register('password')}
-                  />
-                  {form.formState.errors.password && (
-                    <p className="text-xs text-red-600 font-medium ml-1">
-                      {form.formState.errors.password.message}
-                    </p>
-                  )}
-                </div>
-
-                <Button
-                  className="w-full h-11 bg-brand-600 hover:bg-brand-700 text-white font-medium text-base shadow-lg shadow-brand-500/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
-                  type="submit"
-                  disabled={isSubmitting}
+              {step === 'credentials' ? (
+                <form
+                  className="space-y-5"
+                  onSubmit={form.handleSubmit(onCredentialsSubmit)}
                 >
-                  {isSubmitting ? 'Memproses...' : 'Masuk Dashboard'}
-                  {!isSubmitting && <ArrowRight className="ml-2 h-4 w-4" />}
-                </Button>
-              </form>
+                  <div className="space-y-2">
+                    <Label htmlFor="login">Email</Label>
+                    <div className="relative">
+                      <Input
+                        id="login"
+                        type="email"
+                        autoComplete="username"
+                        placeholder="nama@raharja.info"
+                        className="pl-10 h-11"
+                        {...form.register('login')}
+                      />
+                      <Mail className="absolute left-3 top-3 h-5 w-5 text-neutral-400" />
+                    </div>
+                    {form.formState.errors.login && (
+                      <p className="text-xs text-red-600 font-medium ml-1">
+                        {form.formState.errors.login.message}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="password">Password</Label>
+                      <Link
+                        href="/forgot-password"
+                        className="text-xs font-medium text-brand-600 hover:text-brand-700 hover:underline"
+                      >
+                        Lupa password?
+                      </Link>
+                    </div>
+                    <InputPassword
+                      id="password"
+                      autoComplete="current-password"
+                      placeholder="Masukan password Anda"
+                      className="h-11"
+                      {...form.register('password')}
+                    />
+                    {form.formState.errors.password && (
+                      <p className="text-xs text-red-600 font-medium ml-1">
+                        {form.formState.errors.password.message}
+                      </p>
+                    )}
+                  </div>
+
+                  <Button
+                    className="w-full h-11 bg-brand-600 hover:bg-brand-700 text-white font-medium text-base shadow-lg shadow-brand-500/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                    type="submit"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? 'Memproses...' : 'Lanjut'}
+                    {!isSubmitting && <ArrowRight className="ml-2 h-4 w-4" />}
+                  </Button>
+                </form>
+              ) : (
+                <form className="space-y-5" onSubmit={onOtpSubmit}>
+                  <div className="space-y-2">
+                    <Label htmlFor="otp">Kode OTP</Label>
+                    <Input
+                      id="otp"
+                      placeholder="123456"
+                      className="text-center text-2xl tracking-widest h-14 font-mono"
+                      maxLength={6}
+                      value={otp}
+                      onChange={(e) => setOtp(e.target.value)}
+                      autoFocus
+                    />
+                  </div>
+
+                  <Button
+                    className="w-full h-11 bg-brand-600 hover:bg-brand-700 text-white font-medium text-base shadow-lg shadow-brand-500/20 transition-all"
+                    type="submit"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? 'Verifikasi...' : 'Masuk Dashboard'}
+                  </Button>
+
+                  <div className="text-center">
+                    <button
+                      type="button"
+                      onClick={() => setStep('credentials')}
+                      className="text-sm text-brand-600 hover:underline"
+                    >
+                      Kembali
+                    </button>
+                  </div>
+                </form>
+              )}
             </CardContent>
           </Card>
 
-          <p className="text-center text-sm text-neutral-500">
-            Belum punya akun?{' '}
-            <Link
-              className="font-medium text-brand-600 hover:text-brand-700 hover:underline transition-colors"
-              href="https://wa.me/6285117617610"
-              target="_blank"
-            >
-              Hubungi Administrator
-            </Link>
-          </p>
+          <div className="text-center space-y-2">
+            <p className="text-sm text-neutral-500">
+              Belum punya akun?{' '}
+              <Link
+                className="font-medium text-brand-600 hover:text-brand-700 hover:underline transition-colors"
+                href="/register"
+              >
+                Daftar Sekarang
+              </Link>
+            </p>
+            <p className="text-sm text-neutral-500">
+              Belum verifikasi email?{' '}
+              <Link
+                className="font-medium text-brand-600 hover:text-brand-700 hover:underline transition-colors"
+                href="/verify-email"
+              >
+                Verifikasi disini
+              </Link>
+            </p>
+          </div>
         </div>
       </div>
     </div>

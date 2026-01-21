@@ -30,13 +30,14 @@ const BreadcrumbItem: FC<BreadcrumbItemProps> = ({ children, href, onClick }) =>
 
 type BreadcrumbProps = {
   children: ReactNode
+  className?: string
 }
 
 interface BreadcrumbComponent extends FC<BreadcrumbProps> {
   Item: typeof BreadcrumbItem
 }
 
-const Breadcrumb: BreadcrumbComponent = ({ children }) => {
+const Breadcrumb: BreadcrumbComponent = ({ children, className }) => {
   const breadcrumbItems = useMemo<
     React.ReactElement<BreadcrumbItemProps>[] | undefined
   >(() => {
@@ -71,7 +72,7 @@ const Breadcrumb: BreadcrumbComponent = ({ children }) => {
   }, [])
 
   return (
-    <div className="flex flex-row items-center gap-x-1">
+    <div className={cn('flex flex-row items-center gap-x-1', className)}>
       {breadcrumbItems?.map((item, i) =>
         i > 0 && i <= breadcrumbItems.length - 1 ? (
           <Fragment key={i}>

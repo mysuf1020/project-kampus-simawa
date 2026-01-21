@@ -90,15 +90,22 @@ export function OrgJoinRequestsCard({ orgId }: Props) {
             <UserPlus className="h-5 w-5" />
           </div>
           <div>
-            <CardTitle className="text-base font-semibold text-neutral-900">{headerCopy.title}</CardTitle>
-            <CardDescription className="text-xs text-neutral-500">{headerCopy.desc}</CardDescription>
+            <CardTitle className="text-base font-semibold text-neutral-900">
+              {headerCopy.title}
+            </CardTitle>
+            <CardDescription className="text-xs text-neutral-500">
+              {headerCopy.desc}
+            </CardDescription>
           </div>
         </div>
-        <Badge variant="secondary" className="bg-white text-neutral-700 border-neutral-200">
+        <Badge
+          variant="secondary"
+          className="bg-white text-neutral-700 border-neutral-200"
+        >
           {query.data?.length ?? 0} {headerCopy.badge}
         </Badge>
       </CardHeader>
-      
+
       <CardContent className="p-6 space-y-4">
         {!orgId ? (
           <div className="flex items-center justify-center py-12 text-center text-sm text-neutral-500 bg-neutral-50 rounded-xl border border-dashed border-neutral-200">
@@ -111,9 +118,24 @@ export function OrgJoinRequestsCard({ orgId }: Props) {
             className="w-full"
           >
             <TabsList className="bg-neutral-100/50 border border-neutral-200 p-1 w-full sm:w-auto h-auto flex-wrap">
-              <TabsTrigger value="PENDING" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">Menunggu</TabsTrigger>
-              <TabsTrigger value="APPROVED" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">Disetujui</TabsTrigger>
-              <TabsTrigger value="REJECTED" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">Ditolak</TabsTrigger>
+              <TabsTrigger
+                value="PENDING"
+                className="data-[state=active]:bg-white data-[state=active]:shadow-sm"
+              >
+                Menunggu
+              </TabsTrigger>
+              <TabsTrigger
+                value="APPROVED"
+                className="data-[state=active]:bg-white data-[state=active]:shadow-sm"
+              >
+                Disetujui
+              </TabsTrigger>
+              <TabsTrigger
+                value="REJECTED"
+                className="data-[state=active]:bg-white data-[state=active]:shadow-sm"
+              >
+                Ditolak
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value={status} className="mt-4 space-y-3">
@@ -142,22 +164,27 @@ export function OrgJoinRequestsCard({ orgId }: Props) {
                             <p className="text-sm font-semibold text-neutral-900">
                               {r.applicant_name || 'Pemohon'}
                             </p>
-                            <Badge variant="outline" className="text-[10px] bg-neutral-50 text-neutral-600 border-neutral-200">
+                            <Badge
+                              variant="outline"
+                              className="text-[10px] bg-neutral-50 text-neutral-600 border-neutral-200"
+                            >
                               {r.applicant_nim || '-'}
                             </Badge>
                           </div>
-                          
+
                           <div className="text-xs text-neutral-500">
                             <p>{r.applicant_email || '-'}</p>
-                            {r.applicant_jurusan && <p className="mt-0.5">{r.applicant_jurusan}</p>}
+                            {r.applicant_jurusan && (
+                              <p className="mt-0.5">{r.applicant_jurusan}</p>
+                            )}
                           </div>
-                          
+
                           {r.message && (
                             <div className="mt-3 bg-neutral-50 p-2.5 rounded-lg border border-neutral-100 text-xs text-neutral-600 italic">
-                              "{r.message}"
+                              &quot;{r.message}&quot;
                             </div>
                           )}
-                          
+
                           {status !== 'PENDING' && r.decision_note && (
                             <p className="mt-2 text-xs text-neutral-500">
                               Catatan: {r.decision_note}

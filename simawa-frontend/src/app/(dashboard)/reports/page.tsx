@@ -1,8 +1,10 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { toast } from 'sonner'
 import {
+  Button,
   Card,
   CardContent,
   CardDescription,
@@ -13,16 +15,65 @@ import {
   TabsList,
   TabsTrigger,
   Container,
+  Input,
+  Label,
 } from '@/components/ui'
 import { Page } from '@/components/commons'
-import { BarChart2, PieChart } from 'lucide-react'
+import { BarChart2, PieChart, Download, FileText } from 'lucide-react'
 import { fetchDashboardSummary } from '@/lib/apis/dashboard'
+import {
+  exportActivityReport,
+  exportSuratReport,
+  exportLPJReport,
+} from '@/lib/apis/report'
 
 export default function ReportsPage() {
   const { data, isLoading, isError } = useQuery({
     queryKey: ['dashboard-summary', 'reports'],
     queryFn: fetchDashboardSummary,
   })
+
+  const [dateRange, setDateRange] = useState({
+    start: new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+      .toISOString()
+      .split('T')[0],
+    end: new Date().toISOString().split('T')[0],
+  })
+
+  const [exporting, setExporting] = useState<string | null>(null)
+
+  const handleExport = async (type: 'activity' | 'surat' | 'lpj') => {
+    setExporting(type)
+    try {
+      let blob: Blob
+      let filename = ''
+      if (type === 'activity') {
+        blob = await exportActivityReport(dateRange.start, dateRange.end)
+        filename = `laporan_kegiatan_${dateRange.start}_${dateRange.end}.csv`
+      } else if (type === 'surat') {
+        blob = await exportSuratReport(dateRange.start, dateRange.end)
+        filename = `laporan_surat_${dateRange.start}_${dateRange.end}.csv`
+      } else {
+        blob = await exportLPJReport(dateRange.start, dateRange.end)
+        filename = `laporan_lpj_${dateRange.start}_${dateRange.end}.csv`
+      }
+
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = filename
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+      toast.success('Laporan berhasil diunduh')
+    } catch (error) {
+      toast.error('Gagal mengunduh laporan')
+      console.error(error)
+    } finally {
+      setExporting(null)
+    }
+  }
 
   const monthlyStats = useMemo(
     () => [
@@ -45,7 +96,12 @@ export default function ReportsPage() {
 
   return (
     <Page>
-      <Page.Header breadcrumbs={[{ href: '/dashboard', children: 'Dashboard' }, { href: '/reports', children: 'Laporan' }]}>
+      <Page.Header
+        breadcrumbs={[
+          { href: '/dashboard', children: 'Dashboard' },
+          { href: '/reports', children: 'Laporan' },
+        ]}
+      >
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-neutral-900">
@@ -57,7 +113,7 @@ export default function ReportsPage() {
           </div>
         </div>
       </Page.Header>
-      
+
       <Page.Body>
         <Container>
           <Tabs defaultValue="monthly" className="w-full space-y-6">
@@ -95,9 +151,16 @@ export default function ReportsPage() {
                   {!isLoading && !isError && (
                     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 pt-4">
                       {monthlyStats.map((item) => (
-                        <div key={item.label} className="flex flex-col p-4 rounded-xl bg-neutral-50 border border-neutral-100">
-                          <span className="text-xs font-medium text-neutral-500 uppercase tracking-wide">{item.label}</span>
-                          <span className="text-2xl font-bold text-neutral-900 mt-2">{item.value}</span>
+                        <div
+                          key={item.label}
+                          className="flex flex-col p-4 rounded-xl bg-neutral-50 border border-neutral-100"
+                        >
+                          <span className="text-xs font-medium text-neutral-500 uppercase tracking-wide">
+                            {item.label}
+                          </span>
+                          <span className="text-2xl font-bold text-neutral-900 mt-2">
+                            {item.value}
+                          </span>
                         </div>
                       ))}
                     </div>
@@ -135,9 +198,16 @@ export default function ReportsPage() {
                   {!isLoading && !isError && (
                     <div className="grid gap-4 sm:grid-cols-3 pt-4">
                       {dailyStats.map((item) => (
-                        <div key={item.label} className="flex flex-col p-4 rounded-xl bg-neutral-50 border border-neutral-100">
-                          <span className="text-xs font-medium text-neutral-500 uppercase tracking-wide">{item.label}</span>
-                          <span className="text-2xl font-bold text-neutral-900 mt-2">{item.value}</span>
+                        <div
+                          key={item.label}
+                          className="flex flex-col p-4 rounded-xl bg-neutral-50 border border-neutral-100"
+                        >
+                          <span className="text-xs font-medium text-neutral-500 uppercase tracking-wide">
+                            {item.label}
+                          </span>
+                          <span className="text-2xl font-bold text-neutral-900 mt-2">
+                            {item.value}
+                          </span>
                         </div>
                       ))}
                     </div>

@@ -22,4 +22,6 @@ func RegisterOrgRoutes(r *gin.Engine, cfg *config.Env, oh *handler.OrganizationH
 	auth.GET("", oh.ListAuth)
 	auth.PUT("/:id", oh.Update)
 	auth.POST("/:id/upload", oh.UploadImage)
+	auth.POST("/:id/upload-hero", oh.UploadImage) // Alias for specific requirement
+	auth.DELETE("/:id/hero", oh.DeleteHero)
 }

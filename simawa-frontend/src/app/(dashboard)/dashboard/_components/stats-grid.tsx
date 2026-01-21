@@ -1,9 +1,4 @@
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui'
 import { cn } from '@/lib/utils'
 import { LucideIcon } from 'lucide-react'
 
@@ -43,16 +38,14 @@ export function StatsGrid({ items }: Props) {
                 {item.label}
               </CardTitle>
               {Icon && (
-                <div className={cn("rounded-lg p-2", variantClass)}>
+                <div className={cn('rounded-lg p-2', variantClass)}>
                   <Icon className="h-4 w-4" />
                 </div>
               )}
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-neutral-900">{item.value}</div>
-              <p className="text-xs text-neutral-500 mt-1">
-                {item.trend}
-              </p>
+              <p className="text-xs text-neutral-500 mt-1">{item.trend}</p>
             </CardContent>
           </Card>
         )

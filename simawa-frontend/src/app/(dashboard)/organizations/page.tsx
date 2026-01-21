@@ -74,7 +74,12 @@ export default function OrganizationsPage() {
 
   return (
     <Page>
-      <Page.Header breadcrumbs={[{ href: '/dashboard', children: 'Dashboard' }, { href: '/organizations', children: 'Organisasi' }]}>
+      <Page.Header
+        breadcrumbs={[
+          { href: '/dashboard', children: 'Dashboard' },
+          { href: '/organizations', children: 'Organisasi' },
+        ]}
+      >
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-neutral-900">
@@ -84,21 +89,41 @@ export default function OrganizationsPage() {
               Atur profil, anggota, dan pendaftaran keanggotaan organisasi.
             </p>
           </div>
-          <Button variant="outline" size="sm" onClick={() => orgsQuery.refetch()} className="gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => orgsQuery.refetch()}
+            className="gap-2"
+          >
             <RefreshCcw className="h-3.5 w-3.5" /> Muat ulang
           </Button>
         </div>
       </Page.Header>
-      
+
       <Page.Body>
         <Container>
           <Tabs defaultValue="profile" className="w-full space-y-4 sm:space-y-6">
             <TabsList className="w-full flex-wrap h-auto gap-1 p-1">
-              <TabsTrigger value="profile" className="flex-1 min-w-[80px] text-xs sm:text-sm">Profil</TabsTrigger>
+              <TabsTrigger
+                value="profile"
+                className="flex-1 min-w-[80px] text-xs sm:text-sm"
+              >
+                Profil
+              </TabsTrigger>
               {canManageAnyOrg ? (
                 <>
-                  <TabsTrigger value="members" className="flex-1 min-w-[80px] text-xs sm:text-sm">Anggota</TabsTrigger>
-                  <TabsTrigger value="join" className="flex-1 min-w-[80px] text-xs sm:text-sm">Pendaftaran</TabsTrigger>
+                  <TabsTrigger
+                    value="members"
+                    className="flex-1 min-w-[80px] text-xs sm:text-sm"
+                  >
+                    Anggota
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="join"
+                    className="flex-1 min-w-[80px] text-xs sm:text-sm"
+                  >
+                    Pendaftaran
+                  </TabsTrigger>
                 </>
               ) : null}
             </TabsList>
@@ -113,7 +138,9 @@ export default function OrganizationsPage() {
                 {!orgsQuery.isLoading && manageableOrgs.length === 0 && (
                   <div className="rounded-xl border border-dashed border-neutral-200 bg-neutral-50/50 p-8 text-center">
                     <Building2 className="mx-auto h-10 w-10 text-neutral-300 mb-3" />
-                    <p className="text-sm font-medium text-neutral-900">Tidak ada organisasi</p>
+                    <p className="text-sm font-medium text-neutral-900">
+                      Tidak ada organisasi
+                    </p>
                     <p className="text-xs text-neutral-500 mt-1">
                       Anda tidak memiliki akses untuk mengelola organisasi manapun.
                     </p>
@@ -135,7 +162,10 @@ export default function OrganizationsPage() {
 
             {canManageAnyOrg ? (
               <>
-                <TabsContent value="members" className="animate-in fade-in-50 duration-300">
+                <TabsContent
+                  value="members"
+                  className="animate-in fade-in-50 duration-300"
+                >
                   <div className="flex flex-col gap-6">
                     <OrgScopePicker
                       orgs={manageableOrgs}
@@ -186,7 +216,9 @@ function OrgScopePicker({
         </div>
         <div>
           <p className="text-sm font-semibold text-neutral-900">Pilih Organisasi</p>
-          <p className="text-xs text-neutral-500">Pilih organisasi untuk mengelola datanya.</p>
+          <p className="text-xs text-neutral-500">
+            Pilih organisasi untuk mengelola datanya.
+          </p>
         </div>
       </div>
       <div className="min-w-[240px]">

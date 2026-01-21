@@ -15,7 +15,7 @@ import {
   Spinner,
 } from '@/components/ui'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Check, Download, Inbox, X, Loader2, FileText } from 'lucide-react'
+import { Check, Download, Inbox, X, FileText, RotateCcw } from 'lucide-react'
 import { downloadSurat, type Surat } from '@/lib/apis/surat'
 import { SuratApprovalDialog } from './approval-dialog'
 
@@ -27,12 +27,33 @@ type Props = {
 export function InboxListCard({ data, isLoading }: Props) {
   const [approvalOpen, setApprovalOpen] = useState(false)
   const [selectedSuratId, setSelectedSuratId] = useState<number | null>(null)
-  const [approvalAction, setApprovalAction] = useState<'approve' | 'reject' | null>(null)
+  const [approvalAction, setApprovalAction] = useState<
+    'approve' | 'reject' | 'revise' | null
+  >(null)
 
-  const handleDecide = (id: number, action: 'approve' | 'reject') => {
+  const handleDecide = (id: number, action: 'approve' | 'reject' | 'revise') => {
     setSelectedSuratId(id)
     setApprovalAction(action)
     setApprovalOpen(true)
+  }
+
+  const getStatusBadge = (status: string) => {
+    const statusConfig: Record<string, { bg: string; text: string; label: string }> = {
+      PENDING: { bg: 'bg-amber-50', text: 'text-amber-700', label: 'Menunggu' },
+      APPROVED: { bg: 'bg-green-50', text: 'text-green-700', label: 'Disetujui' },
+      REJECTED: { bg: 'bg-red-50', text: 'text-red-700', label: 'Ditolak' },
+      REVISION: { bg: 'bg-blue-50', text: 'text-blue-700', label: 'Revisi' },
+      DRAFT: { bg: 'bg-neutral-100', text: 'text-neutral-600', label: 'Draft' },
+    }
+    const config = statusConfig[status] || statusConfig.PENDING
+    return (
+      <Badge
+        variant="secondary"
+        className={`text-[10px] h-5 px-1.5 font-normal border-none ${config.bg} ${config.text}`}
+      >
+        {config.label}
+      </Badge>
+    )
   }
 
   return (
@@ -44,7 +65,9 @@ export function InboxListCard({ data, isLoading }: Props) {
               <Inbox className="h-5 w-5" />
             </div>
             <div>
-              <CardTitle className="text-sm sm:text-base font-semibold text-neutral-900">Surat Masuk</CardTitle>
+              <CardTitle className="text-sm sm:text-base font-semibold text-neutral-900">
+                Surat Masuk
+              </CardTitle>
               <CardDescription className="text-xs text-neutral-500">
                 Daftar surat yang menunggu persetujuan.
               </CardDescription>
@@ -58,7 +81,7 @@ export function InboxListCard({ data, isLoading }: Props) {
               <span className="text-xs">Memuat surat masuk...</span>
             </div>
           )}
-          
+
           {!isLoading && data?.length === 0 && (
             <div className="flex flex-col items-center justify-center py-12 text-neutral-400">
               <Inbox className="h-8 w-8 mb-2 opacity-20" />
@@ -88,12 +111,7 @@ export function InboxListCard({ data, isLoading }: Props) {
                             #{idLabel}
                           </span>
                           <span>•</span>
-                          <Badge 
-                            variant="secondary" 
-                            className="text-[10px] h-5 px-1.5 font-normal border-none bg-amber-50 text-amber-700"
-                          >
-                            {item.status}
-                          </Badge>
+                          {getStatusBadge(item.status)}
                         </div>
                       </div>
                     </div>
@@ -116,7 +134,7 @@ export function InboxListCard({ data, isLoading }: Props) {
                         <Download className="h-3.5 w-3.5 sm:mr-1.5" />
                         <span className="hidden sm:inline">Preview</span>
                       </Button>
-                      
+
                       {item.status === 'PENDING' && (
                         <>
                           <Button
@@ -127,6 +145,15 @@ export function InboxListCard({ data, isLoading }: Props) {
                           >
                             <Check className="h-3.5 w-3.5 sm:mr-1.5" />
                             <span className="hidden sm:inline">Approve</span>
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 text-xs border-blue-200 text-blue-700 hover:bg-blue-50 hover:text-blue-800 hover:border-blue-300"
+                            onClick={() => item.id && handleDecide(item.id, 'revise')}
+                          >
+                            <RotateCcw className="h-3.5 w-3.5 sm:mr-1.5" />
+                            <span className="hidden sm:inline">Revisi</span>
                           </Button>
                           <Button
                             size="sm"

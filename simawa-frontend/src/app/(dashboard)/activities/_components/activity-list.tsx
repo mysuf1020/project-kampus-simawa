@@ -58,15 +58,17 @@ export function ActivityList({
     <Card className="border-neutral-200 shadow-sm">
       <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-neutral-100 bg-neutral-50/50 pb-4">
         <div className="space-y-0.5">
-          <CardTitle className="text-sm sm:text-base font-semibold text-neutral-900">Daftar Aktivitas</CardTitle>
+          <CardTitle className="text-sm sm:text-base font-semibold text-neutral-900">
+            Daftar Aktivitas
+          </CardTitle>
           <CardDescription className="text-xs text-neutral-500">
             Kelola dan pantau status kegiatan organisasi Anda.
           </CardDescription>
         </div>
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={onRefresh} 
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onRefresh}
           className="h-8 gap-2 bg-white text-xs font-medium text-neutral-700 hover:bg-neutral-50 w-full sm:w-auto"
         >
           {isFetching ? (
@@ -81,7 +83,7 @@ export function ActivityList({
         {isLoading && (
           <div className="space-y-4">
             <div className="flex items-center gap-2 text-xs text-neutral-500">
-              <Spinner size="sm" /> 
+              <Spinner size="sm" />
               <span>Memuat data aktivitas...</span>
             </div>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -101,14 +103,18 @@ export function ActivityList({
             </div>
           </div>
         )}
-        
+
         {isError && (
           <div className="rounded-lg border border-red-100 bg-red-50 p-4 text-center">
-            <p className="text-sm font-medium text-red-800">Gagal memuat data aktivitas</p>
-            <p className="text-xs text-red-600 mt-1">Silakan coba segarkan kembali halaman ini.</p>
+            <p className="text-sm font-medium text-red-800">
+              Gagal memuat data aktivitas
+            </p>
+            <p className="text-xs text-red-600 mt-1">
+              Silakan coba segarkan kembali halaman ini.
+            </p>
           </div>
         )}
-        
+
         {!isLoading && activities?.length === 0 && (
           <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-neutral-200 bg-neutral-50/50 py-12 text-center">
             <div className="rounded-full bg-neutral-100 p-3 mb-3">
@@ -130,41 +136,57 @@ export function ActivityList({
               <div>
                 <div className="flex items-start justify-between gap-3 mb-2">
                   <div className="space-y-1">
-                    <h3 className="font-semibold text-neutral-900 line-clamp-1 text-sm" title={activity.title}>
+                    <h3
+                      className="font-semibold text-neutral-900 line-clamp-1 text-sm"
+                      title={activity.title}
+                    >
                       {activity.title}
                     </h3>
                     <p className="text-xs font-medium text-neutral-500 uppercase tracking-wide">
                       {activity.type || 'Kegiatan Umum'}
                     </p>
                   </div>
-                  <Badge 
-                    variant="secondary" 
+                  <Badge
+                    variant="secondary"
                     className={`
                       shrink-0 text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5
-                      ${activity.status === 'APPROVED' ? 'bg-green-50 text-green-700 border-green-100' : 
-                        activity.status === 'REJECTED' ? 'bg-red-50 text-red-700 border-red-100' :
-                        activity.status === 'PENDING' ? 'bg-amber-50 text-amber-700 border-amber-100' :
-                        'bg-neutral-100 text-neutral-600 border-neutral-200'}
+                      ${
+                        activity.status === 'APPROVED'
+                          ? 'bg-green-50 text-green-700 border-green-100'
+                          : activity.status === 'REJECTED'
+                            ? 'bg-red-50 text-red-700 border-red-100'
+                            : activity.status === 'PENDING'
+                              ? 'bg-amber-50 text-amber-700 border-amber-100'
+                              : 'bg-neutral-100 text-neutral-600 border-neutral-200'
+                      }
                     `}
                   >
-                    {activity.status === 'APPROVED' ? 'Disetujui' :
-                     activity.status === 'REJECTED' ? 'Ditolak' :
-                     activity.status === 'PENDING' ? 'Menunggu' :
-                     'Draft'}
+                    {activity.status === 'APPROVED'
+                      ? 'Disetujui'
+                      : activity.status === 'REJECTED'
+                        ? 'Ditolak'
+                        : activity.status === 'PENDING'
+                          ? 'Menunggu'
+                          : 'Draft'}
                   </Badge>
                 </div>
-                
+
                 {activity.description && (
                   <p className="text-xs text-neutral-600 line-clamp-2 mb-3 leading-relaxed">
                     {activity.description}
                   </p>
                 )}
-                
+
                 <div className="flex flex-wrap gap-2 mb-4">
                   {activity.start_at && (
                     <div className="flex items-center gap-1.5 rounded-md bg-neutral-50 px-2 py-1 text-[11px] font-medium text-neutral-600 border border-neutral-100">
                       <Calendar className="h-3 w-3 text-neutral-400" />
-                      <span>{new Date(activity.start_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</span>
+                      <span>
+                        {new Date(activity.start_at).toLocaleDateString('id-ID', {
+                          day: 'numeric',
+                          month: 'short',
+                        })}
+                      </span>
                     </div>
                   )}
                   {activity.location && (
@@ -191,7 +213,7 @@ export function ActivityList({
                   )}
                   Submit
                 </Button>
-                
+
                 {activity.status === 'PENDING' && (
                   <>
                     <Button
@@ -257,8 +279,8 @@ export function ActivityList({
               >
                 Sebelumnya
               </Button>
-              <Button 
-                size="sm" 
+              <Button
+                size="sm"
                 variant="outline"
                 className="h-8 text-xs"
                 onClick={() => onChangePage(page + 1)}

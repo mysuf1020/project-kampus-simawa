@@ -36,7 +36,6 @@ import {
   useSuratCreateState,
   type SuratCreateForm,
 } from '@/features/surat/surat-create.atoms'
-import { SuratTemplatesCard } from '../_components/templates-card'
 
 function buildPayload(form: SuratCreateForm): CreateSuratPayload | null {
   if (!form.orgId) return null
@@ -223,20 +222,27 @@ function SuratCreatePageInner() {
 
   return (
     <Page>
-      <Page.Header breadcrumbs={[{ href: '/dashboard', children: 'Dashboard' }, { href: '/surat', children: 'Surat' }, { href: '/surat/create', children: 'Buat Surat' }]}>
+      <Page.Header
+        breadcrumbs={[
+          { href: '/dashboard', children: 'Dashboard' },
+          { href: '/surat', children: 'Surat' },
+          { href: '/surat/create', children: 'Buat Surat' },
+        ]}
+      >
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-neutral-900">
               Buat Surat Baru
             </h1>
             <p className="mt-1 text-sm text-neutral-500">
-              Lengkapi informasi surat langkah demi langkah lalu lihat preview sebelum dikirim.
+              Lengkapi informasi surat langkah demi langkah lalu lihat preview sebelum
+              dikirim.
             </p>
           </div>
           <StepIndicator step={step} />
         </div>
       </Page.Header>
-      
+
       <Page.Body>
         <Container>
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr),380px] lg:items-start">
@@ -269,7 +275,9 @@ function SuratCreatePageInner() {
 
                 <div className="grid gap-6 md:grid-cols-[1fr,240px]">
                   <div className="space-y-2">
-                    <Label className="text-sm font-medium text-neutral-700">Pilih Organisasi</Label>
+                    <Label className="text-sm font-medium text-neutral-700">
+                      Pilih Organisasi
+                    </Label>
                     <select
                       className="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all"
                       value={form.orgId}
@@ -282,19 +290,27 @@ function SuratCreatePageInner() {
                       ))}
                     </select>
                     {errors.orgId && (
-                      <p className="text-xs text-red-600 font-medium mt-1">{errors.orgId}</p>
+                      <p className="text-xs text-red-600 font-medium mt-1">
+                        {errors.orgId}
+                      </p>
                     )}
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-sm font-medium text-neutral-700">Tempat & Tanggal</Label>
+                    <Label className="text-sm font-medium text-neutral-700">
+                      Tempat & Tanggal
+                    </Label>
                     <Input
                       placeholder="Contoh: Tangerang, 07 Desember 2025"
                       value={form.placeAndDate}
                       onChange={(e) => setForm({ ...form, placeAndDate: e.target.value })}
-                      className={errors.placeAndDate ? 'border-red-500 focus:ring-red-500/20' : ''}
+                      className={
+                        errors.placeAndDate ? 'border-red-500 focus:ring-red-500/20' : ''
+                      }
                     />
                     {errors.placeAndDate && (
-                      <p className="text-xs text-red-600 font-medium mt-1">{errors.placeAndDate}</p>
+                      <p className="text-xs text-red-600 font-medium mt-1">
+                        {errors.placeAndDate}
+                      </p>
                     )}
                   </div>
                 </div>
@@ -304,9 +320,12 @@ function SuratCreatePageInner() {
                     <div className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm">
                       <div className="flex items-center justify-between gap-4 mb-4">
                         <div>
-                          <h3 className="font-semibold text-neutral-900">Kop Surat Custom</h3>
+                          <h3 className="font-semibold text-neutral-900">
+                            Kop Surat Custom
+                          </h3>
                           <p className="text-xs text-neutral-500 mt-0.5">
-                            Aktifkan jika ingin menggunakan kop surat khusus untuk surat ini.
+                            Aktifkan jika ingin menggunakan kop surat khusus untuk surat
+                            ini.
                           </p>
                         </div>
                         <Switch
@@ -341,7 +360,7 @@ function SuratCreatePageInner() {
                               />
                             </div>
                           </div>
-                          
+
                           <div className="grid gap-4 md:grid-cols-2">
                             <div className="space-y-2">
                               <Label>Alamat Lengkap</Label>
@@ -438,7 +457,9 @@ function SuratCreatePageInner() {
                           <Input
                             placeholder="1 (satu) berkas"
                             value={form.lampiran}
-                            onChange={(e) => setForm({ ...form, lampiran: e.target.value })}
+                            onChange={(e) =>
+                              setForm({ ...form, lampiran: e.target.value })
+                            }
                           />
                         </div>
                       </div>
@@ -450,10 +471,14 @@ function SuratCreatePageInner() {
                           placeholder="Contoh: Undangan Rapat Koordinasi"
                           value={form.subject}
                           onChange={(e) => setForm({ ...form, subject: e.target.value })}
-                          className={errors.subject ? 'border-red-500 focus:ring-red-500/20' : ''}
+                          className={
+                            errors.subject ? 'border-red-500 focus:ring-red-500/20' : ''
+                          }
                         />
                         {errors.subject && (
-                          <p className="text-xs text-red-600 font-medium mt-1">{errors.subject}</p>
+                          <p className="text-xs text-red-600 font-medium mt-1">
+                            {errors.subject}
+                          </p>
                         )}
                       </div>
                     </div>
@@ -464,7 +489,7 @@ function SuratCreatePageInner() {
                   <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
                     <div className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm space-y-4">
                       <h3 className="font-semibold text-neutral-900">Tujuan Surat</h3>
-                      
+
                       <div className="grid gap-4 md:grid-cols-2">
                         <div className="space-y-2">
                           <Label>Jabatan Penerima</Label>
@@ -472,10 +497,14 @@ function SuratCreatePageInner() {
                             placeholder="Contoh: Rektor / Kepala Bagian"
                             value={form.toRole}
                             onChange={(e) => setForm({ ...form, toRole: e.target.value })}
-                            className={errors.toRole ? 'border-red-500 focus:ring-red-500/20' : ''}
+                            className={
+                              errors.toRole ? 'border-red-500 focus:ring-red-500/20' : ''
+                            }
                           />
                           {errors.toRole && (
-                            <p className="text-xs text-red-600 font-medium mt-1">{errors.toRole}</p>
+                            <p className="text-xs text-red-600 font-medium mt-1">
+                              {errors.toRole}
+                            </p>
                           )}
                         </div>
                         <div className="space-y-2">
@@ -494,7 +523,9 @@ function SuratCreatePageInner() {
                           <Input
                             placeholder="Gedung Rektorat / Ruang Rapat"
                             value={form.toPlace}
-                            onChange={(e) => setForm({ ...form, toPlace: e.target.value })}
+                            onChange={(e) =>
+                              setForm({ ...form, toPlace: e.target.value })
+                            }
                           />
                         </div>
                         <div className="space-y-2">
@@ -509,8 +540,10 @@ function SuratCreatePageInner() {
                     </div>
 
                     <div className="space-y-4">
-                      <h3 className="font-semibold text-neutral-900 border-b border-neutral-100 pb-2">Isi Surat</h3>
-                      
+                      <h3 className="font-semibold text-neutral-900 border-b border-neutral-100 pb-2">
+                        Isi Surat
+                      </h3>
+
                       <div className="space-y-2">
                         <Label>Paragraf Pembuka</Label>
                         <TextArea
@@ -532,7 +565,9 @@ function SuratCreatePageInner() {
                           className={`min-h-[150px] ${errors.body ? 'border-red-500 focus:ring-red-500/20' : ''}`}
                         />
                         {errors.body && (
-                          <p className="text-xs text-red-600 font-medium mt-1">{errors.body}</p>
+                          <p className="text-xs text-red-600 font-medium mt-1">
+                            {errors.body}
+                          </p>
                         )}
                       </div>
 
@@ -573,14 +608,17 @@ function SuratCreatePageInner() {
                       <div>
                         <h3 className="font-semibold text-brand-900">Langkah Terakhir</h3>
                         <p className="text-sm text-brand-700 mt-1">
-                          Tentukan penandatangan surat, lalu tinjau kembali sebelum mengirim.
+                          Tentukan penandatangan surat, lalu tinjau kembali sebelum
+                          mengirim.
                         </p>
                       </div>
                     </div>
 
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
-                        <h3 className="font-semibold text-neutral-900">Daftar Penandatangan</h3>
+                        <h3 className="font-semibold text-neutral-900">
+                          Daftar Penandatangan
+                        </h3>
                         <Button
                           type="button"
                           variant="outline"
@@ -611,7 +649,9 @@ function SuratCreatePageInner() {
                                     const next = form.signers.filter((_, i) => i !== idx)
                                     setForm({
                                       ...form,
-                                      signers: next.length ? next : [{ role: '', name: '', nip: '' }],
+                                      signers: next.length
+                                        ? next
+                                        : [{ role: '', name: '', nip: '' }],
                                     })
                                   }}
                                   className="text-neutral-400 hover:text-red-500 p-1 rounded-md hover:bg-red-50 transition-colors"
@@ -620,9 +660,12 @@ function SuratCreatePageInner() {
                                 </button>
                               )}
                             </div>
-                            
+
                             <div className="flex items-center gap-2 mb-1">
-                              <Badge variant="secondary" className="bg-neutral-100 text-neutral-600 h-5 text-[10px]">
+                              <Badge
+                                variant="secondary"
+                                className="bg-neutral-100 text-neutral-600 h-5 text-[10px]"
+                              >
                                 Pihak #{idx + 1}
                               </Badge>
                             </div>
@@ -638,7 +681,9 @@ function SuratCreatePageInner() {
                                     next[idx] = { ...next[idx], role: e.target.value }
                                     setForm({ ...form, signers: next })
                                   }}
-                                  className={errors[`signers.${idx}.role`] ? 'border-red-500' : ''}
+                                  className={
+                                    errors[`signers.${idx}.role`] ? 'border-red-500' : ''
+                                  }
                                 />
                               </div>
                               <div className="space-y-2">
@@ -651,7 +696,9 @@ function SuratCreatePageInner() {
                                     next[idx] = { ...next[idx], name: e.target.value }
                                     setForm({ ...form, signers: next })
                                   }}
-                                  className={errors[`signers.${idx}.name`] ? 'border-red-500' : ''}
+                                  className={
+                                    errors[`signers.${idx}.name`] ? 'border-red-500' : ''
+                                  }
                                 />
                               </div>
                               <div className="space-y-2">
@@ -684,7 +731,7 @@ function SuratCreatePageInner() {
                   >
                     Kembali
                   </Button>
-                  
+
                   <div className="flex items-center gap-3">
                     <Button
                       type="button"
@@ -695,7 +742,7 @@ function SuratCreatePageInner() {
                     >
                       <Eye className="mr-2 h-4 w-4" /> Preview
                     </Button>
-                    
+
                     {step < 2 ? (
                       <Button
                         type="button"
@@ -726,8 +773,6 @@ function SuratCreatePageInner() {
             </Card>
 
             <div className="space-y-6">
-              <SuratTemplatesCard orgId={form.orgId} />
-              
               <Card className="border-neutral-200 shadow-sm bg-neutral-50/50">
                 <CardContent className="p-5 space-y-3">
                   <h4 className="font-semibold text-sm text-neutral-900 flex items-center gap-2">

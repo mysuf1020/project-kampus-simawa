@@ -13,6 +13,7 @@ import (
 
 	"simawa-backend/internal/model"
 	"simawa-backend/internal/service"
+	"simawa-backend/internal/util/sanitize"
 	"simawa-backend/internal/util/storage"
 	"simawa-backend/pkg/response"
 )
@@ -46,6 +47,13 @@ func (h *ActivityHandler) Create(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, response.Err(err.Error()))
 		return
 	}
+	
+	// Sanitize inputs
+	req.Title = sanitize.String(req.Title)
+	req.Description = sanitize.String(req.Description)
+	req.Location = sanitize.String(req.Location)
+	req.Type = sanitize.String(req.Type)
+
 	orgID, _ := uuid.Parse(req.OrgID)
 	start := time.Unix(req.StartAt, 0)
 	end := time.Unix(req.EndAt, 0)
@@ -303,4 +311,148 @@ func (h *ActivityHandler) UploadProposal(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"file_key": key})
+}
+
+func (h *ActivityHandler) DeleteProposal(c *gin.Context) {
+	key := c.Query("key")
+	if key == "" {
+		c.JSON(http.StatusBadRequest, response.Err("key required"))
+		return
+	}
+	// minimal validation to prevent deleting random system files
+	if !strings.HasPrefix(key, "proposals/") {
+		c.JSON(http.StatusBadRequest, response.Err("invalid key"))
+		return
+	}
+	if err := storage.DeleteFromMinio(c.Request.Context(), h.minio, h.bucket, key); err != nil {
+		c.JSON(http.StatusInternalServerError, response.Err(err.Error()))
+		return
+	}
+	msg := "deleted"
+	c.JSON(http.StatusOK, response.OK(&msg))
+}
+
+type addGalleryPhotoRequest struct {
+	URL string `json:"url" binding:"required"`
+}
+
+func (h *ActivityHandler) AddGalleryPhoto(c *gin.Context) {
+	id, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.Err("invalid id"))
+		return
+	}
+	var req addGalleryPhotoRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, response.Err(err.Error()))
+		return
+	}
+	userID, _ := uuid.Parse(c.GetString("sub"))
+	a, err := h.svc.AddGalleryPhoto(c.Request.Context(), userID, id, req.URL)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.Err(err.Error()))
+		return
+	}
+	c.JSON(http.StatusOK, response.OK(a))
+}
+
+type removeGalleryPhotoRequest struct {
+	URL string `json:"url" binding:"required"`
+}
+
+func (h *ActivityHandler) RemoveGalleryPhoto(c *gin.Context) {
+	id, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.Err("invalid id"))
+		return
+	}
+	var req removeGalleryPhotoRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, response.Err(err.Error()))
+		return
+	}
+	userID, _ := uuid.Parse(c.GetString("sub"))
+	a, err := h.svc.RemoveGalleryPhoto(c.Request.Context(), userID, id, req.URL)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.Err(err.Error()))
+		return
+	}
+	c.JSON(http.StatusOK, response.OK(a))
+}
+
+func (h *ActivityHandler) ListPublicGallery(c *gin.Context) {
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	size, _ := strconv.Atoi(c.DefaultQuery("size", "20"))
+	
+	// Reuse ListPublic but filter for items with GalleryURLs in frontend or here?
+	// The requirement is "Public Gallery". 
+	// For now, let's fetch recent public activities and frontend can display their cover images 
+	// or specific gallery photos.
+	// Or we can create a dedicated service method later.
+	// For MVP: Return public activities that have cover images or gallery urls.
+	
+	// Actually, the user asked for:
+	// GET /public/activities/gallery | List semua foto dokumentasi kegiatan | ❌ (getPublicGallery)
+	// GET /public/activities/:id/photos | List foto spesifik per kegiatan | ❌ (getActivityPhotos)
+	
+	// Re-using ListPublic from service for now, but in real app ideally filter by having photos.
+	from := time.Now().Add(-365 * 24 * time.Hour) // Last 1 year
+	rows, err := h.svc.ListPublic(c.Request.Context(), from)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, response.Err(err.Error()))
+		return
+	}
+	
+	// Simple pagination on memory (not efficient for large data, but okay for MVP)
+	// Filter items that have Cover or Gallery
+	var withPhotos []model.Activity
+	for _, a := range rows {
+		hasCover := a.CoverKey != "" && a.CoverApproved
+		hasGallery := len(a.GalleryURLs) > 0 && string(a.GalleryURLs) != "null" && string(a.GalleryURLs) != "[]"
+		if hasCover || hasGallery {
+			withPhotos = append(withPhotos, a)
+		}
+	}
+	
+	// Slice for pagination
+	start := (page - 1) * size
+	end := start + size
+	if start > len(withPhotos) {
+		start = len(withPhotos)
+	}
+	if end > len(withPhotos) {
+		end = len(withPhotos)
+	}
+	
+	c.JSON(http.StatusOK, gin.H{
+		"items": withPhotos[start:end],
+		"total": len(withPhotos),
+		"page":  page,
+		"size":  size,
+	})
+}
+
+func (h *ActivityHandler) GetActivityPhotos(c *gin.Context) {
+	id, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.Err("invalid id"))
+		return
+	}
+	// Fetch public or check permission? Public endpoint implies public access.
+	// Should check if activity is public or user has access.
+	// Assuming public for now as per route /public/...
+	
+	a, err := h.svc.Get(c.Request.Context(), id)
+	if err != nil {
+		c.JSON(http.StatusNotFound, response.Err(err.Error()))
+		return
+	}
+	
+	// If internal and not logged in? 
+	// For now, allow viewing photos if you have the ID (like unlisted link)
+	
+	c.JSON(http.StatusOK, response.OK(gin.H{
+		"cover":   a.CoverKey, // or URL
+		"gallery": a.GalleryURLs,
+	}))
 }

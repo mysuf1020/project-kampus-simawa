@@ -19,16 +19,11 @@ func RegisterSuratRoutes(r *gin.Engine, cfg *config.Env, sh *handler.SuratHandle
 	api.POST("/preview", sh.Generate)
 	api.POST("/:id/submit", sh.Submit)
 	api.POST("/:id/approve", sh.Approve)
+	api.POST("/:id/revise", sh.Revise)
 	api.GET("/outbox/:org_id", sh.ListOutbox)
 	api.GET("/inbox", sh.ListInbox)
+	api.GET("/archive", sh.ListArchive)
 	api.GET("", sh.List)
 	api.GET("/:id", sh.Get)
 	api.GET("/:id/download", sh.Download)
-
-	api.POST("/templates", sh.CreateTemplate)
-	api.GET("/templates", sh.ListTemplates)
-	api.GET("/templates/:id", sh.GetTemplate)
-	api.PUT("/templates/:id", sh.UpdateTemplate)
-	api.DELETE("/templates/:id", sh.DeleteTemplate)
-	api.POST("/pdf-from-template", sh.RenderFromTemplate)
 }

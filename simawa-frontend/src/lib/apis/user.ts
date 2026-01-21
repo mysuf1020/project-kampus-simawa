@@ -96,6 +96,15 @@ export const listUsers = async (params?: {
   return data.data
 }
 
+export const changePassword = async (payload: {
+  old_password: string
+  new_password: string
+  confirm_password: string
+}) => {
+  const { data } = await api.put<ApiResponse<void>>('/v1/users/change-password', payload)
+  return data
+}
+
 export const searchUsers = async (params?: { q?: string; size?: number }) => {
   const { data } = await api.get<{ items: UserSearchItem[] }>('/v1/users/search', {
     params,
