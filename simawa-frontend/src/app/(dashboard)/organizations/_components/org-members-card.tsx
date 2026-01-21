@@ -152,17 +152,22 @@ export function OrgMembersCard({ orgId, orgName }: Props) {
             <Users className="h-5 w-5" />
           </div>
           <div>
-            <CardTitle className="text-base font-semibold text-neutral-900">Anggota Organisasi</CardTitle>
+            <CardTitle className="text-base font-semibold text-neutral-900">
+              Anggota Organisasi
+            </CardTitle>
             <CardDescription className="text-xs text-neutral-500">
               Kelola anggota dan hak akses organisasi.
             </CardDescription>
           </div>
         </div>
-        <Badge variant="secondary" className="bg-white text-neutral-700 border-neutral-200">
+        <Badge
+          variant="secondary"
+          className="bg-white text-neutral-700 border-neutral-200"
+        >
           {data?.length ?? 0} Anggota
         </Badge>
       </CardHeader>
-      
+
       <CardContent className="p-6 space-y-6">
         {!orgId ? (
           <div className="flex items-center justify-center py-12 text-center text-sm text-neutral-500 bg-neutral-50 rounded-xl border border-dashed border-neutral-200">
@@ -178,7 +183,7 @@ export function OrgMembersCard({ orgId, orgName }: Props) {
                 <UserPlus className="h-4 w-4 text-brand-600" />
                 Tambah Anggota Baru
               </h4>
-              
+
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label className="text-xs">Cari Pengguna</Label>
@@ -191,7 +196,8 @@ export function OrgMembersCard({ orgId, orgName }: Props) {
                     onSearch={(txt) => setUserSearch(txt)}
                     onSelect={(value, option) => {
                       setUserIdInput(value || '')
-                      const picked = (option as { user?: UserSearchItem } | undefined)?.user
+                      const picked = (option as { user?: UserSearchItem } | undefined)
+                        ?.user
                       setSelectedUser(picked ?? null)
                     }}
                     customRender={(opt) => {
@@ -228,11 +234,11 @@ export function OrgMembersCard({ orgId, orgName }: Props) {
                   </Select>
                 </div>
               </div>
-              
+
               <div className="flex gap-2 justify-end pt-2">
-                <Button 
-                  type="button" 
-                  size="sm" 
+                <Button
+                  type="button"
+                  size="sm"
                   variant="outline"
                   disabled={isSaving}
                   onClick={(e) => handleSubmit(e as unknown as FormEvent, 'update')}
@@ -240,10 +246,10 @@ export function OrgMembersCard({ orgId, orgName }: Props) {
                 >
                   Update Role
                 </Button>
-                <Button 
-                  type="submit" 
-                  size="sm" 
-                  disabled={isSaving} 
+                <Button
+                  type="submit"
+                  size="sm"
+                  disabled={isSaving}
                   className="bg-brand-600 hover:bg-brand-700 text-white text-xs h-8 gap-1.5"
                 >
                   {isSaving ? (
@@ -258,7 +264,7 @@ export function OrgMembersCard({ orgId, orgName }: Props) {
 
             <div className="space-y-3">
               <h4 className="text-sm font-medium text-neutral-900">Daftar Anggota</h4>
-              
+
               {isLoading ? (
                 <div className="flex items-center justify-center py-8 text-xs text-neutral-500">
                   <Spinner size="sm" className="mr-2" /> Memuat daftar anggota...
@@ -267,7 +273,7 @@ export function OrgMembersCard({ orgId, orgName }: Props) {
                 <div className="p-4 rounded-lg bg-red-50 text-red-600 text-xs text-center border border-red-100">
                   Gagal memuat anggota organisasi.
                 </div>
-              ) : (!data || data.length === 0) ? (
+              ) : !data || data.length === 0 ? (
                 <div className="text-center py-8 text-sm text-neutral-500 bg-neutral-50 rounded-lg border border-neutral-100">
                   Belum ada anggota terdaftar.
                 </div>
@@ -280,30 +286,43 @@ export function OrgMembersCard({ orgId, orgName }: Props) {
                     >
                       <div className="flex items-center gap-3">
                         <div className="h-9 w-9 rounded-full bg-brand-50 flex items-center justify-center text-brand-600 text-xs font-bold border border-brand-100">
-                          {(member.user?.first_name || member.user?.username || member.user_id).slice(0, 2).toUpperCase()}
+                          {(
+                            member.user?.first_name ||
+                            member.user?.username ||
+                            member.user_id
+                          )
+                            .slice(0, 2)
+                            .toUpperCase()}
                         </div>
                         <div>
                           <p className="text-sm font-medium text-neutral-900">
                             {member.user ? (
                               <>
                                 {member.user.first_name} {member.user.second_name}
-                                <span className="text-neutral-400 font-normal ml-1">(@{member.user.username})</span>
+                                <span className="text-neutral-400 font-normal ml-1">
+                                  (@{member.user.username})
+                                </span>
                               </>
                             ) : (
                               member.user_id
                             )}
                           </p>
                           <div className="flex items-center gap-2 mt-0.5">
-                            <Badge variant="secondary" className="text-[10px] font-normal bg-neutral-100 text-neutral-600 border-neutral-200 px-1.5 py-0 h-5">
+                            <Badge
+                              variant="secondary"
+                              className="text-[10px] font-normal bg-neutral-100 text-neutral-600 border-neutral-200 px-1.5 py-0 h-5"
+                            >
                               {member.role}
                             </Badge>
                             {member.user?.email && (
-                              <span className="text-xs text-neutral-400">• {member.user.email}</span>
+                              <span className="text-xs text-neutral-400">
+                                • {member.user.email}
+                              </span>
                             )}
                           </div>
                         </div>
                       </div>
-                      
+
                       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <Button
                           size="icon"

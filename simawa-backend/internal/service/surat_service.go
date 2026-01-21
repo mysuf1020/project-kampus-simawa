@@ -40,32 +40,25 @@ type SuratService interface {
 	Create(ctx context.Context, in *CreateSuratInput, mc *minio.Client, bucket string) (*model.Surat, error)
 	Submit(ctx context.Context, userID uuid.UUID, id uint) (*model.Surat, error)
 	Decide(ctx context.Context, approver uuid.UUID, id uint, approve bool, note string) (*model.Surat, error)
+	Revise(ctx context.Context, approver uuid.UUID, id uint, note string) (*model.Surat, error)
 	SaveMetadata(ctx context.Context, m *model.Surat) error
 	Get(ctx context.Context, id uint) (*model.Surat, error)
 	List(ctx context.Context, q repository.ListSuratQuery) ([]model.Surat, int64, error)
 	ListByOrg(ctx context.Context, orgID uuid.UUID, status string, page, size int) ([]model.Surat, int64, error)
 	ListInbox(ctx context.Context, in InboxFilter) ([]model.Surat, int64, error)
+	ListArchive(ctx context.Context, orgIDs []uuid.UUID, page, size int) ([]model.Surat, int64, error)
 	PresignOrURL(ctx context.Context, mc *minio.Client, bucket string, key string, expire time.Duration) (string, error)
-
-	CreateTemplate(ctx context.Context, t *model.SuratTemplate) error
-	UpdateTemplate(ctx context.Context, t *model.SuratTemplate) error
-	DeleteTemplate(ctx context.Context, id uint) error
-	GetTemplate(ctx context.Context, id uint) (*model.SuratTemplate, error)
-	ListTemplates(ctx context.Context) ([]model.SuratTemplate, error)
-
-	RenderFromTemplate(ctx context.Context, t *model.SuratTemplate, overrides map[string]any, mc *minio.Client, bucket string, createdBy uuid.UUID, orgID uuid.UUID, targetOrgID *uuid.UUID, status string) (*model.Surat, error)
 }
 
 type suratService struct {
 	suratRepo repository.SuratRepository
-	tplRepo   repository.SuratTemplateRepository
 	audit     *AuditService
 	notify    *NotificationService
 	orgRepo   repository.OrganizationRepository
 }
 
-func NewSuratServiceWithRepo(suratRepo repository.SuratRepository, tplRepo repository.SuratTemplateRepository, orgRepo repository.OrganizationRepository, audit *AuditService, notify *NotificationService) SuratService {
-	return &suratService{suratRepo: suratRepo, tplRepo: tplRepo, orgRepo: orgRepo, audit: audit, notify: notify}
+func NewSuratServiceWithRepo(suratRepo repository.SuratRepository, orgRepo repository.OrganizationRepository, audit *AuditService, notify *NotificationService) SuratService {
+	return &suratService{suratRepo: suratRepo, orgRepo: orgRepo, audit: audit, notify: notify}
 }
 func NewSuratService() SuratService { return &suratService{} }
 
@@ -309,60 +302,44 @@ func (s *suratService) PresignOrURL(ctx context.Context, mc *minio.Client, bucke
 	return u.String(), nil
 }
 
-/* templates */
-
-func (s *suratService) CreateTemplate(ctx context.Context, t *model.SuratTemplate) error {
-	if s.tplRepo == nil {
-		return fmt.Errorf("template repository not wired")
+// Revise requests revision for a surat with a note
+func (s *suratService) Revise(ctx context.Context, approver uuid.UUID, id uint, note string) (*model.Surat, error) {
+	if s.suratRepo == nil {
+		return nil, fmt.Errorf("surat repository not wired")
 	}
-	return s.tplRepo.Create(ctx, t)
-}
-func (s *suratService) UpdateTemplate(ctx context.Context, t *model.SuratTemplate) error {
-	if s.tplRepo == nil {
-		return fmt.Errorf("template repository not wired")
+	row, err := s.suratRepo.Get(ctx, id)
+	if err != nil {
+		return nil, err
 	}
-	return s.tplRepo.Update(ctx, t)
-}
-func (s *suratService) DeleteTemplate(ctx context.Context, id uint) error {
-	if s.tplRepo == nil {
-		return fmt.Errorf("template repository not wired")
+	if row.Status != model.SuratStatusPending {
+		return nil, errors.New("only pending surat can be revised")
 	}
-	return s.tplRepo.Delete(ctx, id)
-}
-func (s *suratService) GetTemplate(ctx context.Context, id uint) (*model.SuratTemplate, error) {
-	if s.tplRepo == nil {
-		return nil, fmt.Errorf("template repository not wired")
+	row.Status = model.SuratStatusRevision
+	row.ApprovalNote = note
+	if approver != uuid.Nil {
+		row.ApprovedBy = &approver
 	}
-	return s.tplRepo.Get(ctx, id)
-}
-func (s *suratService) ListTemplates(ctx context.Context) ([]model.SuratTemplate, error) {
-	if s.tplRepo == nil {
-		return nil, fmt.Errorf("template repository not wired")
+	if err := s.suratRepo.Update(ctx, row); err != nil {
+		return nil, err
 	}
-	return s.tplRepo.List(ctx)
+	if s.audit != nil && approver != uuid.Nil {
+		s.audit.Log(ctx, approver, "surat_revise", map[string]any{"surat_id": row.ID, "note": note})
+	}
+	if s.notify != nil && row.CreatedBy != nil {
+		_ = s.notify.Push(ctx, *row.CreatedBy, "Surat perlu revisi", fmt.Sprintf("Catatan: %s", note), map[string]any{"surat_id": row.ID})
+	}
+	return row, nil
 }
 
-func (s *suratService) RenderFromTemplate(ctx context.Context, t *model.SuratTemplate, overrides map[string]any, mc *minio.Client, bucket string, createdBy uuid.UUID, orgID uuid.UUID, targetOrgID *uuid.UUID, status string) (*model.Surat, error) {
-	if t == nil {
-		return nil, fmt.Errorf("template nil")
+// ListArchive returns approved/rejected surat for archive page
+func (s *suratService) ListArchive(ctx context.Context, orgIDs []uuid.UUID, page, size int) ([]model.Surat, int64, error) {
+	if s.suratRepo == nil {
+		return nil, 0, fmt.Errorf("surat repository not wired")
 	}
-	var theme suratpdf.Theme
-	var payload suratpdf.Payload
-	_ = json.Unmarshal(t.ThemeJSON, &theme)
-	_ = json.Unmarshal(t.PayloadJSON, &payload)
-
-	if overrides != nil {
-		b, _ := json.Marshal(overrides)
-		_ = json.Unmarshal(b, &payload)
+	q := repository.ListSuratQuery{
+		ForOrgIDs: orgIDs,
+		Page:      page,
+		Size:      size,
 	}
-	payload.Variant = suratpdf.Variant(t.Variant)
-
-	return s.Create(ctx, &CreateSuratInput{
-		OrgID:       orgID,
-		TargetOrgID: targetOrgID,
-		Payload:     payload,
-		Theme:       &theme,
-		CreatedBy:   createdBy,
-		Status:      status,
-	}, mc, bucket)
+	return s.suratRepo.List(ctx, q)
 }

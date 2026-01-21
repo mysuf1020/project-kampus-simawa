@@ -6,10 +6,53 @@ import type { Provider } from 'next-auth/providers'
 import type { JWT } from 'next-auth/jwt'
 import { NextResponse } from 'next/server'
 import { refreshAccessToken } from './apis/auth/refresh-token'
-import loginAction from './apis/auth/login'
 import { RoledJwtPayload } from './models/authentication'
 
 const backendUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080'
+
+// Server-side loginVerify (tidak menggunakan axios client-side)
+type AuthTokensResponse = {
+  access_token: string
+  expires_in: number
+  refresh_token?: string
+}
+
+type ApiEnvelope<T> = {
+  success: boolean
+  message: string
+  data?: T
+}
+
+async function serverLoginVerify(email: string, otp: string) {
+  console.log('[Auth] Server loginVerify called for:', email)
+
+  const res = await fetch(`${backendUrl}/auth/login/verify`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ login: email, otp }),
+  })
+
+  console.log('[Auth] Backend response status:', res.status)
+
+  const json = await res.json().catch(() => null)
+  console.log('[Auth] Backend response:', JSON.stringify(json))
+
+  if (!res.ok) {
+    const errorMsg = (json as ApiEnvelope<any>)?.message || `HTTP ${res.status}`
+    throw new Error(errorMsg)
+  }
+
+  const envelope = json as ApiEnvelope<AuthTokensResponse>
+  if (!envelope?.success || !envelope.data) {
+    throw new Error(envelope?.message || 'Invalid response from server')
+  }
+
+  return {
+    accessToken: envelope.data.access_token,
+    refreshToken: envelope.data.refresh_token,
+    expiresIn: envelope.data.expires_in,
+  }
+}
 
 const revokeRefreshToken = async (refreshToken?: string) => {
   if (!refreshToken) return
@@ -28,34 +71,44 @@ const providers: Provider[] = [
   Credentials({
     credentials: {
       email: { label: 'Email', type: 'email' },
-      password: { label: 'Password', type: 'password' },
+      otp: { label: 'OTP', type: 'text' },
     },
     async authorize(c) {
-      if (typeof c.password !== 'string') return null
-      if (typeof c.email !== 'string') return null
-      const { email, password } = c
-      const verifiedResponse = await loginAction({
-        email,
-        password,
-      })
-      if (verifiedResponse.data) {
-        const tokens = verifiedResponse.data
-        const decodedJwt = jwtDecode<RoledJwtPayload>(tokens.access_token)
-        return {
-          id: decodedJwt.sub || email,
-          access_token: tokens.access_token,
-          refresh_token: tokens.refresh_token,
-          expires_at: Date.now() + tokens.expires_in * 1000,
-          user_id: decodedJwt.sub,
-          username: (decodedJwt as any).usr,
-          roles: decodedJwt.roles,
-          email,
+      const credentials = c as any
+      if (typeof credentials.email !== 'string') return null
+      if (typeof credentials.otp !== 'string') return null
+
+      const { email, otp } = credentials
+
+      try {
+        console.log('[NextAuth] Attempting loginVerify for:', email)
+        const tokens = await serverLoginVerify(email, otp)
+
+        console.log(
+          '[NextAuth] loginVerify response:',
+          tokens ? 'tokens received' : 'no tokens',
+        )
+
+        if (tokens && tokens.accessToken) {
+          const decodedJwt = jwtDecode<RoledJwtPayload>(tokens.accessToken)
+          console.log('[NextAuth] JWT decoded, sub:', decodedJwt.sub)
+          return {
+            id: decodedJwt.sub || email,
+            access_token: tokens.accessToken,
+            refresh_token: tokens.refreshToken,
+            expires_at: Date.now() + (tokens.expiresIn || 3600) * 1000,
+            user_id: decodedJwt.sub,
+            username: (decodedJwt as any).usr,
+            roles: decodedJwt.roles,
+            email,
+          }
         }
+        console.log('[NextAuth] No valid tokens returned')
+      } catch (error: any) {
+        console.error('[NextAuth] loginVerify error:', error?.message || error)
+        console.error('[NextAuth] Error details:', error?.response?.data || error)
       }
-      if (verifiedResponse.error?.status === 401) {
-        return null
-      }
-      throw new Error(verifiedResponse.error?.message || 'Internal server error')
+      return null
     },
   }),
 ]

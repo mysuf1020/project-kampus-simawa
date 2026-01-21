@@ -5,6 +5,11 @@ import "time"
 type Variant string
 
 const (
+	VariantUndangan   Variant = "undangan"
+	VariantPeminjaman Variant = "peminjaman"
+	VariantPengajuan  Variant = "pengajuan"
+	VariantPermohonan Variant = "permohonan"
+	// Keep existing for backward compatibility if needed, or map them
 	VariantNonAcademic Variant = "non_academic"
 	VariantAcademic    Variant = "academic"
 )

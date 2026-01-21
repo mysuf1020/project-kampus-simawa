@@ -24,7 +24,15 @@ type Props = {
   isFetchingNextPage?: boolean
 }
 
-export function OutboxListCard({ data, isLoading, page = 1, onChangePage, hasNextPage, onLoadMore, isFetchingNextPage }: Props) {
+export function OutboxListCard({
+  data,
+  isLoading,
+  page = 1,
+  onChangePage,
+  hasNextPage,
+  onLoadMore,
+  isFetchingNextPage,
+}: Props) {
   return (
     <Card className="border-neutral-200 shadow-sm">
       <CardHeader className="flex flex-col sm:flex-row sm:items-center gap-3 border-b border-neutral-100 bg-neutral-50/50 px-4 sm:px-6 py-4">
@@ -33,7 +41,9 @@ export function OutboxListCard({ data, isLoading, page = 1, onChangePage, hasNex
             <Outdent className="h-5 w-5" />
           </div>
           <div>
-            <CardTitle className="text-sm sm:text-base font-semibold text-neutral-900">Riwayat Surat Keluar</CardTitle>
+            <CardTitle className="text-sm sm:text-base font-semibold text-neutral-900">
+              Riwayat Surat Keluar
+            </CardTitle>
             <CardDescription className="text-xs text-neutral-500">
               Daftar surat yang sudah dikirim.
             </CardDescription>
@@ -47,7 +57,7 @@ export function OutboxListCard({ data, isLoading, page = 1, onChangePage, hasNex
             <span className="text-xs">Memuat riwayat surat...</span>
           </div>
         )}
-        
+
         {!isLoading && data?.length === 0 && (
           <div className="flex flex-col items-center justify-center py-12 text-neutral-400">
             <Send className="h-8 w-8 mb-2 opacity-20" />
@@ -77,12 +87,14 @@ export function OutboxListCard({ data, isLoading, page = 1, onChangePage, hasNex
                           #{idLabel}
                         </span>
                         <span>•</span>
-                        <Badge 
-                          variant="secondary" 
+                        <Badge
+                          variant="secondary"
                           className={`text-[10px] h-5 px-1.5 font-normal border-none ${
-                            item.status === 'APPROVED' ? 'bg-green-50 text-green-700' :
-                            item.status === 'REJECTED' ? 'bg-red-50 text-red-700' :
-                            'bg-amber-50 text-amber-700'
+                            item.status === 'APPROVED'
+                              ? 'bg-green-50 text-green-700'
+                              : item.status === 'REJECTED'
+                                ? 'bg-red-50 text-red-700'
+                                : 'bg-amber-50 text-amber-700'
                           }`}
                         >
                           {item.status}
@@ -113,7 +125,7 @@ export function OutboxListCard({ data, isLoading, page = 1, onChangePage, hasNex
             })}
           </div>
         )}
-        
+
         {/* Mobile: Infinite Scroll */}
         {hasNextPage && onLoadMore && (
           <div className="sm:hidden px-4 py-2">
@@ -139,9 +151,9 @@ export function OutboxListCard({ data, isLoading, page = 1, onChangePage, hasNex
               >
                 Sebelumnya
               </Button>
-              <Button 
-                size="sm" 
-                variant="outline" 
+              <Button
+                size="sm"
+                variant="outline"
                 className="h-7 text-xs bg-white"
                 onClick={() => onChangePage(page + 1)}
               >

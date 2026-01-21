@@ -37,7 +37,6 @@ type Server struct {
 		UserRole     repository.UserRoleRepository
 		RefreshToken repository.RefreshTokenRepository
 		Surat        repository.SuratRepository
-		SuratTpl     repository.SuratTemplateRepository
 		Org          repository.OrganizationRepository
 		Activity     repository.ActivityRepository
 		LPJ          repository.LPJRepository
@@ -62,6 +61,8 @@ type Server struct {
 		Notify    *service.NotificationService
 		Dashboard *service.DashboardService
 		Audit     *service.AuditService
+		Captcha   *service.CaptchaService
+		Report    *service.ReportService
 	}
 
 	Handlers struct {
@@ -76,6 +77,8 @@ type Server struct {
 		Notify    *handler.NotificationHandler
 		Dashboard *handler.DashboardHandler
 		Health    *handler.HealthHandler
+		Audit     *handler.AuditLogHandler
+		Report    *handler.ReportHandler
 	}
 }
 
@@ -108,13 +111,12 @@ func (s *Server) autoMigrate() error {
 	if s.DB == nil {
 		return fmt.Errorf("db not initialized")
 	}
-	return s.DB.AutoMigrate(
+	if err := s.DB.AutoMigrate(
 		&model.User{},
 		&model.Role{},
 		&model.UserRole{},
 		&model.RefreshToken{},
 		&model.Surat{},
-		&model.SuratTemplate{},
 		&model.Organization{},
 		&model.Activity{},
 		&model.LPJ{},
@@ -124,7 +126,11 @@ func (s *Server) autoMigrate() error {
 		&model.ActivityHistory{},
 		&model.LPJHistory{},
 		&model.AuditLog{},
-	)
+	); err != nil {
+		return err
+	}
+	// Create performance indexes
+	return database.CreateIndexes(s.DB)
 }
 
 func (s *Server) initMinio() {
@@ -147,7 +153,6 @@ func (s *Server) initRepositories() {
 	s.Repositories.UserRole = repository.NewUserRoleRepository(s.DB)
 	s.Repositories.RefreshToken = repository.NewRefreshTokenRepository(s.DB)
 	s.Repositories.Surat = repository.NewSuratRepository(s.DB)
-	s.Repositories.SuratTpl = repository.NewSuratTemplateRepository(s.DB)
 	s.Repositories.Org = repository.NewOrganizationRepository(s.DB)
 	s.Repositories.Activity = repository.NewActivityRepository(s.DB)
 	s.Repositories.LPJ = repository.NewLPJRepository(s.DB)
@@ -163,15 +168,18 @@ func (s *Server) initServices() {
 	s.Services.User = service.NewUserService(s.Repositories.User)
 	s.Services.RBAC = service.NewRBACService(s.Repositories.UserRole)
 	s.Services.Audit = service.NewAuditService(s.Repositories.Audit)
+	s.Services.Captcha = service.NewCaptchaService(s.Config)
 	s.Services.Notify = service.NewNotificationService(s.Repositories.Notify)
-	s.Services.Auth = service.NewAuthService(s.Config, s.Repositories.User, s.Repositories.UserRole, s.Repositories.RefreshToken, s.Services.Audit)
-	s.Services.Surat = service.NewSuratServiceWithRepo(s.Repositories.Surat, s.Repositories.SuratTpl, s.Repositories.Org, s.Services.Audit, s.Services.Notify)
+	emailSvc := service.NewEmailService(&s.Config.SMTP)
+	s.Services.Auth = service.NewAuthService(s.Config, s.Repositories.User, s.Repositories.UserRole, s.Repositories.RefreshToken, s.Redis, emailSvc, s.Services.Audit)
+	s.Services.Surat = service.NewSuratServiceWithRepo(s.Repositories.Surat, s.Repositories.Org, s.Services.Audit, s.Services.Notify)
 	s.Services.Org = service.NewOrganizationService(s.Repositories.Org, s.Services.RBAC, s.Services.Audit)
 	s.Services.Activity = service.NewActivityService(s.Repositories.Activity, s.Repositories.ActHistory, s.Services.RBAC, s.Services.Notify, s.Services.Audit)
 	s.Services.LPJ = service.NewLPJService(s.Repositories.LPJ, s.Repositories.Activity, s.Services.RBAC, s.Services.Notify, s.Repositories.LPJHistory, s.Services.Audit)
 	s.Services.Member = service.NewOrgMemberService(s.Repositories.OrgMember, s.Repositories.Org, s.Services.RBAC, s.Services.Audit)
 	s.Services.JoinReq = service.NewOrgJoinRequestService(s.Repositories.OrgJoinReq, s.Repositories.Org, s.Repositories.User, s.Repositories.OrgMember, s.Services.RBAC, s.Services.Audit)
 	s.Services.Dashboard = service.NewDashboardService(s.DB)
+	s.Services.Report = service.NewReportService(s.Repositories.Activity, s.Repositories.Surat, s.Repositories.LPJ)
 
 	// Seed base roles
 	_ = s.Repositories.UserRole.EnsureBaseRoles(context.Background())
@@ -198,8 +206,8 @@ func (s *Server) renameOrgIfNeeded(ctx context.Context, slug string, from string
 }
 
 func (s *Server) initHandlers() {
-	s.Handlers.User = handler.NewUserHandler(s.Services.User, s.Services.RBAC)
-	s.Handlers.Auth = handler.NewAuthHandler(s.Services.Auth)
+	s.Handlers.User = handler.NewUserHandler(s.Services.User, s.Services.Auth, s.Services.RBAC)
+	s.Handlers.Auth = handler.NewAuthHandler(s.Services.Auth, s.Services.Captcha)
 	s.Handlers.Surat = handler.NewSuratHandler(s.Services.Surat, s.Minio, s.Config.Minio.Bucket, s.Services.RBAC)
 	minioPublicBaseURL := ""
 	if !s.Config.Minio.Disabled && s.Config.Minio.Endpoint != "" {
@@ -216,6 +224,7 @@ func (s *Server) initHandlers() {
 	s.Handlers.JoinReq = handler.NewOrgJoinRequestHandler(s.Services.JoinReq)
 	s.Handlers.Notify = handler.NewNotificationHandler(s.Services.Notify)
 	s.Handlers.Dashboard = handler.NewDashboardHandler(s.Services.Dashboard)
+	s.Handlers.Audit = handler.NewAuditLogHandler(s.DB)
 	s.Handlers.Health = handler.NewHealthHandler(s.StartTime, s.DB, s.Redis, s.Minio, func() map[string]int64 {
 		counts := map[string]int64{}
 		var c int64
@@ -234,6 +243,7 @@ func (s *Server) initHandlers() {
 func (s *Server) initRouter() {
 	engine := gin.New()
 	engine.Use(gin.Recovery())
+	engine.Use(middleware.RequestLogger())
 	engine.Use(middleware.SecurityMiddleware(s.Redis))
 	router.Register(engine, s.Config, s.Handlers.Auth, s.Handlers.User, s.Handlers.Surat, s.Handlers.Org, s.Services.RBAC)
 	router.RegisterActivityRoutes(engine, s.Config, s.Handlers.Activity, s.Services.RBAC)
@@ -242,6 +252,8 @@ func (s *Server) initRouter() {
 	router.RegisterOrgJoinRequestRoutes(engine, s.Config, s.Handlers.JoinReq, s.Services.RBAC)
 	router.RegisterNotificationRoutes(engine, s.Config, s.Handlers.Notify)
 	router.RegisterDashboardRoutes(engine, s.Config, s.Handlers.Dashboard, s.Services.RBAC)
+	router.RegisterReportRoutes(engine, s.Config, s.Handlers.Report, s.Services.RBAC)
+	router.RegisterAuditLogRoutes(engine, s.Config, s.Handlers.Audit)
 	router.RegisterHealthRoutes(engine, s.Handlers.Health)
 	s.Engine = engine
 }

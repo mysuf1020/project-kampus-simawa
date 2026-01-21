@@ -39,21 +39,25 @@ export function ActivityProposalUploadCard({ orgId }: Props) {
     <Card className="border-neutral-200 shadow-sm h-fit">
       <CardHeader className="bg-neutral-50/50 border-b border-neutral-100 pb-4">
         <div className="flex items-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white border border-neutral-200 shadow-sm">
-                <FileUp className="h-4 w-4 text-brand-600" />
-            </div>
-            <div className="space-y-0.5">
-                <CardTitle className="text-base font-semibold text-neutral-900">Upload Proposal</CardTitle>
-                <CardDescription className="text-xs text-neutral-500">
-                Unggah proposal kegiatan dalam format PDF.
-                </CardDescription>
-            </div>
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white border border-neutral-200 shadow-sm">
+            <FileUp className="h-4 w-4 text-brand-600" />
+          </div>
+          <div className="space-y-0.5">
+            <CardTitle className="text-base font-semibold text-neutral-900">
+              Upload Proposal
+            </CardTitle>
+            <CardDescription className="text-xs text-neutral-500">
+              Unggah proposal kegiatan dalam format PDF.
+            </CardDescription>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="pt-4 space-y-4">
         <form className="space-y-4" onSubmit={handleSubmit}>
           <div className="space-y-1.5">
-            <Label className="text-xs font-medium text-neutral-700">File Proposal (PDF)</Label>
+            <Label className="text-xs font-medium text-neutral-700">
+              File Proposal (PDF)
+            </Label>
             <Input
               type="file"
               accept="application/pdf"
@@ -64,18 +68,18 @@ export function ActivityProposalUploadCard({ orgId }: Props) {
               }}
             />
           </div>
-          
+
           {orgId ? null : (
             <div className="rounded-lg bg-amber-50 p-3 border border-amber-100">
-                <p className="text-xs text-amber-700">
+              <p className="text-xs text-amber-700">
                 Pilih organisasi terlebih dahulu sebelum mengunggah proposal.
-                </p>
+              </p>
             </div>
           )}
 
-          <Button 
-            type="submit" 
-            className="w-full bg-brand-600 hover:bg-brand-700 text-white" 
+          <Button
+            type="submit"
+            className="w-full bg-brand-600 hover:bg-brand-700 text-white"
             disabled={!file || isPending}
           >
             {isPending ? (
@@ -88,10 +92,10 @@ export function ActivityProposalUploadCard({ orgId }: Props) {
 
           {uploadedKey && (
             <div className="rounded-lg bg-green-50 p-3 border border-green-100 flex items-center gap-2">
-                <div className="h-1.5 w-1.5 rounded-full bg-green-500" />
-                <p className="text-xs font-medium text-green-700">
-                    Berkas berhasil diunggah.
-                </p>
+              <div className="h-1.5 w-1.5 rounded-full bg-green-500" />
+              <p className="text-xs font-medium text-green-700">
+                Berkas berhasil diunggah.
+              </p>
             </div>
           )}
         </form>

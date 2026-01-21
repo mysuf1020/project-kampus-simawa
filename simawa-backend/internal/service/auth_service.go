@@ -5,14 +5,19 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
+	"github.com/redis/go-redis/v9"
 
 	"simawa-backend/internal/config"
+	"simawa-backend/internal/dto"
 	"simawa-backend/internal/model"
+
 	"simawa-backend/internal/repository"
 )
 
@@ -21,6 +26,8 @@ type AuthService struct {
 	users      repository.UserRepository
 	userRoles  repository.UserRoleRepository
 	refreshTok repository.RefreshTokenRepository
+	redis      *redis.Client
+	email      *EmailService
 
 	mu        sync.Mutex
 	failTrack map[string]failedLogin
@@ -37,6 +44,8 @@ func NewAuthService(
 	users repository.UserRepository,
 	userRoles repository.UserRoleRepository,
 	refresh repository.RefreshTokenRepository,
+	redis *redis.Client,
+	email *EmailService,
 	audit *AuditService,
 ) *AuthService {
 	return &AuthService{
@@ -44,6 +53,8 @@ func NewAuthService(
 		users:      users,
 		userRoles:  userRoles,
 		refreshTok: refresh,
+		redis:      redis,
+		email:      email,
 		failTrack:  make(map[string]failedLogin),
 		audit:      audit,
 	}
@@ -69,31 +80,178 @@ type RefreshRequest struct {
 
 /* ====== Public ====== */
 
-func (s *AuthService) Login(ctx context.Context, req *LoginRequest) (*AuthTokens, error) {
+// Register creates a new user and sends verification OTP
+func (s *AuthService) Register(ctx context.Context, req *dto.RegisterRequest) (*model.User, error) {
 	if req == nil {
 		return nil, errors.New("nil request")
 	}
-	login := strings.TrimSpace(strings.ToLower(req.Login))
-	if !strings.HasSuffix(login, "@raharja.info") && login != "admin@simawa.local" {
-		// semua user biasa wajib pakai email @raharja.info
-		// admin@simawa.local dibiarkan untuk kebutuhan seeding / admin internal
-		return nil, errors.New("invalid credentials")
+
+	// 1. Validate email domain (mahasiswa only)
+	email := strings.TrimSpace(strings.ToLower(req.Email))
+	if !strings.HasSuffix(email, "@raharja.info") {
+		return nil, errors.New("email must be @raharja.info")
 	}
-	if s.isBlocked(req.Login) {
-		return nil, errors.New("account locked, try again later")
+
+	// 2. Check if user exists
+	existing, _ := s.users.FindByLogin(ctx, email)
+	if existing != nil {
+		return nil, errors.New("email already registered")
 	}
-	u, err := s.users.FindByLogin(ctx, req.Login)
+
+	// 3. Hash password
+	hash, err := repository.BcryptHash(req.Password)
 	if err != nil {
-		s.registerFailure(req.Login)
-		return nil, errors.New("invalid credentials")
+		return nil, err
 	}
-	if err := s.users.CheckPassword(ctx, u, req.Password); err != nil {
-		s.registerFailure(req.Login)
-		return nil, errors.New("invalid credentials")
+
+	// 4. Create User
+	newUser := &model.User{
+		Username:     req.Username,
+		FirstName:    req.FirstName,
+		Email:        email,
+		PasswordHash: hash,
+		// Defaults
+		Jurusan: "Sistem Informasi", // Default or extract from somewhere
+		NIM:     "",                 // Optional at registration?
 	}
-	s.resetFailure(req.Login)
+	
+	if err := s.users.Create(ctx, newUser); err != nil {
+		return nil, err
+	}
+
+	// 5. Assign default Role USER
+	if s.userRoles != nil {
+		_ = s.userRoles.Assign(ctx, &model.UserRole{
+			UserID:   newUser.ID,
+			RoleCode: model.RoleUser,
+		})
+	}
+
+	// 6. Generate & Send OTP
+	otp, err := s.generateOTP(ctx, email, "verify")
+	if err != nil {
+		// Log error but don't fail registration
+		fmt.Printf("[OTP] Failed to generate OTP for %s: %v\n", email, err)
+	}
+	
+	// Send verification email
+	if s.email != nil && otp != "" {
+		if err := s.email.SendOTP(email, otp, "register"); err != nil {
+			fmt.Printf("[EMAIL] Failed to send verification email to %s: %v\n", email, err)
+		}
+	}
+	
 	if s.audit != nil {
-		s.audit.Log(ctx, u.ID, "login_success", map[string]any{"login": req.Login})
+		s.audit.Log(ctx, newUser.ID, "register_otp_sent", map[string]any{"email": email})
+	}
+
+	return newUser, nil
+}
+
+// VerifyEmail verifies the OTP and activates the account
+func (s *AuthService) VerifyEmail(ctx context.Context, email, otp string) error {
+	email = strings.TrimSpace(strings.ToLower(email))
+	
+	// Check OTP
+	valid, err := s.validateOTP(ctx, email, "verify", otp)
+	if err != nil {
+		return err
+	}
+	if !valid {
+		return errors.New("invalid or expired OTP")
+	}
+
+	// Update User
+	u, err := s.users.FindByLogin(ctx, email)
+	if err != nil {
+		return errors.New("user not found")
+	}
+
+	now := time.Now()
+	u.EmailVerifiedAt = &now
+	if err := s.users.Update(ctx, u); err != nil {
+		return err
+	}
+
+	if s.audit != nil {
+		s.audit.Log(ctx, u.ID, "email_verified", nil)
+	}
+	return nil
+}
+
+// Login Step 1: Validate Creds & Trigger OTP
+// Returns error if invalid, nil if OTP sent.
+func (s *AuthService) Login(ctx context.Context, req *LoginRequest) error {
+	if req == nil {
+		return errors.New("nil request")
+	}
+	login := strings.TrimSpace(strings.ToLower(req.Login))
+	
+	// Check failure block
+	if s.isBlocked(login) {
+		return errors.New("account locked, try again later")
+	}
+
+	u, err := s.users.FindByLogin(ctx, login)
+	if err != nil {
+		s.registerFailure(login)
+		return errors.New("invalid credentials")
+	}
+
+	// Check password
+	if err := s.users.CheckPassword(ctx, u, req.Password); err != nil {
+		s.registerFailure(login)
+		return errors.New("invalid credentials")
+	}
+	s.resetFailure(login)
+
+	// Check Verification
+	if u.EmailVerifiedAt == nil && login != "admin@simawa.local" {
+		return errors.New("email not verified")
+	}
+
+	// Generate & Send OTP
+	otp, err := s.generateOTP(ctx, login, "login")
+	if err != nil {
+		return errors.New("failed to generate otp")
+	}
+
+	// Send OTP via Email
+	if s.email != nil {
+		if err := s.email.SendOTP(login, otp, "login"); err != nil {
+			fmt.Printf("[EMAIL] Failed to send login OTP to %s: %v\n", login, err)
+		}
+	} else {
+		// Dev mode: print to console
+		fmt.Printf("[OTP] Login OTP for %s: %s\n", login, otp)
+	}
+
+	if s.audit != nil {
+		s.audit.Log(ctx, u.ID, "login_otp_generated", map[string]any{"email": login})
+	}
+	
+	return nil
+}
+
+// LoginVerify Step 2: Verify OTP and Issue Token
+func (s *AuthService) LoginVerify(ctx context.Context, req *dto.LoginOTPRequest) (*AuthTokens, error) {
+	login := strings.TrimSpace(strings.ToLower(req.Login))
+
+	valid, err := s.validateOTP(ctx, login, "login", req.OTP)
+	if err != nil {
+		return nil, err
+	}
+	if !valid {
+		return nil, errors.New("invalid or expired OTP")
+	}
+
+	u, err := s.users.FindByLogin(ctx, login)
+	if err != nil {
+		return nil, errors.New("user not found")
+	}
+
+	if s.audit != nil {
+		s.audit.Log(ctx, u.ID, "login_success", map[string]any{"login": login})
 	}
 
 	// enforce single active session (refresh token) per user
@@ -118,6 +276,202 @@ func (s *AuthService) Login(ctx context.Context, req *LoginRequest) (*AuthTokens
 		TokenType:    "Bearer",
 	}, nil
 }
+
+// ResendOTP Resends OTP for verify or login
+func (s *AuthService) ResendOTP(ctx context.Context, email, purpose string) error {
+	email = strings.TrimSpace(strings.ToLower(email))
+	
+	// Check if user exists
+	_, err := s.users.FindByLogin(ctx, email)
+	if err != nil {
+		return errors.New("user not found")
+	}
+	
+	otp, err := s.generateOTP(ctx, email, purpose)
+	if err != nil {
+		return err
+	}
+	
+	// Send OTP via Email
+	if s.email != nil {
+		if err := s.email.SendOTP(email, otp, purpose); err != nil {
+			fmt.Printf("[ResendOTP] Failed to send OTP to %s: %v\n", email, err)
+			return err
+		}
+		fmt.Printf("[ResendOTP] OTP sent to %s for purpose: %s\n", email, purpose)
+	} else {
+		fmt.Printf("[ResendOTP] Email service nil - OTP for %s: %s\n", email, otp)
+	}
+	
+	return nil
+}
+
+func (s *AuthService) LoginLegacy(ctx context.Context, req *LoginRequest) (*AuthTokens, error) {
+	// Replaced by 2-step Login. Keeping code here if needed for rollback, 
+	// or user can call LoginVerify directly if we allowed static OTP (not implemented).
+	// This function is effectively the old Login() logic.
+	return nil, errors.New("use 2-step login")
+}
+
+// ChangePassword allows a logged-in user to change their password
+func (s *AuthService) ChangePassword(ctx context.Context, userID uuid.UUID, req *dto.ChangePasswordRequest) error {
+	u, err := s.users.GetByUUID(ctx, userID)
+	if err != nil {
+		return errors.New("user not found")
+	}
+
+	// Verify old password
+	if err := s.users.CheckPassword(ctx, u, req.OldPassword); err != nil {
+		return errors.New("invalid old password")
+	}
+
+	// Hash new password
+	hash, err := repository.BcryptHash(req.NewPassword)
+	if err != nil {
+		return err
+	}
+
+	u.PasswordHash = hash
+	if err := s.users.Update(ctx, u); err != nil {
+		return err
+	}
+
+	// Optional: Revoke all sessions?
+	// _ = s.refreshTok.DeleteByUser(ctx, u.ID)
+
+	if s.audit != nil {
+		s.audit.Log(ctx, u.ID, "password_changed", nil)
+	}
+	return nil
+}
+
+// ForgotPassword initiates the password reset flow
+func (s *AuthService) ForgotPassword(ctx context.Context, email string) error {
+	email = strings.TrimSpace(strings.ToLower(email))
+	u, err := s.users.FindByLogin(ctx, email)
+	if err != nil {
+		// Return nil to prevent email enumeration? 
+		// For this project, explicit error might be fine, or just return nil.
+		// Let's return nil but log it.
+		return nil
+	}
+
+	otp, err := s.generateOTP(ctx, email, "reset")
+	if err != nil {
+		fmt.Printf("[ForgotPassword] Failed to generate OTP: %v\n", err)
+		return err
+	}
+	fmt.Printf("[ForgotPassword] Generated OTP for %s: %s\n", email, otp)
+
+	// Send OTP via Email
+	if s.email != nil {
+		fmt.Printf("[ForgotPassword] Sending OTP via email service...\n")
+		if err := s.email.SendOTP(email, otp, "reset"); err != nil {
+			fmt.Printf("[EMAIL] Failed to send reset password OTP to %s: %v\n", email, err)
+			return err
+		}
+		fmt.Printf("[ForgotPassword] Email sent successfully\n")
+	} else {
+		fmt.Printf("[ForgotPassword] Email service is nil - printing OTP instead\n")
+		fmt.Printf("[OTP] Reset Password OTP for %s: %s\n", email, otp)
+	}
+
+	if s.audit != nil {
+		s.audit.Log(ctx, u.ID, "reset_password_requested", nil)
+	}
+	return nil
+}
+
+// ResetPassword completes the password reset flow
+func (s *AuthService) ResetPassword(ctx context.Context, req *dto.ResetPasswordRequest) error {
+	email := strings.TrimSpace(strings.ToLower(req.Email))
+	
+	valid, err := s.validateOTP(ctx, email, "reset", req.OTP)
+	if err != nil {
+		return err
+	}
+	if !valid {
+		return errors.New("invalid or expired OTP")
+	}
+
+	u, err := s.users.FindByLogin(ctx, email)
+	if err != nil {
+		return errors.New("user not found")
+	}
+
+	hash, err := repository.BcryptHash(req.NewPassword)
+	if err != nil {
+		return err
+	}
+
+	u.PasswordHash = hash
+	if err := s.users.Update(ctx, u); err != nil {
+		return err
+	}
+
+	// Revoke all sessions on password reset
+	_ = s.refreshTok.DeleteByUser(ctx, u.ID)
+
+	if s.audit != nil {
+		s.audit.Log(ctx, u.ID, "password_reset_success", nil)
+	}
+
+	return nil
+}
+
+/* ====== Internals ====== */
+
+func (s *AuthService) generateOTP(ctx context.Context, email, purpose string) (string, error) {
+	// 6 digit numeric
+	b := make([]byte, 3)
+	if _, err := rand.Read(b); err != nil {
+		return "", err
+	}
+	// just a simple random number
+	// Better: crypto/rand -> int
+	
+	otp := "123456" // Default for DEV if no random
+	// Make it random
+	digits := "0123456789"
+	otpB := make([]byte, 6)
+	if _, err := rand.Read(otpB); err == nil {
+		for i := 0; i < 6; i++ {
+			otpB[i] = digits[int(otpB[i])%10]
+		}
+		otp = string(otpB)
+	}
+
+	key := fmt.Sprintf("otp:%s:%s", purpose, email)
+	// Store in Redis, TTL 5 mins
+	if s.redis != nil {
+		err := s.redis.Set(ctx, key, otp, 5*time.Minute).Err()
+		if err != nil {
+			return "", err
+		}
+	}
+	return otp, nil
+}
+
+func (s *AuthService) validateOTP(ctx context.Context, email, purpose, otp string) (bool, error) {
+	if s.redis == nil {
+		return false, errors.New("redis not available")
+	}
+	key := fmt.Sprintf("otp:%s:%s", purpose, email)
+	val, err := s.redis.Get(ctx, key).Result()
+	if err == redis.Nil {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	if val == otp {
+		// Consume OTP
+		s.redis.Del(ctx, key)
+		return true, nil
+	}
+	return false, nil
+}
+
 
 func (s *AuthService) Refresh(ctx context.Context, req *RefreshRequest) (*AuthTokens, error) {
 	if req == nil || req.RefreshToken == "" {
@@ -165,16 +519,14 @@ func (s *AuthService) Logout(ctx context.Context, refreshToken string) error {
 	return s.refreshTok.Revoke(ctx, refreshToken)
 }
 
-/* ====== Internals ====== */
-
 func (s *AuthService) accessTTL() time.Duration {
 	if s.cfg != nil && s.cfg.Auth.AccessTokenExpiry > 0 {
 		return s.cfg.Auth.AccessTokenExpiry
 	}
 	return 15 * time.Minute
 }
+
 func (s *AuthService) refreshTTL() time.Duration {
-	// fallback: 7d
 	return 7 * 24 * time.Hour
 }
 

@@ -23,6 +23,7 @@ type User struct {
 	Alamat  string `gorm:"size:255;not null;default:''" json:"alamat"`
 
 	BirthDate    *time.Time `gorm:"not null" json:"birth_date"` // sekarang wajib terisi
+	EmailVerifiedAt *time.Time `json:"email_verified_at"`
 	PasswordHash string     `gorm:"size:255;not null" json:"-"`
 
 	CreatedAt time.Time `json:"created_at"`

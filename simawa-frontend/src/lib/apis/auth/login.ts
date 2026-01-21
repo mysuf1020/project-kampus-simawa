@@ -1,6 +1,7 @@
 type LoginPayload = {
   email: string
   password: string
+  captchaToken?: string | null
 }
 
 type BackendAuthTokens = {
@@ -31,6 +32,7 @@ export default async function loginAction(payload: LoginPayload): Promise<AuthRe
   const body = {
     login: payload.email,
     password: payload.password,
+    captcha_token: payload.captchaToken,
   }
 
   try {

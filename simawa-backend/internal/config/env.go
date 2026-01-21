@@ -16,6 +16,8 @@ type Env struct {
 	Minio       MinioEnv
 	Auth        AuthEnv
 	Redis       RedisEnv
+	Captcha     CaptchaEnv
+	SMTP        SMTPEnv
 }
 
 type ServerEnv struct {
@@ -56,17 +58,32 @@ type RedisEnv struct {
 	DB       int    `envconfig:"REDIS_DB" default:"0"`
 }
 
+type CaptchaEnv struct {
+	Secret string `envconfig:"CAPTCHA_SECRET" default:""`
+}
+
+type SMTPEnv struct {
+	Host     string `envconfig:"SMTP_HOST" default:"smtp.gmail.com"`
+	Port     int    `envconfig:"SMTP_PORT" default:"587"`
+	User     string `envconfig:"SMTP_USER" default:""`
+	Password string `envconfig:"SMTP_PASSWORD" default:""`
+	From     string `envconfig:"SMTP_FROM" default:"noreply@raharja.info"`
+	FromName string `envconfig:"SMTP_FROM_NAME" default:"SIMAWA Raharja"`
+}
+
 // GetEnv mirrors the backoffice-backend style: load .env files by gin mode,
 // then populate structured configuration.
 func GetEnv() (*Env, error) {
+	// Always try to load .env first
+	_ = godotenv.Load(".env")
+	
+	// Then override with mode-specific env if exists
 	if gin.Mode() != gin.ReleaseMode {
 		switch gin.Mode() {
 		case gin.DebugMode:
 			_ = godotenv.Load(".env.debug")
 		case gin.TestMode:
 			_ = godotenv.Load(".env.test")
-		default:
-			_ = godotenv.Load(".env")
 		}
 	}
 
@@ -88,6 +105,9 @@ func GetEnv() (*Env, error) {
 	}
 	if err := envconfig.Process("", &env.Redis); err != nil {
 		return nil, fmt.Errorf("load redis env: %w", err)
+	}
+	if err := envconfig.Process("", &env.SMTP); err != nil {
+		return nil, fmt.Errorf("load smtp env: %w", err)
 	}
 	return env, nil
 }

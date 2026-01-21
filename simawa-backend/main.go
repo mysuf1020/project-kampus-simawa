@@ -29,7 +29,6 @@ func main() {
 		&model.UserRole{},
 		&model.RefreshToken{},
 		&model.Surat{},
-		&model.SuratTemplate{},
 		&model.Organization{},
 		&model.Activity{},
 		&model.LPJ{},

@@ -36,3 +36,18 @@ func UploadToMinio(
 	return key, nil
 }
 
+// DeleteFromMinio removes an object from the specified Minio bucket.
+func DeleteFromMinio(ctx context.Context, client *minio.Client, bucket, key string) error {
+	if client == nil {
+		return fmt.Errorf("minio client nil")
+	}
+	if bucket == "" {
+		return fmt.Errorf("minio bucket empty")
+	}
+	if key == "" {
+		// If key is empty, consider it already deleted or non-existent
+		return nil
+	}
+	return client.RemoveObject(ctx, bucket, key, minio.RemoveObjectOptions{})
+}
+

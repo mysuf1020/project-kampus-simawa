@@ -29,7 +29,9 @@ export function LatestActivityCard({
     <Card className="border-neutral-200 shadow-sm h-full flex flex-col">
       <CardHeader className="flex flex-row items-center justify-between pb-4 border-b border-neutral-100 bg-neutral-50/50">
         <div className="space-y-1">
-          <CardTitle className="text-base font-semibold text-neutral-900">Aktivitas Terbaru</CardTitle>
+          <CardTitle className="text-base font-semibold text-neutral-900">
+            Aktivitas Terbaru
+          </CardTitle>
           <CardDescription className="text-xs text-neutral-500">
             Pencapaian dan laporan kinerja terkini.
           </CardDescription>
@@ -50,13 +52,13 @@ export function LatestActivityCard({
         </Button>
       </CardHeader>
       <CardContent className="p-0 flex-1">
-        {(isLoading) && (
+        {isLoading && (
           <div className="flex flex-col items-center justify-center py-12 text-neutral-500">
             <Spinner size="sm" className="mb-2 text-brand-600" />
             <span className="text-xs">Memuat aktivitas...</span>
           </div>
         )}
-        
+
         {isError && (
           <div className="flex flex-col items-center justify-center py-12 text-red-500">
             <span className="text-xs">Gagal memuat data.</span>
@@ -88,7 +90,10 @@ export function LatestActivityCard({
                     Laporan Pertanggungjawaban (LPJ) telah disetujui.
                   </p>
                 </div>
-                <Badge variant="outline" className="shrink-0 bg-white border-neutral-200 text-neutral-500 text-[10px] font-normal">
+                <Badge
+                  variant="outline"
+                  className="shrink-0 bg-white border-neutral-200 text-neutral-500 text-[10px] font-normal"
+                >
                   Selesai
                 </Badge>
               </div>
@@ -96,10 +101,14 @@ export function LatestActivityCard({
           </div>
         )}
       </CardContent>
-      
+
       {!isLoading && !isError && items && items.length > 0 && (
         <div className="p-3 border-t border-neutral-100 bg-neutral-50/30">
-          <Button variant="ghost" size="sm" className="w-full text-xs text-brand-600 hover:text-brand-700 hover:bg-brand-50 h-8 justify-center">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full text-xs text-brand-600 hover:text-brand-700 hover:bg-brand-50 h-8 justify-center"
+          >
             Lihat Semua Aktivitas <ArrowRight className="ml-1 h-3 w-3" />
           </Button>
         </div>

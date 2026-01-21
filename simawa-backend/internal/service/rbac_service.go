@@ -123,6 +123,39 @@ func (s *RBACService) ListAssignments(ctx context.Context, userID uuid.UUID) ([]
 	return s.userRoles.ListAssignments(ctx, userID)
 }
 
+// IsBEMAdmin checks if user has BEM_ADMIN role (can approve surat, lpj, etc)
+func (s *RBACService) IsBEMAdmin(ctx context.Context, userID uuid.UUID) (bool, error) {
+	return s.RequireAny(ctx, userID, model.RoleAdmin, model.RoleBEMAdmin) == nil, nil
+}
+
+// IsDEMAAdmin checks if user has DEMA_ADMIN role (view only)
+func (s *RBACService) IsDEMAAdmin(ctx context.Context, userID uuid.UUID) (bool, error) {
+	return s.RequireAny(ctx, userID, model.RoleDEMAAdmin) == nil, nil
+}
+
+// CanApproveSurat checks if user can approve/reject/revise surat
+// Only ADMIN and BEM_ADMIN can approve, DEMA_ADMIN is view only
+func (s *RBACService) CanApproveSurat(ctx context.Context, userID uuid.UUID) (bool, error) {
+	return s.IsBEMAdmin(ctx, userID)
+}
+
+// CanApproveLPJ checks if user can approve/reject/revise LPJ
+// Only ADMIN and BEM_ADMIN can approve, DEMA_ADMIN is view only
+func (s *RBACService) CanApproveLPJ(ctx context.Context, userID uuid.UUID) (bool, error) {
+	return s.IsBEMAdmin(ctx, userID)
+}
+
+// CanApproveActivity checks if user can approve/reject/revise activity
+// Only ADMIN and BEM_ADMIN can approve, DEMA_ADMIN is view only
+func (s *RBACService) CanApproveActivity(ctx context.Context, userID uuid.UUID) (bool, error) {
+	return s.IsBEMAdmin(ctx, userID)
+}
+
+// CanViewAll checks if user can view all data (ADMIN, BEM_ADMIN, DEMA_ADMIN)
+func (s *RBACService) CanViewAll(ctx context.Context, userID uuid.UUID) (bool, error) {
+	return s.IsAdmin(ctx, userID)
+}
+
 // CanManageOrg determines if user can manage given org:
 // - ADMIN selalu boleh manage semua organisasi
 // - BEM_ADMIN jika org.Type == BEM

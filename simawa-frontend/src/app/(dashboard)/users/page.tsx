@@ -50,7 +50,7 @@ export default function UsersPage() {
   )
 
   // Desktop: useQuery with pagination
-  const { data, isLoading, isError, refetch, isFetching } = useQuery({
+  const { data, isLoading, isError, error, refetch, isFetching } = useQuery({
     queryKey: ['users', search, orgFilterId, page],
     queryFn: () =>
       listUsers({
@@ -84,7 +84,7 @@ export default function UsersPage() {
 
   const allInfiniteUsers = useMemo(
     () => usersInfiniteQuery.data?.pages.flatMap((p) => p.items ?? []) ?? [],
-    [usersInfiniteQuery.data?.pages]
+    [usersInfiniteQuery.data?.pages],
   )
 
   const items = data?.items ?? []
@@ -100,7 +100,12 @@ export default function UsersPage() {
 
   return (
     <Page>
-      <Page.Header breadcrumbs={[{ href: '/dashboard', children: 'Dashboard' }, { href: '/users', children: 'Pengguna' }]}>
+      <Page.Header
+        breadcrumbs={[
+          { href: '/dashboard', children: 'Dashboard' },
+          { href: '/users', children: 'Pengguna' },
+        ]}
+      >
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-neutral-900">
@@ -116,16 +121,18 @@ export default function UsersPage() {
           </Button>
         </div>
       </Page.Header>
-      
+
       <Page.Body>
         <Container>
           <div className="grid gap-6">
             {/* Stats / Overview could go here if needed */}
-            
+
             <Card className="border-neutral-200 shadow-sm">
               <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4">
                 <div className="space-y-1">
-                  <CardTitle className="text-sm sm:text-base font-semibold">Pengguna Terdaftar</CardTitle>
+                  <CardTitle className="text-sm sm:text-base font-semibold">
+                    Pengguna Terdaftar
+                  </CardTitle>
                   <CardDescription className="text-xs">
                     Semua pengguna yang memiliki akun di SIMAWA.
                   </CardDescription>
@@ -136,7 +143,7 @@ export default function UsersPage() {
                   </Badge>
                 )}
               </CardHeader>
-              
+
               <CardContent className="space-y-6">
                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                   <div className="relative w-full md:w-72">
@@ -148,34 +155,34 @@ export default function UsersPage() {
                       className="pl-9 h-9 text-sm"
                     />
                   </div>
-                  
+
                   <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center md:w-auto">
-                     <div className="w-full sm:w-64">
-                        <AutoComplete
-                          placeholder="Filter Organisasi"
-                          value={orgFilterId}
-                          options={orgOptions}
-                          disabled={orgsQuery.isLoading}
-                          isLoading={orgsQuery.isFetching}
-                          onSelect={(value) => setOrgFilterId(value || '')}
-                          closable
-                          onRemove={() => setOrgFilterId('')}
-                          customRender={(opt) => {
-                            const org = (opt as { org?: Organization }).org
-                            if (!org) return opt.label
-                            return (
-                              <div className="flex flex-col py-1">
-                                <span className="text-sm font-medium text-neutral-900">
-                                  {org.name}
-                                </span>
-                                <span className="text-xs text-neutral-500">
-                                  {org.type || 'ORG'} • {org.slug ? `/${org.slug}` : '-'}
-                                </span>
-                              </div>
-                            )
-                          }}
-                        />
-                     </div>
+                    <div className="w-full sm:w-64">
+                      <AutoComplete
+                        placeholder="Filter Organisasi"
+                        value={orgFilterId}
+                        options={orgOptions}
+                        disabled={orgsQuery.isLoading}
+                        isLoading={orgsQuery.isFetching}
+                        onSelect={(value) => setOrgFilterId(value || '')}
+                        closable
+                        onRemove={() => setOrgFilterId('')}
+                        customRender={(opt) => {
+                          const org = (opt as { org?: Organization }).org
+                          if (!org) return opt.label
+                          return (
+                            <div className="flex flex-col py-1">
+                              <span className="text-sm font-medium text-neutral-900">
+                                {org.name}
+                              </span>
+                              <span className="text-xs text-neutral-500">
+                                {org.type || 'ORG'} • {org.slug ? `/${org.slug}` : '-'}
+                              </span>
+                            </div>
+                          )
+                        }}
+                      />
+                    </div>
                   </div>
                 </div>
 
@@ -185,15 +192,30 @@ export default function UsersPage() {
                   </div>
                 ) : isError ? (
                   <div className="rounded-lg border border-red-100 bg-red-50 p-4 text-center text-sm text-red-600">
-                    Gagal memuat daftar pengguna. Silakan coba lagi.
+                    <p className="font-semibold">Gagal memuat daftar pengguna.</p>
+                    <p className="mt-1 text-xs">
+                      {error?.message || 'Terjadi kesalahan saat menghubungi server.'}
+                    </p>
+                    <Button
+                      variant="link"
+                      size="sm"
+                      onClick={() => refetch()}
+                      className="mt-2 h-auto p-0 text-red-700"
+                    >
+                      Coba lagi
+                    </Button>
                   </div>
                 ) : items.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-12 text-center">
                     <div className="flex h-12 w-12 items-center justify-center rounded-full bg-neutral-100">
                       <UsersIcon className="h-6 w-6 text-neutral-400" />
                     </div>
-                    <p className="mt-3 text-sm font-medium text-neutral-900">Tidak ada pengguna ditemukan</p>
-                    <p className="mt-1 text-xs text-neutral-500">Coba ubah kata kunci pencarian atau filter Anda.</p>
+                    <p className="mt-3 text-sm font-medium text-neutral-900">
+                      Tidak ada pengguna ditemukan
+                    </p>
+                    <p className="mt-1 text-xs text-neutral-500">
+                      Coba ubah kata kunci pencarian atau filter Anda.
+                    </p>
                   </div>
                 ) : (
                   <>
@@ -205,9 +227,7 @@ export default function UsersPage() {
                         ))}
                       </div>
                       <div className="flex items-center justify-between border-t border-neutral-100 pt-4 mt-2">
-                        <span className="text-xs text-neutral-500">
-                          {totalText}
-                        </span>
+                        <span className="text-xs text-neutral-500">{totalText}</span>
                         <div className="flex gap-2">
                           <Button
                             size="sm"
@@ -218,8 +238,8 @@ export default function UsersPage() {
                           >
                             Sebelumnya
                           </Button>
-                          <Button 
-                            size="sm" 
+                          <Button
+                            size="sm"
                             variant="outline"
                             className="h-8 text-xs"
                             onClick={() => setPage((p) => p + 1)}
@@ -278,28 +298,30 @@ function UserRow({ user }: { user: UserWithRoles }) {
         </div>
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-             <p className="text-sm font-medium text-neutral-900 leading-none">
-              {user.first_name ? `${user.first_name} ${user.second_name || ''}` : user.username}
+            <p className="text-sm font-medium text-neutral-900 leading-none">
+              {user.first_name
+                ? `${user.first_name} ${user.second_name || ''}`
+                : user.username}
             </p>
             {user.nim && (
-               <span className="hidden sm:inline-flex rounded bg-neutral-100 px-1.5 py-0.5 text-[10px] font-medium text-neutral-600">
+              <span className="hidden sm:inline-flex rounded bg-neutral-100 px-1.5 py-0.5 text-[10px] font-medium text-neutral-600">
                 {user.nim}
               </span>
             )}
           </div>
-          
+
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-neutral-500">
-             <span>{user.email}</span>
-             {user.jurusan && (
-               <>
-                 <span className="text-neutral-300">•</span>
-                 <span>{user.jurusan}</span>
-               </>
-             )}
+            <span>{user.email}</span>
+            {user.jurusan && (
+              <>
+                <span className="text-neutral-300">•</span>
+                <span>{user.jurusan}</span>
+              </>
+            )}
           </div>
         </div>
       </div>
-      
+
       <div className="flex items-center gap-2 pl-12 sm:pl-0">
         {isLoading ? (
           <div className="h-5 w-16 animate-pulse rounded bg-neutral-100" />
@@ -310,7 +332,7 @@ function UserRow({ user }: { user: UserWithRoles }) {
                 key={code}
                 variant="outline"
                 className={`text-[10px] px-2 py-0.5 font-medium border-neutral-200 ${
-                  code === 'ADMIN' || code.includes('_ADMIN') 
+                  code === 'ADMIN' || code.includes('_ADMIN')
                     ? 'bg-amber-50 text-amber-700 border-amber-200'
                     : 'bg-neutral-50 text-neutral-600'
                 }`}

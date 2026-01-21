@@ -78,24 +78,53 @@ export function RoleGuideCard() {
           </h4>
           <ul className="space-y-2 text-sm text-neutral-600 pl-1">
             <li className="flex gap-2 items-start">
-              <Badge variant="outline" className="mt-0.5 bg-neutral-50 text-neutral-600 border-neutral-200">USER</Badge>
+              <Badge
+                variant="outline"
+                className="mt-0.5 bg-neutral-50 text-neutral-600 border-neutral-200"
+              >
+                USER
+              </Badge>
               <span>Akses dasar (tanpa fitur kelola).</span>
             </li>
             <li className="flex gap-2 items-start">
-              <Badge variant="outline" className="mt-0.5 bg-amber-50 text-amber-700 border-amber-200">ADMIN</Badge>
+              <Badge
+                variant="outline"
+                className="mt-0.5 bg-amber-50 text-amber-700 border-amber-200"
+              >
+                ADMIN
+              </Badge>
               <span>Admin utama (akses penuh ke semua organisasi & menu admin).</span>
             </li>
             <li className="flex gap-2 items-start">
-              <Badge variant="outline" className="mt-0.5 bg-blue-50 text-blue-700 border-blue-200">BEM_ADMIN</Badge>
+              <Badge
+                variant="outline"
+                className="mt-0.5 bg-blue-50 text-blue-700 border-blue-200"
+              >
+                BEM_ADMIN
+              </Badge>
               <span>Admin untuk organisasi tipe BEM.</span>
             </li>
             <li className="flex gap-2 items-start">
-              <Badge variant="outline" className="mt-0.5 bg-blue-50 text-blue-700 border-blue-200">DEMA_ADMIN</Badge>
+              <Badge
+                variant="outline"
+                className="mt-0.5 bg-blue-50 text-blue-700 border-blue-200"
+              >
+                DEMA_ADMIN
+              </Badge>
               <span>Admin untuk organisasi tipe DEMA.</span>
             </li>
             <li className="flex gap-2 items-start">
-              <Badge variant="outline" className="mt-0.5 bg-brand-50 text-brand-700 border-brand-200">ORG_*</Badge>
-              <span>Admin spesifik organisasi (contoh: <span className="font-medium">ORG_ABSTER</span>). Dibuat otomatis saat user dijadikan admin di menu Organisasi.</span>
+              <Badge
+                variant="outline"
+                className="mt-0.5 bg-brand-50 text-brand-700 border-brand-200"
+              >
+                ORG_*
+              </Badge>
+              <span>
+                Admin spesifik organisasi (contoh:{' '}
+                <span className="font-medium">ORG_ABSTER</span>). Dibuat otomatis saat
+                user dijadikan admin di menu Organisasi.
+              </span>
             </li>
           </ul>
         </div>
@@ -109,48 +138,108 @@ export function RoleGuideCard() {
             <table className="min-w-[760px] w-full border-collapse bg-white text-xs">
               <thead className="bg-neutral-50/50 text-neutral-500 font-medium">
                 <tr>
-                  <th className="border-b border-neutral-100 px-4 py-3 text-left">Fitur</th>
-                  <th className="border-b border-neutral-100 px-4 py-3 text-center">USER</th>
-                  <th className="border-b border-neutral-100 px-4 py-3 text-center">ORG_*</th>
-                  <th className="border-b border-neutral-100 px-4 py-3 text-center">BEM/DEMA</th>
-                  <th className="border-b border-neutral-100 px-4 py-3 text-center">ADMIN</th>
+                  <th className="border-b border-neutral-100 px-4 py-3 text-left">
+                    Fitur
+                  </th>
+                  <th className="border-b border-neutral-100 px-4 py-3 text-center">
+                    USER
+                  </th>
+                  <th className="border-b border-neutral-100 px-4 py-3 text-center">
+                    ORG_*
+                  </th>
+                  <th className="border-b border-neutral-100 px-4 py-3 text-center">
+                    BEM/DEMA
+                  </th>
+                  <th className="border-b border-neutral-100 px-4 py-3 text-center">
+                    ADMIN
+                  </th>
                 </tr>
               </thead>
               <tbody className="text-neutral-600 divide-y divide-neutral-100">
                 <tr>
-                  <td className="px-4 py-3 font-medium text-neutral-900">Kelola Profil Organisasi</td>
-                  <td className="px-4 py-3 text-center"><No /></td>
-                  <td className="px-4 py-3 text-center"><Yes /></td>
-                  <td className="px-4 py-3 text-center"><Yes /></td>
-                  <td className="px-4 py-3 text-center"><Yes /></td>
+                  <td className="px-4 py-3 font-medium text-neutral-900">
+                    Kelola Profil Organisasi
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <No />
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <Yes />
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <Yes />
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <Yes />
+                  </td>
                 </tr>
                 <tr>
-                  <td className="px-4 py-3 font-medium text-neutral-900">Kelola Anggota</td>
-                  <td className="px-4 py-3 text-center"><No /></td>
-                  <td className="px-4 py-3 text-center"><Yes /></td>
-                  <td className="px-4 py-3 text-center"><Yes /></td>
-                  <td className="px-4 py-3 text-center"><Yes /></td>
+                  <td className="px-4 py-3 font-medium text-neutral-900">
+                    Kelola Anggota
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <No />
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <Yes />
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <Yes />
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <Yes />
+                  </td>
                 </tr>
                 <tr>
-                  <td className="px-4 py-3 font-medium text-neutral-900">Proses Pendaftaran</td>
-                  <td className="px-4 py-3 text-center"><No /></td>
-                  <td className="px-4 py-3 text-center"><Yes /></td>
-                  <td className="px-4 py-3 text-center"><Yes /></td>
-                  <td className="px-4 py-3 text-center"><Yes /></td>
+                  <td className="px-4 py-3 font-medium text-neutral-900">
+                    Proses Pendaftaran
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <No />
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <Yes />
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <Yes />
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <Yes />
+                  </td>
                 </tr>
                 <tr>
-                  <td className="px-4 py-3 font-medium text-neutral-900">Direktori User</td>
-                  <td className="px-4 py-3 text-center"><No /></td>
-                  <td className="px-4 py-3 text-center"><No /></td>
-                  <td className="px-4 py-3 text-center"><Yes /></td>
-                  <td className="px-4 py-3 text-center"><Yes /></td>
+                  <td className="px-4 py-3 font-medium text-neutral-900">
+                    Direktori User
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <No />
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <No />
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <Yes />
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <Yes />
+                  </td>
                 </tr>
                 <tr>
-                  <td className="px-4 py-3 font-medium text-neutral-900">Laporan / LPJ</td>
-                  <td className="px-4 py-3 text-center"><No /></td>
-                  <td className="px-4 py-3 text-center"><No /></td>
-                  <td className="px-4 py-3 text-center"><Yes /></td>
-                  <td className="px-4 py-3 text-center"><Yes /></td>
+                  <td className="px-4 py-3 font-medium text-neutral-900">
+                    Laporan / LPJ
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <No />
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <No />
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <Yes />
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <Yes />
+                  </td>
                 </tr>
               </tbody>
             </table>
@@ -179,7 +268,9 @@ export function RoleGuideCard() {
                     <p className="truncate text-sm font-medium text-neutral-900">
                       {o.name}
                     </p>
-                    <p className="text-[10px] text-neutral-500 font-mono mt-0.5">/{o.slug}</p>
+                    <p className="text-[10px] text-neutral-500 font-mono mt-0.5">
+                      /{o.slug}
+                    </p>
                   </div>
                   <Badge
                     variant="secondary"
@@ -197,21 +288,33 @@ export function RoleGuideCard() {
           <h4 className="font-medium text-blue-900 mb-2">Tips Pemberian Akses</h4>
           <ul className="list-disc space-y-1 pl-4 text-xs text-blue-800/80">
             <li>
-              <span className="font-semibold text-blue-900">Kelola Satu Organisasi:</span> Buka menu <span className="font-medium">Organisasi</span>, pilih tab Anggota, lalu tambahkan user sebagai ADMIN di sana.
+              <span className="font-semibold text-blue-900">Kelola Satu Organisasi:</span>{' '}
+              Buka menu <span className="font-medium">Organisasi</span>, pilih tab
+              Anggota, lalu tambahkan user sebagai ADMIN di sana.
             </li>
             <li>
-              <span className="font-semibold text-blue-900">Admin Global:</span> Gunakan form di atas untuk memberikan role <span className="font-medium">ADMIN</span>.
+              <span className="font-semibold text-blue-900">Admin Global:</span> Gunakan
+              form di atas untuk memberikan role{' '}
+              <span className="font-medium">ADMIN</span>.
             </li>
           </ul>
-          
+
           <div className="flex gap-2 mt-4">
             <Link href="/organizations">
-              <Button size="sm" variant="outline" className="bg-white border-blue-200 text-blue-700 hover:bg-blue-50">
+              <Button
+                size="sm"
+                variant="outline"
+                className="bg-white border-blue-200 text-blue-700 hover:bg-blue-50"
+              >
                 Ke Organisasi
               </Button>
             </Link>
             <Link href="/users">
-              <Button size="sm" variant="outline" className="bg-white border-blue-200 text-blue-700 hover:bg-blue-50">
+              <Button
+                size="sm"
+                variant="outline"
+                className="bg-white border-blue-200 text-blue-700 hover:bg-blue-50"
+              >
                 Ke Users
               </Button>
             </Link>

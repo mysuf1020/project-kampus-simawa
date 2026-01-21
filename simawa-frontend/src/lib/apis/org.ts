@@ -46,7 +46,7 @@ export const updateOrganization = async (id: string, payload: Partial<Organizati
   return data.data
 }
 
-export type UploadOrganizationImageKind = 'hero' | 'logo'
+export type UploadOrganizationImageKind = 'hero' | 'logo' | 'gallery'
 
 export type UploadOrganizationImageResponse = {
   file_key: string
@@ -70,5 +70,14 @@ export const uploadOrganizationImage = async (
     },
   )
 
+  return data
+}
+
+export const uploadOrgHero = async (id: string, file: File) => {
+  return uploadOrganizationImage(id, 'hero', file)
+}
+
+export const deleteOrgHero = async (id: string) => {
+  const { data } = await api.delete<ApiResponse<void>>(`/v1/orgs/${id}/hero`)
   return data
 }

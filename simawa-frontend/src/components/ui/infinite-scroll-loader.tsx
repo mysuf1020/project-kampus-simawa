@@ -37,10 +37,7 @@ export function InfiniteScrollLoader({
   if (!hasMore) return null
 
   return (
-    <div
-      ref={loaderRef}
-      className="flex justify-center items-center py-6 w-full"
-    >
+    <div ref={loaderRef} className="flex justify-center items-center py-6 w-full">
       {isLoading && <Spinner size="md" />}
     </div>
   )

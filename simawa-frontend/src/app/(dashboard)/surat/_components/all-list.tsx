@@ -46,7 +46,9 @@ export function AllSuratListCard() {
     <Card className="border-neutral-200 shadow-sm h-full flex flex-col">
       <CardHeader className="flex flex-row items-center justify-between pb-4 border-b border-neutral-100 bg-neutral-50/50">
         <div className="space-y-1">
-          <CardTitle className="text-base font-semibold text-neutral-900">Semua Surat</CardTitle>
+          <CardTitle className="text-base font-semibold text-neutral-900">
+            Semua Surat
+          </CardTitle>
           <CardDescription className="text-xs text-neutral-500">
             Daftar surat terbaru di sistem (Admin View).
           </CardDescription>
@@ -73,7 +75,7 @@ export function AllSuratListCard() {
             <span className="text-xs">Memuat daftar surat...</span>
           </div>
         )}
-        
+
         {isError && (
           <div className="flex flex-col items-center justify-center py-12 text-red-500">
             <span className="text-xs">Gagal memuat daftar surat.</span>
@@ -109,12 +111,14 @@ export function AllSuratListCard() {
                       <span>•</span>
                       <span>No: {item.number || '-'}</span>
                       <span>•</span>
-                      <Badge 
-                        variant="secondary" 
+                      <Badge
+                        variant="secondary"
                         className={`text-[10px] h-5 px-1.5 font-normal border-none ${
-                          item.status === 'APPROVED' ? 'bg-green-50 text-green-700' :
-                          item.status === 'REJECTED' ? 'bg-red-50 text-red-700' :
-                          'bg-amber-50 text-amber-700'
+                          item.status === 'APPROVED'
+                            ? 'bg-green-50 text-green-700'
+                            : item.status === 'REJECTED'
+                              ? 'bg-red-50 text-red-700'
+                              : 'bg-amber-50 text-amber-700'
                         }`}
                       >
                         {item.status}
@@ -122,7 +126,7 @@ export function AllSuratListCard() {
                     </div>
                   </div>
                 </div>
-                
+
                 <Button
                   size="sm"
                   variant="ghost"

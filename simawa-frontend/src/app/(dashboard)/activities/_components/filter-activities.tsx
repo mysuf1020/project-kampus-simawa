@@ -55,61 +55,66 @@ export function FilterActivities({
   }, [searchDebounced, queryParams?.search, setQueryParams])
 
   return (
-    <div className="flex flex-col gap-3 bg-white p-3 rounded-lg border border-neutral-200 shadow-sm">
-      {/* Row 1: Org & Status selects */}
-      <div className="flex flex-wrap gap-2">
-        <Select value={orgId} onValueChange={onChange} disabled={isLoading}>
-          <SelectTrigger className="h-9 flex-1 min-w-[120px] max-w-[180px] bg-white border-neutral-200 text-xs">
-            <SelectValue placeholder="Organisasi">
-              {selectedName || 'Organisasi'}
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            {orgs?.map((org) => (
-              <SelectItem key={org.id} value={org.id} className="text-xs">
-                {org.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+    <div className="flex flex-wrap items-center gap-2 p-2 px-4 bg-white rounded-lg border border-neutral-200 shadow-sm">
+      <Select value={orgId} onValueChange={onChange} disabled={isLoading}>
+        <SelectTrigger className="h-7 w-auto min-w-[120px] bg-white border-neutral-200 text-xs px-2">
+          <SelectValue placeholder="Organisasi">
+            {selectedName || 'Organisasi'}
+          </SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          {orgs?.map((org) => (
+            <SelectItem key={org.id} value={org.id} className="text-xs">
+              {org.name}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
 
-        <Select
-          value={queryParams?.status || 'ALL'}
-          onValueChange={(value) =>
-            setQueryParams?.({ status: value === 'ALL' ? '' : value, page: '1' })
-          }
-        >
-          <SelectTrigger className="h-9 flex-1 min-w-[100px] max-w-[140px] bg-white border-neutral-200 text-xs">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="ALL" className="text-xs">Semua</SelectItem>
-            <SelectItem value="DRAFT" className="text-xs">Draft</SelectItem>
-            <SelectItem value="PENDING" className="text-xs">Menunggu</SelectItem>
-            <SelectItem value="APPROVED" className="text-xs">Disetujui</SelectItem>
-            <SelectItem value="REJECTED" className="text-xs">Ditolak</SelectItem>
-            <SelectItem value="COMPLETED" className="text-xs">Selesai</SelectItem>
-          </SelectContent>
-        </Select>
+      <Select
+        value={queryParams?.status || 'ALL'}
+        onValueChange={(value) =>
+          setQueryParams?.({ status: value === 'ALL' ? '' : value, page: '1' })
+        }
+      >
+        <SelectTrigger className="h-7 w-auto min-w-[90px] bg-white border-neutral-200 text-xs px-2">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="ALL" className="text-xs">
+            Semua
+          </SelectItem>
+          <SelectItem value="DRAFT" className="text-xs">
+            Draft
+          </SelectItem>
+          <SelectItem value="PENDING" className="text-xs">
+            Menunggu
+          </SelectItem>
+          <SelectItem value="APPROVED" className="text-xs">
+            Disetujui
+          </SelectItem>
+          <SelectItem value="REJECTED" className="text-xs">
+            Ditolak
+          </SelectItem>
+          <SelectItem value="COMPLETED" className="text-xs">
+            Selesai
+          </SelectItem>
+        </SelectContent>
+      </Select>
+
+      <div className="relative flex-1 min-w-[120px] max-w-[200px]">
+        <Search className="absolute left-2 top-1.5 h-3.5 w-3.5 text-neutral-400" />
+        <Input
+          className="h-7 pl-7 text-xs"
+          placeholder="Cari..."
+          value={searchValue}
+          onChange={(e) => setSearchValue(e.target.value)}
+        />
       </div>
 
-      {/* Row 2: Search & Count */}
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="relative flex-1 min-w-[140px]">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-neutral-400" />
-          <Input
-            className="h-9 pl-8 bg-white border-neutral-200 text-xs"
-            placeholder="Cari..."
-            value={searchValue}
-            onChange={(e) => setSearchValue(e.target.value)}
-          />
-        </div>
-
-        <div className="flex items-center gap-1.5 px-2.5 py-2 bg-brand-50 rounded-md border border-brand-100 text-brand-700 text-xs font-medium shrink-0">
-          <Sparkles className="h-3.5 w-3.5" />
-          <span className="font-bold">{outboxCount ?? 0}</span> 
-          <span className="hidden sm:inline">Aktivitas</span>
-        </div>
+      <div className="flex items-center gap-1.5 px-2 py-1 bg-brand-50 rounded text-brand-700 text-[10px] font-medium ml-auto">
+        <Sparkles className="h-3 w-3" />
+        <span className="font-bold">{outboxCount ?? 0}</span> aktivitas
       </div>
     </div>
   )

@@ -25,7 +25,7 @@ import type { SuratPageQueryParamsState } from '@/features/surat/query-params'
 import { FilterOutbox } from './_components/filter-outbox'
 import { InboxListCard } from './_components/inbox-list'
 import { OutboxListCard } from './_components/outbox-list'
-import { AllSuratListCard } from './_components/all-list'
+import { DraftFormCard } from './_components/draft-form'
 
 function SuratPageInner() {
   const [orgId, setOrgId] = useState('')
@@ -75,7 +75,7 @@ function SuratPageInner() {
 
   const allInfiniteOutbox = useMemo(
     () => outboxInfiniteQuery.data?.pages.flat() ?? [],
-    [outboxInfiniteQuery.data?.pages]
+    [outboxInfiniteQuery.data?.pages],
   )
 
   const filteredOutbox = (outboxQuery.data || []).filter((item) => {
@@ -100,7 +100,12 @@ function SuratPageInner() {
 
   return (
     <Page>
-      <Page.Header breadcrumbs={[{ href: '/dashboard', children: 'Dashboard' }, { href: '/surat', children: 'Surat' }]}>
+      <Page.Header
+        breadcrumbs={[
+          { href: '/dashboard', children: 'Dashboard' },
+          { href: '/surat', children: 'Surat' },
+        ]}
+      >
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-neutral-900">
@@ -112,7 +117,10 @@ function SuratPageInner() {
           </div>
           <div className="flex items-center gap-2">
             <Link href="/surat/create">
-              <Button size="sm" className="bg-brand-600 hover:bg-brand-700 text-white gap-2">
+              <Button
+                size="sm"
+                className="bg-brand-600 hover:bg-brand-700 text-white gap-2"
+              >
                 <Plus className="h-4 w-4" /> Buat Surat
               </Button>
             </Link>
@@ -130,7 +138,7 @@ function SuratPageInner() {
           </div>
         </div>
       </Page.Header>
-      
+
       <Page.Body>
         <Container>
           <Tabs
@@ -141,8 +149,11 @@ function SuratPageInner() {
             className="w-full space-y-6"
           >
             <TabsList className="w-full flex-wrap h-auto gap-1 p-1 bg-neutral-100/50 border border-neutral-200">
-              <TabsTrigger value="inbox" className="flex-1 min-w-[90px] gap-1.5 text-xs sm:text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm">
-                <span className="hidden sm:inline">Surat</span> Masuk
+              <TabsTrigger
+                value="inbox"
+                className="flex-1 min-w-[80px] gap-1.5 text-xs sm:text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm"
+              >
+                Daftar Surat
                 {pendingInboxCount > 0 && (
                   <Badge
                     variant="secondary"
@@ -152,16 +163,32 @@ function SuratPageInner() {
                   </Badge>
                 )}
               </TabsTrigger>
-              <TabsTrigger value="outbox" className="flex-1 min-w-[90px] text-xs sm:text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm">
-                <span className="hidden sm:inline">Riwayat</span> Keluar
+              <TabsTrigger
+                value="create"
+                className="flex-1 min-w-[80px] text-xs sm:text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm"
+              >
+                Buat Surat
               </TabsTrigger>
-              <TabsTrigger value="all" className="flex-1 min-w-[80px] text-xs sm:text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm">Semua</TabsTrigger>
+              <TabsTrigger
+                value="outbox"
+                className="flex-1 min-w-[80px] text-xs sm:text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm"
+              >
+                Riwayat
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="inbox" className="animate-in fade-in-50 duration-300">
-              <InboxListCard
-                data={inboxQuery.data}
-                isLoading={inboxQuery.isLoading}
+              <InboxListCard data={inboxQuery.data} isLoading={inboxQuery.isLoading} />
+            </TabsContent>
+
+            <TabsContent value="create" className="animate-in fade-in-50 duration-300">
+              <DraftFormCard
+                orgId={orgId}
+                onSent={() => {
+                  inboxQuery.refetch()
+                  outboxQuery.refetch()
+                  setQueryParams({ tab: 'inbox' })
+                }}
               />
             </TabsContent>
 
@@ -197,10 +224,6 @@ function SuratPageInner() {
                   />
                 </div>
               </div>
-            </TabsContent>
-
-            <TabsContent value="all" className="animate-in fade-in-50 duration-300">
-              <AllSuratListCard />
             </TabsContent>
           </Tabs>
         </Container>

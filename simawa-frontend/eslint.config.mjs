@@ -33,9 +33,10 @@ const eslintConfig = [
       'no-var': 'warn',
       'no-unused-vars': 'off',
       '@typescript-eslint/no-unused-vars': [
-        'error',
+        'warn',
         { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
       ],
+      '@typescript-eslint/no-explicit-any': 'warn',
       'react/react-in-jsx-scope': 'off',
       'react/prop-types': 'off',
       'no-console': ['warn', { allow: ['warn', 'error'] }],

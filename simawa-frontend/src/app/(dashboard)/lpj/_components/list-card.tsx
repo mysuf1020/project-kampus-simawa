@@ -58,8 +58,7 @@ export function LPJListCard({
       lpjId: string
       approve: boolean
       note?: string
-    }) =>
-      approveLPJ(lpjId, approve, note || (approve ? 'LPJ disetujui' : 'Ditolak')),
+    }) => approveLPJ(lpjId, approve, note || (approve ? 'LPJ disetujui' : 'Ditolak')),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['lpj'] })
       toast.success('Keputusan LPJ tersimpan')
@@ -156,15 +155,17 @@ export function LPJListCard({
     <Card className="border-neutral-200 shadow-sm">
       <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-neutral-100 bg-neutral-50/50 pb-4">
         <div className="space-y-0.5">
-          <CardTitle className="text-sm sm:text-base font-semibold text-neutral-900">Daftar LPJ</CardTitle>
+          <CardTitle className="text-sm sm:text-base font-semibold text-neutral-900">
+            Daftar LPJ
+          </CardTitle>
           <CardDescription className="text-xs text-neutral-500">
             Daftar laporan pertanggungjawaban.
           </CardDescription>
         </div>
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={onRefresh} 
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onRefresh}
           className="h-8 gap-2 bg-white text-xs font-medium text-neutral-700 hover:bg-neutral-50 w-full sm:w-auto"
         >
           {isFetching ? (
@@ -179,7 +180,7 @@ export function LPJListCard({
         {isLoading && (
           <div className="space-y-4">
             <div className="flex items-center gap-2 text-xs text-neutral-500">
-              <Spinner size="sm" /> 
+              <Spinner size="sm" />
               <span>Memuat data LPJ...</span>
             </div>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -199,14 +200,16 @@ export function LPJListCard({
             </div>
           </div>
         )}
-        
+
         {isError && (
           <div className="rounded-lg border border-red-100 bg-red-50 p-4 text-center">
             <p className="text-sm font-medium text-red-800">Gagal memuat data LPJ</p>
-            <p className="text-xs text-red-600 mt-1">Silakan coba segarkan kembali halaman ini.</p>
+            <p className="text-xs text-red-600 mt-1">
+              Silakan coba segarkan kembali halaman ini.
+            </p>
           </div>
         )}
-        
+
         {!isLoading && !isError && (!items || items.length === 0) && (
           <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-neutral-200 bg-neutral-50/50 py-12 text-center">
             <div className="rounded-full bg-neutral-100 p-3 mb-3">
@@ -228,17 +231,20 @@ export function LPJListCard({
               <div>
                 <div className="flex items-start justify-between gap-3 mb-2">
                   <div className="space-y-1">
-                    <h3 className="font-semibold text-neutral-900 line-clamp-1 text-sm" title={lpj.summary}>
+                    <h3
+                      className="font-semibold text-neutral-900 line-clamp-1 text-sm"
+                      title={lpj.summary}
+                    >
                       {lpj.summary || 'LPJ Kegiatan'}
                     </h3>
                     {lpj.activity_id && (
-                        <p className="text-xs text-neutral-500 truncate max-w-[180px]">
-                            Ref: {lpj.activity_id}
-                        </p>
+                      <p className="text-xs text-neutral-500 truncate max-w-[180px]">
+                        Ref: {lpj.activity_id}
+                      </p>
                     )}
                   </div>
-                  <Badge 
-                    variant="secondary" 
+                  <Badge
+                    variant="secondary"
                     className={`
                       shrink-0 text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5
                       ${statusTone[lpj.status] || 'bg-neutral-100 text-neutral-600 border-neutral-200'}
@@ -249,15 +255,17 @@ export function LPJListCard({
                 </div>
 
                 <div className="text-xs text-neutral-500 mb-4 space-y-1">
-                    <p>{renderMeta(lpj)}</p>
-                    {lpj.revision_no ? (
-                        <p className="font-medium text-amber-600">Revisi ke-{lpj.revision_no}</p>
-                    ) : null}
-                     {lpj.note && (
-                        <div className="mt-2 rounded-md bg-neutral-50 p-2 text-xs italic text-neutral-600 border border-neutral-100">
-                            "{lpj.note}"
-                        </div>
-                    )}
+                  <p>{renderMeta(lpj)}</p>
+                  {lpj.revision_no ? (
+                    <p className="font-medium text-amber-600">
+                      Revisi ke-{lpj.revision_no}
+                    </p>
+                  ) : null}
+                  {lpj.note && (
+                    <div className="mt-2 rounded-md bg-neutral-50 p-2 text-xs italic text-neutral-600 border border-neutral-100">
+                      &quot;{lpj.note}&quot;
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -278,7 +286,7 @@ export function LPJListCard({
                   )}
                   Unduh PDF
                 </Button>
-                
+
                 {lpj.status === 'PENDING' && (
                   <>
                     <Button
@@ -317,11 +325,11 @@ export function LPJListCard({
                       onClick={() => handleRevision(lpj)}
                       title="Minta Revisi"
                     >
-                        {isRevising ? (
-                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        ) : (
-                          <Info className="h-3.5 w-3.5" />
-                        )}
+                      {isRevising ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Info className="h-3.5 w-3.5" />
+                      )}
                     </Button>
                   </>
                 )}
@@ -357,8 +365,8 @@ export function LPJListCard({
               >
                 Sebelumnya
               </Button>
-              <Button 
-                size="sm" 
+              <Button
+                size="sm"
                 variant="outline"
                 className="h-8 text-xs"
                 onClick={() => onChangePage(page + 1)}

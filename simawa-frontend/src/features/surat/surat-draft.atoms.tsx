@@ -5,6 +5,7 @@ import { atom, useAtom } from 'jotai'
 export type SuratDraftStep = 'FORM' | 'REVIEW'
 
 export type SuratDraftForm = {
+  variant: 'UNDANGAN' | 'PEMINJAMAN' | 'PENGAJUAN' | 'PERMOHONAN'
   title: string
   body: string
   number: string
@@ -22,6 +23,7 @@ export type SuratDraftForm = {
 }
 
 const initialDraft: SuratDraftForm = {
+  variant: 'UNDANGAN',
   title: '',
   body: '',
   number: '',

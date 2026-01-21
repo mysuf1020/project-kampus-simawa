@@ -13,30 +13,28 @@ export type InputProps = Omit<React.ComponentProps<'input'>, 'prefix' | 'suffix'
   InputCustomProps &
   VariantProps<typeof inputVariants>
 
-const containerClass = `input-container flex h-9 items-center w-full rounded-md
-  border border-neutral-300 bg-background text-base
-  hover:border-main-500
-  hover:shadow
-  transition
-  focus-within:outline focus-within:outline-offset-2 focus-within:!outline-main-200 focus-within:border focus-within:border-main-500
-  text-sm
-  md:text-sm`
+const containerClass = `input-container flex h-8 items-center w-full rounded-lg
+  border border-neutral-200 bg-white text-sm
+  hover:border-brand-400
+  transition-all duration-200
+  focus-within:ring-2 focus-within:ring-brand-500/20 focus-within:border-brand-500
+  shadow-sm`
 
 const inputClass = `
 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground
 placeholder:text-neutral-400
 focus-visible:outline-none
-focus:caret-main-500
+focus:caret-brand-500
 disabled:hover:cursor-not-allowed
-text-sm
-md:text-sm`
+text-sm leading-tight`
 
 const inputVariants = cva(inputClass, {
   variants: {
     inputSize: {
-      sm: 'px-2 py-1.5',
-      default: 'px-3 py-2',
-      lg: 'px-3.5 py-2.5',
+      xs: 'px-2 py-1',
+      sm: 'px-2.5 py-1.5',
+      default: 'px-3 py-1.5',
+      lg: 'px-4 py-2',
     },
   },
   defaultVariants: {
@@ -45,7 +43,10 @@ const inputVariants = cva(inputClass, {
 })
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, type = 'text', prefix, inputSize, suffix, showCounter, ...props }, forwardedRef) => {
+  (
+    { className, type = 'text', prefix, inputSize, suffix, showCounter, ...props },
+    forwardedRef,
+  ) => {
     return (
       <div
         className={cn(

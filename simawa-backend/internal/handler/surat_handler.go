@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -15,6 +14,7 @@ import (
 	"simawa-backend/internal/model"
 	"simawa-backend/internal/repository"
 	"simawa-backend/internal/service"
+	"simawa-backend/internal/util/sanitize"
 	"simawa-backend/internal/util/suratpdf"
 	"simawa-backend/pkg/response"
 )
@@ -43,12 +43,8 @@ type approveSuratRequest struct {
 	Note    string `json:"note"`
 }
 
-type renderFromTemplateRequest struct {
-	TemplateID  uint           `json:"template_id" binding:"required"`
-	Overrides   map[string]any `json:"overrides"`
-	OrgID       string         `json:"org_id" binding:"required,uuid"`
-	TargetOrgID string         `json:"target_org_id"`
-	Status      string         `json:"status"`
+type reviseSuratRequest struct {
+	Note string `json:"note" binding:"required"`
 }
 
 // Create generates surat, uploads PDF to Minio, dan simpan metadata sebagai pending/draft.
@@ -72,6 +68,21 @@ func (h *SuratHandler) Create(c *gin.Context) {
 			return
 		}
 		targetOrg = &tid
+	}
+
+	// Sanitize payload fields
+	req.Payload.Meta.Subject = sanitize.String(req.Payload.Meta.Subject)
+	req.Payload.Meta.ToName = sanitize.String(req.Payload.Meta.ToName)
+	req.Payload.Meta.ToRole = sanitize.String(req.Payload.Meta.ToRole)
+	req.Payload.Meta.ToPlace = sanitize.String(req.Payload.Meta.ToPlace)
+	req.Payload.Meta.ToCity = sanitize.String(req.Payload.Meta.ToCity)
+	
+	if req.Payload.Header != nil {
+		for i, t := range req.Payload.Header.Title {
+			req.Payload.Header.Title[i] = sanitize.String(t)
+		}
+		req.Payload.Header.OrgName = sanitize.String(req.Payload.Header.OrgName)
+		req.Payload.Header.OrgAddress = sanitize.String(req.Payload.Header.OrgAddress)
 	}
 
 	row, err := h.svc.Create(c.Request.Context(), &service.CreateSuratInput{
@@ -133,6 +144,9 @@ func (h *SuratHandler) Approve(c *gin.Context) {
 		c.JSON(http.StatusForbidden, response.Err("forbidden"))
 		return
 	}
+
+	// Sanitize note
+	req.Note = sanitize.String(req.Note)
 
 	res, err := h.svc.Decide(c.Request.Context(), userID, uint(idNum), req.Approve, req.Note)
 	if err != nil {
@@ -319,106 +333,80 @@ func (h *SuratHandler) Generate(c *gin.Context) {
 	c.Data(http.StatusOK, "application/pdf", pdfBytes)
 }
 
-func (h *SuratHandler) CreateTemplate(c *gin.Context) {
-	var req model.SuratTemplate
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, response.Err(err.Error()))
-		return
-	}
-	if err := h.svc.CreateTemplate(c.Request.Context(), &req); err != nil {
-		c.JSON(http.StatusInternalServerError, response.Err(err.Error()))
-		return
-	}
-	c.JSON(http.StatusOK, response.OK(&req))
-}
-
-func (h *SuratHandler) UpdateTemplate(c *gin.Context) {
+// Revise requests revision for a surat with a note
+func (h *SuratHandler) Revise(c *gin.Context) {
 	idNum, _ := strconv.Atoi(c.Param("id"))
-	var req model.SuratTemplate
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, response.Err(err.Error()))
-		return
-	}
-	req.ID = uint(idNum)
-	if err := h.svc.UpdateTemplate(c.Request.Context(), &req); err != nil {
-		c.JSON(http.StatusInternalServerError, response.Err(err.Error()))
-		return
-	}
-	c.JSON(http.StatusOK, response.OK(&req))
-}
-
-func (h *SuratHandler) DeleteTemplate(c *gin.Context) {
-	idNum, _ := strconv.Atoi(c.Param("id"))
-	if err := h.svc.DeleteTemplate(c.Request.Context(), uint(idNum)); err != nil {
-		c.JSON(http.StatusInternalServerError, response.Err(err.Error()))
-		return
-	}
-	c.JSON(http.StatusOK, gin.H{"deleted": true})
-}
-
-func (h *SuratHandler) GetTemplate(c *gin.Context) {
-	idNum, _ := strconv.Atoi(c.Param("id"))
-	row, err := h.svc.GetTemplate(c.Request.Context(), uint(idNum))
-	if err != nil {
-		c.JSON(http.StatusNotFound, response.Err(err.Error()))
-		return
-	}
-	c.JSON(http.StatusOK, response.OK(row))
-}
-
-func (h *SuratHandler) ListTemplates(c *gin.Context) {
-	rows, err := h.svc.ListTemplates(c.Request.Context())
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, response.Err(err.Error()))
-		return
-	}
-	c.JSON(http.StatusOK, gin.H{"items": rows})
-}
-
-func (h *SuratHandler) RenderFromTemplate(c *gin.Context) {
-	var req renderFromTemplateRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, response.Err(err.Error()))
-		return
-	}
 	userID, err := h.currentUser(c)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, response.Err(err.Error()))
 		return
 	}
-	orgID, _ := uuid.Parse(req.OrgID)
-	var targetOrg *uuid.UUID
-	if strings.TrimSpace(req.TargetOrgID) != "" {
-		tid, err := uuid.Parse(req.TargetOrgID)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, response.Err("invalid target_org_id"))
-			return
-		}
-		targetOrg = &tid
+	var req reviseSuratRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, response.Err(err.Error()))
+		return
 	}
 
-	tpl, err := h.svc.GetTemplate(c.Request.Context(), req.TemplateID)
+	// authorization per target
+	row, err := h.svc.Get(c.Request.Context(), uint(idNum))
 	if err != nil {
 		c.JSON(http.StatusNotFound, response.Err(err.Error()))
 		return
 	}
-	row, err := h.svc.RenderFromTemplate(c.Request.Context(), tpl, req.Overrides, h.minio, h.bucket, userID, orgID, targetOrg, req.Status)
+	if ok := h.canAccessSurat(c, userID, row); !ok {
+		c.JSON(http.StatusForbidden, response.Err("forbidden"))
+		return
+	}
+
+	// Sanitize note
+	req.Note = sanitize.String(req.Note)
+
+	res, err := h.svc.Revise(c.Request.Context(), userID, uint(idNum), req.Note)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.Err(err.Error()))
+		return
+	}
+	c.JSON(http.StatusOK, response.OK(res))
+}
+
+// ListArchive returns archived surat for BEM/DEMA/ORG
+func (h *SuratHandler) ListArchive(c *gin.Context) {
+	userID, assignments, err := h.userAssignments(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, response.Err(err.Error()))
+		return
+	}
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	size, _ := strconv.Atoi(c.DefaultQuery("size", "10"))
+
+	orgIDs := make([]uuid.UUID, 0)
+	for _, a := range assignments {
+		if a.OrgID != nil {
+			orgIDs = append(orgIDs, *a.OrgID)
+		}
+	}
+
+	rows, total, err := h.svc.ListArchive(c.Request.Context(), orgIDs, page, size)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, response.Err(err.Error()))
 		return
 	}
-
-	// hydrate URL if possible
-	url, _ := h.svc.PresignOrURL(c.Request.Context(), h.minio, h.bucket, row.FileKey, 15*time.Minute)
-	if url != "" {
-		row.FileURL = url
+	type item struct {
+		model.Surat
+		URL string `json:"url"`
 	}
-	meta := map[string]any{}
-	_ = json.Unmarshal(row.MetaJSON, &meta)
+	items := make([]item, 0, len(rows))
+	for _, s := range rows {
+		url, _ := h.svc.PresignOrURL(c.Request.Context(), h.minio, h.bucket, s.FileKey, 15*time.Minute)
+		items = append(items, item{Surat: s, URL: url})
+	}
 
+	_ = userID // silence unused if future use
 	c.JSON(http.StatusOK, gin.H{
-		"data": row,
-		"meta": meta,
+		"data": gin.H{
+			"items": items,
+			"total": total,
+		},
 	})
 }
 

@@ -3,20 +3,20 @@ import { auth } from '@/lib/auth'
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-const backendBaseUrl = (process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080').replace(
-  /\/$/,
-  '',
-)
+const backendBaseUrl = (
+  process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080'
+).replace(/\/$/, '')
 
 type RouteContext = {
-  params: {
+  params: Promise<{
     path?: string[]
-  }
+  }>
 }
 
 async function proxy(request: Request, context: RouteContext): Promise<Response> {
+  const params = await context.params
   const url = new URL(request.url)
-  const path = context.params.path?.join('/') || ''
+  const path = params.path?.join('/') || ''
   const targetUrl = `${backendBaseUrl}/${path}${url.search}`
 
   const headers = new Headers(request.headers)
@@ -26,7 +26,10 @@ async function proxy(request: Request, context: RouteContext): Promise<Response>
   headers.delete('cookie')
 
   const session = await auth()
-  const sessionUser = session?.user as { access_token?: string; error?: string } | undefined
+  const sessionUser = session?.user as
+    | { access_token?: string; error?: string }
+    | undefined
+
   if (sessionUser?.access_token && sessionUser.error !== 'RefreshTokenError') {
     headers.set('Authorization', `Bearer ${sessionUser.access_token}`)
   } else {

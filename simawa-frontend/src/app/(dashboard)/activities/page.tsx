@@ -1,10 +1,23 @@
 'use client'
 
 import { useEffect, useMemo } from 'react'
-import { useMutation, useQuery, useQueryClient, useInfiniteQuery } from '@tanstack/react-query'
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+  useInfiniteQuery,
+} from '@tanstack/react-query'
 import { Plus } from 'lucide-react'
 
-import { Badge, Button, Container, Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui'
+import {
+  Badge,
+  Button,
+  Container,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from '@/components/ui'
 import { Page } from '@/components/commons'
 import {
   approveActivity,
@@ -145,7 +158,7 @@ function ActivitiesPageInner() {
   // Combine all pages for mobile infinite scroll
   const allInfiniteActivities = useMemo(
     () => infiniteData?.pages.flatMap((p) => p.items ?? []) ?? [],
-    [infiniteData?.pages]
+    [infiniteData?.pages],
   )
 
   const filteredActivities = activities.filter((a) => {
@@ -166,7 +179,12 @@ function ActivitiesPageInner() {
 
   return (
     <Page>
-      <Page.Header breadcrumbs={[{ href: '/dashboard', children: 'Dashboard' }, { href: '/activities', children: 'Aktivitas' }]}>
+      <Page.Header
+        breadcrumbs={[
+          { href: '/dashboard', children: 'Dashboard' },
+          { href: '/activities', children: 'Aktivitas' },
+        ]}
+      >
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-neutral-900">
@@ -177,20 +195,38 @@ function ActivitiesPageInner() {
             </Badge>
           </div>
           <div className="flex items-center gap-2">
-            <Badge variant="secondary" className="bg-brand-50 text-brand-700 hover:bg-brand-100 border-brand-100">
+            <Badge
+              variant="secondary"
+              className="bg-brand-50 text-brand-700 hover:bg-brand-100 border-brand-100"
+            >
               Data Terbaru
             </Badge>
           </div>
         </div>
       </Page.Header>
-      
+
       <Page.Body>
         <Container>
           <Tabs defaultValue="list" className="w-full space-y-4 sm:space-y-6">
             <TabsList className="w-full flex-wrap h-auto gap-1 p-1">
-              <TabsTrigger value="list" className="flex-1 min-w-[100px] text-xs sm:text-sm">Daftar Aktivitas</TabsTrigger>
-              <TabsTrigger value="create" className="flex-1 min-w-[100px] text-xs sm:text-sm">Buat Aktivitas</TabsTrigger>
-              <TabsTrigger value="review" className="flex-1 min-w-[100px] text-xs sm:text-sm">Review Sampul</TabsTrigger>
+              <TabsTrigger
+                value="list"
+                className="flex-1 min-w-[100px] text-xs sm:text-sm"
+              >
+                Daftar Aktivitas
+              </TabsTrigger>
+              <TabsTrigger
+                value="create"
+                className="flex-1 min-w-[100px] text-xs sm:text-sm"
+              >
+                Buat Aktivitas
+              </TabsTrigger>
+              <TabsTrigger
+                value="review"
+                className="flex-1 min-w-[100px] text-xs sm:text-sm"
+              >
+                Review Sampul
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="list" className="space-y-6">
@@ -220,7 +256,9 @@ function ActivitiesPageInner() {
                   isRevising={isRevising}
                   page={Number(page || '1') || 1}
                   total={totalActivities}
-                  onChangePage={(next) => setQueryParams({ page: String(Math.max(1, next)) })}
+                  onChangePage={(next) =>
+                    setQueryParams({ page: String(Math.max(1, next)) })
+                  }
                 />
               </div>
               {/* Mobile View with Infinite Scroll */}

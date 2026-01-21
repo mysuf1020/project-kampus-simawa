@@ -12,6 +12,12 @@ const (
 	SuratStatusPending  = "PENDING"
 	SuratStatusApproved = "APPROVED"
 	SuratStatusRejected = "REJECTED"
+	SuratStatusRevision = "REVISION"
+)
+
+const (
+	SuratVariantUndangan = "UNDANGAN"
+	SuratVariantResmi    = "RESMI"
 )
 
 type Surat struct {
@@ -37,14 +43,3 @@ type Surat struct {
 	UpdatedAt    time.Time      `json:"updated_at"`
 }
 
-type SuratTemplate struct {
-	ID          uint           `gorm:"primaryKey" json:"id"`
-	Name        string         `gorm:"type:varchar(128);uniqueIndex" json:"name"`
-	Variant     string         `gorm:"type:varchar(32);index" json:"variant"`
-	ThemeJSON   datatypes.JSON `json:"theme_json"`
-	PayloadJSON datatypes.JSON `json:"payload_json"`
-	Description string         `gorm:"type:varchar(255)" json:"description"`
-	CreatedBy   *uuid.UUID     `gorm:"type:uuid;column:created_by" json:"created_by"`
-	CreatedAt   time.Time      `json:"created_at"`
-	UpdatedAt   time.Time      `json:"updated_at"`
-}

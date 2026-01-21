@@ -89,7 +89,9 @@ export function LPJSubmitCard({ orgId, onSuccess }: Props) {
                 <ul className="text-xs text-blue-700 list-disc pl-4 space-y-1">
                   <li>Format wajib PDF, maksimal 20 MB.</li>
                   <li>Gunakan ringkasan singkat agar reviewer cepat memahami isi LPJ.</li>
-                  <li>Jika diminta revisi/ditolak, unggah PDF terbaru lalu kirim ulang.</li>
+                  <li>
+                    Jika diminta revisi/ditolak, unggah PDF terbaru lalu kirim ulang.
+                  </li>
                 </ul>
               </div>
             </div>
@@ -98,7 +100,9 @@ export function LPJSubmitCard({ orgId, onSuccess }: Props) {
 
         <form className="space-y-4" onSubmit={handleSubmit}>
           <div className="space-y-1.5">
-            <Label className="text-xs font-medium text-neutral-700">Ringkasan Kegiatan</Label>
+            <Label className="text-xs font-medium text-neutral-700">
+              Ringkasan Kegiatan
+            </Label>
             <TextArea
               rows={3}
               placeholder="Contoh: Laporan kegiatan Seminar Nasional yang dilaksanakan pada tanggal..."
@@ -109,7 +113,9 @@ export function LPJSubmitCard({ orgId, onSuccess }: Props) {
           </div>
 
           <div className="space-y-1.5">
-            <Label className="text-xs font-medium text-neutral-700">File Laporan (PDF)</Label>
+            <Label className="text-xs font-medium text-neutral-700">
+              File Laporan (PDF)
+            </Label>
             <div className="relative">
               <Input
                 type="file"
@@ -131,7 +137,8 @@ export function LPJSubmitCard({ orgId, onSuccess }: Props) {
 
           {orgId && (
             <p className="text-xs text-neutral-500">
-              Mengirim sebagai: <span className="font-semibold text-neutral-900">{orgId}</span>
+              Mengirim sebagai:{' '}
+              <span className="font-semibold text-neutral-900">{orgId}</span>
             </p>
           )}
 
