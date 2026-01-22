@@ -57,11 +57,7 @@ const nextConfig = {
   },
   async redirects() {
     return [
-      {
-        source: '/',
-        destination: '/login',
-        permanent: false,
-      },
+      // Root redirect removed - now handled by /app/page.tsx which redirects to /org
     ]
   },
   async rewrites() {

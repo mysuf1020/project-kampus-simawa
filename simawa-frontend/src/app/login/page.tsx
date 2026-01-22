@@ -22,6 +22,7 @@ import {
   InputPassword,
   Label,
 } from '@/components/ui'
+import { getEmailPlaceholder } from '@/lib/config/email'
 
 const loginSchema = z.object({
   login: z.string().min(1, 'Email wajib diisi').email('Format email tidak valid'),
@@ -206,7 +207,7 @@ function LoginContent() {
                         id="login"
                         type="email"
                         autoComplete="username"
-                        placeholder="nama@raharja.info"
+                        placeholder={getEmailPlaceholder()}
                         className="pl-10 h-11"
                         {...form.register('login')}
                       />

@@ -4,7 +4,6 @@ import { jwtDecode } from 'jwt-decode'
 import Credentials from 'next-auth/providers/credentials'
 import type { Provider } from 'next-auth/providers'
 import type { JWT } from 'next-auth/jwt'
-import { NextResponse } from 'next/server'
 import { refreshAccessToken } from './apis/auth/refresh-token'
 import { RoledJwtPayload } from './models/authentication'
 
@@ -131,19 +130,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     },
   },
   callbacks: {
-    authorized: async ({ auth, request }) => {
-      const isSessionExpired = (auth?.user as any)?.error === 'RefreshTokenError'
-      if (isSessionExpired) {
-        return false
-      }
-      if (auth?.user && request.nextUrl.pathname.startsWith('/login')) {
-        return NextResponse.redirect(new URL('/dashboard', request.nextUrl.origin))
-      }
-      if (auth === null) {
-        return false
-      }
-      return true
-    },
     async jwt({ token, user }) {
       if (user) {
         const u = user as any

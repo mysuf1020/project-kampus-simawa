@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query'
 import Image from 'next/image'
 import Link from 'next/link'
 import {
+  Button,
   Card,
   CardContent,
   CardDescription,
@@ -17,8 +18,7 @@ import {
   TabsTrigger,
   Spinner,
 } from '@/components/ui'
-import { Page } from '@/components/commons'
-import { Calendar, Building2, Image as ImageIcon, ExternalLink } from 'lucide-react'
+import { Calendar, Building2, Image as ImageIcon, ExternalLink, LogIn } from 'lucide-react'
 import { api } from '@/lib/http-client'
 
 type Organization = {
@@ -85,22 +85,39 @@ export default function PublicOrganizationsPage() {
     : activities || []
 
   return (
-    <Page>
-      <Page.Header breadcrumbs={[{ href: '/org', children: 'Organisasi' }]}>
-        <div className="flex flex-col gap-4">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight text-neutral-900">
+    <div className="min-h-screen bg-neutral-50">
+      {/* Public Navbar */}
+      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-neutral-200 shadow-sm">
+        <Container>
+          <div className="flex items-center justify-between h-16">
+            <Link href="/org" className="flex items-center gap-2">
+              <div className="h-9 w-9 bg-brand-600 rounded-lg flex items-center justify-center text-white font-bold shadow-md">
+                S
+              </div>
+              <span className="font-bold text-xl tracking-tight text-neutral-900">
+                SIMAWA
+              </span>
+            </Link>
+          </div>
+        </Container>
+      </header>
+
+      {/* Hero Section */}
+      <section className="bg-gradient-to-br from-brand-600 to-brand-800 text-white py-16">
+        <Container>
+          <div className="text-center max-w-3xl mx-auto">
+            <h1 className="text-4xl lg:text-5xl font-bold tracking-tight mb-4">
               Organisasi Mahasiswa
             </h1>
-            <p className="mt-2 text-lg text-neutral-500">
-              Jelajahi organisasi mahasiswa Universitas Raharja beserta kegiatan dan
-              galeri mereka.
+            <p className="text-lg text-brand-100">
+              Jelajahi organisasi mahasiswa Universitas Raharja beserta kegiatan dan galeri mereka.
             </p>
           </div>
-        </div>
-      </Page.Header>
+        </Container>
+      </section>
 
-      <Page.Body>
+      {/* Main Content */}
+      <main className="py-8">
         <Container>
           <Tabs defaultValue="organizations" className="w-full space-y-6">
             <TabsList>
@@ -206,11 +223,10 @@ export default function PublicOrganizationsPage() {
               <div className="flex flex-wrap gap-2">
                 <button
                   onClick={() => setSelectedOrg(null)}
-                  className={`px-3 py-1.5 text-sm rounded-full border transition-colors ${
-                    !selectedOrg
+                  className={`px-3 py-1.5 text-sm rounded-full border transition-colors ${!selectedOrg
                       ? 'bg-brand-600 text-white border-brand-600'
                       : 'bg-white text-neutral-700 border-neutral-200 hover:border-brand-300'
-                  }`}
+                    }`}
                 >
                   Semua
                 </button>
@@ -218,11 +234,10 @@ export default function PublicOrganizationsPage() {
                   <button
                     key={org.id}
                     onClick={() => setSelectedOrg(org)}
-                    className={`px-3 py-1.5 text-sm rounded-full border transition-colors ${
-                      selectedOrg?.id === org.id
+                    className={`px-3 py-1.5 text-sm rounded-full border transition-colors ${selectedOrg?.id === org.id
                         ? 'bg-brand-600 text-white border-brand-600'
                         : 'bg-white text-neutral-700 border-neutral-200 hover:border-brand-300'
-                    }`}
+                      }`}
                   >
                     {org.name}
                   </button>
@@ -288,11 +303,10 @@ export default function PublicOrganizationsPage() {
               <div className="flex flex-wrap gap-2">
                 <button
                   onClick={() => setSelectedOrg(null)}
-                  className={`px-3 py-1.5 text-sm rounded-full border transition-colors ${
-                    !selectedOrg
+                  className={`px-3 py-1.5 text-sm rounded-full border transition-colors ${!selectedOrg
                       ? 'bg-brand-600 text-white border-brand-600'
                       : 'bg-white text-neutral-700 border-neutral-200 hover:border-brand-300'
-                  }`}
+                    }`}
                 >
                   Semua
                 </button>
@@ -300,11 +314,10 @@ export default function PublicOrganizationsPage() {
                   <button
                     key={org.id}
                     onClick={() => setSelectedOrg(org)}
-                    className={`px-3 py-1.5 text-sm rounded-full border transition-colors ${
-                      selectedOrg?.id === org.id
+                    className={`px-3 py-1.5 text-sm rounded-full border transition-colors ${selectedOrg?.id === org.id
                         ? 'bg-brand-600 text-white border-brand-600'
                         : 'bg-white text-neutral-700 border-neutral-200 hover:border-brand-300'
-                    }`}
+                      }`}
                   >
                     {org.name}
                   </button>
@@ -346,7 +359,24 @@ export default function PublicOrganizationsPage() {
             </TabsContent>
           </Tabs>
         </Container>
-      </Page.Body>
-    </Page>
+      </main>
+
+      {/* Footer */}
+      <footer className="py-8 bg-white border-t border-neutral-200 mt-8">
+        <Container>
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            <div className="flex items-center gap-2">
+              <div className="h-8 w-8 bg-neutral-900 rounded-lg flex items-center justify-center text-white text-sm font-bold">
+                S
+              </div>
+              <span className="font-bold text-neutral-900">SIMAWA</span>
+            </div>
+            <p className="text-sm text-neutral-500">
+              © {new Date().getFullYear()} Universitas Raharja. All rights reserved.
+            </p>
+          </div>
+        </Container>
+      </footer>
+    </div>
   )
 }

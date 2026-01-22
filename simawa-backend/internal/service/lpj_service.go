@@ -136,9 +136,7 @@ func (s *LPJService) Approve(ctx context.Context, approver uuid.UUID, lpjID uuid
 	if !approve && strings.TrimSpace(note) == "" {
 		return nil, errors.New("note required for reject")
 	}
-	if l.ReportKey == "" {
-		return nil, errors.New("report file missing")
-	}
+	// ReportKey validation removed - allow approval/rejection without file for flexibility
 	now := time.Now()
 	l.ReviewedBy = &approver
 	l.ReviewedAt = &now
@@ -178,9 +176,7 @@ func (s *LPJService) AddRevision(ctx context.Context, userID, lpjID uuid.UUID, n
 	if l.Status != model.LPJStatusPending {
 		return nil, errors.New("lpj not pending")
 	}
-	if l.ReportKey == "" {
-		return nil, errors.New("report file missing")
-	}
+	// ReportKey validation removed - allow revision request without file for flexibility
 	now := time.Now()
 	l.Status = model.LPJStatusRevision
 	l.Note = note

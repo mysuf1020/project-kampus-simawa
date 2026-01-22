@@ -200,7 +200,10 @@ export default function UsersPage() {
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-neutral-500" />
                     <Input
                       value={search}
-                      onChange={(e) => setSearch(e.target.value)}
+                      onChange={(e) => {
+                        setSearch(e.target.value)
+                        setPage(1) // Reset page when search changes
+                      }}
                       placeholder="Cari nama, email, atau NIM..."
                       className="pl-9 h-9 text-sm"
                     />
@@ -214,9 +217,15 @@ export default function UsersPage() {
                         options={orgOptions}
                         disabled={orgsQuery.isLoading}
                         isLoading={orgsQuery.isFetching}
-                        onSelect={(value) => setOrgFilterId(value || '')}
+                        onSelect={(value) => {
+                          setOrgFilterId(value || '')
+                          setPage(1) // Reset page when filter changes
+                        }}
                         closable
-                        onRemove={() => setOrgFilterId('')}
+                        onRemove={() => {
+                          setOrgFilterId('')
+                          setPage(1) // Reset page when filter is removed
+                        }}
                         customRender={(opt) => {
                           const org = (opt as { org?: Organization }).org
                           if (!org) return opt.label

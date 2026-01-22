@@ -18,6 +18,7 @@ type Env struct {
 	Redis       RedisEnv
 	Captcha     CaptchaEnv
 	SMTP        SMTPEnv
+	App         AppEnv
 }
 
 type ServerEnv struct {
@@ -71,6 +72,10 @@ type SMTPEnv struct {
 	FromName string `envconfig:"SMTP_FROM_NAME" default:"SIMAWA Raharja"`
 }
 
+type AppEnv struct {
+	EmailDomain string `envconfig:"EMAIL_DOMAIN" default:"@raharja.info"`
+}
+
 // GetEnv mirrors the backoffice-backend style: load .env files by gin mode,
 // then populate structured configuration.
 func GetEnv() (*Env, error) {
@@ -108,6 +113,9 @@ func GetEnv() (*Env, error) {
 	}
 	if err := envconfig.Process("", &env.SMTP); err != nil {
 		return nil, fmt.Errorf("load smtp env: %w", err)
+	}
+	if err := envconfig.Process("", &env.App); err != nil {
+		return nil, fmt.Errorf("load app env: %w", err)
 	}
 	return env, nil
 }

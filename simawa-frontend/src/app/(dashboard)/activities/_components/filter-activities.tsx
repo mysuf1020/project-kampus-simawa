@@ -47,6 +47,16 @@ export function FilterActivities({
     delay: 100,
   })
 
+  const statusValue = queryParams?.status || 'ALL'
+  const statusLabels: Record<string, string> = {
+    ALL: 'Semua',
+    DRAFT: 'Draft',
+    PENDING: 'Menunggu',
+    APPROVED: 'Disetujui',
+    REJECTED: 'Ditolak',
+    COMPLETED: 'Selesai',
+  }
+
   useEffect(() => {
     if (!setQueryParams) return
     if (searchDebounced !== queryParams?.search) {
@@ -56,7 +66,14 @@ export function FilterActivities({
 
   return (
     <div className="flex flex-wrap items-center gap-2 p-2 px-4 bg-white rounded-lg border border-neutral-200 shadow-sm">
-      <Select value={orgId} onValueChange={onChange} disabled={isLoading}>
+      <Select 
+        value={orgId} 
+        onValueChange={(value) => {
+          onChange(value)
+          setQueryParams?.({ page: '1' }) // Reset page when org changes
+        }} 
+        disabled={isLoading}
+      >
         <SelectTrigger className="h-7 w-auto min-w-[120px] bg-white border-neutral-200 text-xs px-2">
           <SelectValue placeholder="Organisasi">
             {selectedName || 'Organisasi'}
@@ -72,13 +89,15 @@ export function FilterActivities({
       </Select>
 
       <Select
-        value={queryParams?.status || 'ALL'}
+        value={statusValue}
         onValueChange={(value) =>
           setQueryParams?.({ status: value === 'ALL' ? '' : value, page: '1' })
         }
       >
         <SelectTrigger className="h-7 w-auto min-w-[90px] bg-white border-neutral-200 text-xs px-2">
-          <SelectValue />
+          <SelectValue placeholder="Status">
+            {statusLabels[statusValue] || 'Semua'}
+          </SelectValue>
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="ALL" className="text-xs">

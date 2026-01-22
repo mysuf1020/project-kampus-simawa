@@ -18,6 +18,7 @@ type UserRepository interface {
 	GetByUUID(ctx context.Context, id uuid.UUID) (*model.User, error)
 	FindByLogin(ctx context.Context, login string) (*model.User, error) // login via email only
 	CheckPassword(ctx context.Context, u *model.User, plain string) error
+	ExistsByEmail(ctx context.Context, email string) (bool, error)
 
 	List(ctx context.Context, q string, page, size int) ([]*model.User, int64, error)
 	ListWithRoleFilter(ctx context.Context, q string, roleCode string, rolePrefix string, orgID *uuid.UUID, page, size int) ([]*model.User, int64, error)
@@ -40,7 +41,33 @@ func (r *userRepository) Update(ctx context.Context, u *model.User) error {
 }
 
 func (r *userRepository) DeleteByUUID(ctx context.Context, id uuid.UUID) error {
-	return r.db.WithContext(ctx).Delete(&model.User{}, "id = ?", id).Error
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		// Delete related records first to avoid foreign key constraints
+		// Order matters - delete child records before parent
+
+		// Delete user roles
+		if err := tx.Delete(&model.UserRole{}, "user_id = ?", id).Error; err != nil {
+			return err
+		}
+		// Delete org memberships
+		if err := tx.Delete(&model.OrgMember{}, "user_id = ?", id).Error; err != nil {
+			return err
+		}
+		// Delete refresh tokens
+		if err := tx.Delete(&model.RefreshToken{}, "user_id = ?", id).Error; err != nil {
+			return err
+		}
+		// Delete notifications
+		if err := tx.Delete(&model.Notification{}, "user_id = ?", id).Error; err != nil {
+			return err
+		}
+		// Nullify org join requests (keep the request but remove user reference)
+		if err := tx.Model(&model.OrgJoinRequest{}).Where("user_id = ?", id).Update("user_id", nil).Error; err != nil {
+			return err
+		}
+		// Then delete the user
+		return tx.Delete(&model.User{}, "id = ?", id).Error
+	})
 }
 
 func (r *userRepository) GetByUUID(ctx context.Context, id uuid.UUID) (*model.User, error) {
@@ -70,6 +97,17 @@ func (r *userRepository) CheckPassword(ctx context.Context, u *model.User, plain
 		return err
 	}
 	return nil
+}
+
+func (r *userRepository) ExistsByEmail(ctx context.Context, email string) (bool, error) {
+	var count int64
+	emailLower := strings.TrimSpace(strings.ToLower(email))
+	if err := r.db.WithContext(ctx).Model(&model.User{}).
+		Where("LOWER(email) = ?", emailLower).
+		Count(&count).Error; err != nil {
+		return false, err
+	}
+	return count > 0, nil
 }
 
 func (r *userRepository) List(ctx context.Context, q string, page, size int) ([]*model.User, int64, error) {

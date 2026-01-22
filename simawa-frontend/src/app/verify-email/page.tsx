@@ -20,6 +20,7 @@ import {
   Label,
 } from '@/components/ui'
 import { verifyEmail, resendOTP } from '@/lib/apis/auth'
+import { getEmailPlaceholder } from '@/lib/config/email'
 
 const verifyEmailSchema = z.object({
   email: z.string().min(1, 'Email wajib diisi').email('Format email tidak valid'),
@@ -119,7 +120,7 @@ function VerifyEmailContent() {
                 <Input
                   id="email"
                   type="email"
-                  placeholder="nama@raharja.info"
+                  placeholder={getEmailPlaceholder()}
                   className={`pl-10 h-11 ${emailFromQuery ? 'bg-neutral-50' : ''}`}
                   readOnly={!!emailFromQuery}
                   {...form.register('email')}

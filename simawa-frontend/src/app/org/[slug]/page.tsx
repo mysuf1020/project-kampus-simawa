@@ -5,11 +5,11 @@ import { useParams } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import {
+  Button,
   Container,
   Spinner,
 } from '@/components/ui'
-import { Page } from '@/components/commons'
-import { Building2, Mail, Phone, Globe, Instagram, ArrowLeft, Calendar, MapPin, Users, ExternalLink } from 'lucide-react'
+import { Building2, Mail, Phone, Globe, Instagram, ArrowLeft, Calendar, MapPin, Users, ExternalLink, LogIn } from 'lucide-react'
 import { getOrganizationBySlug } from '@/lib/apis/org'
 import { fetchPublicActivities } from '@/lib/apis/activity'
 
@@ -93,8 +93,30 @@ export default function OrganizationDetailPage() {
 
   return (
     <div className="min-h-screen bg-neutral-50">
+      {/* Public Navbar */}
+      <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-neutral-200 shadow-sm">
+        <Container>
+          <div className="flex items-center justify-between h-16">
+            <Link href="/org" className="flex items-center gap-2">
+              <div className="h-9 w-9 bg-brand-600 rounded-lg flex items-center justify-center text-white font-bold shadow-md">
+                S
+              </div>
+              <span className="font-bold text-xl tracking-tight text-neutral-900">
+                SIMAWA
+              </span>
+            </Link>
+            <Link href="/login">
+              <Button className="bg-brand-600 hover:bg-brand-700 text-white gap-2">
+                <LogIn className="h-4 w-4" />
+                Masuk
+              </Button>
+            </Link>
+          </div>
+        </Container>
+      </header>
+
       {/* Hero Section - Full Width */}
-      <div className="relative h-[50vh] min-h-[400px] max-h-[600px]">
+      <div className="relative h-[50vh] min-h-[400px] max-h-[600px] mt-16">
         <Image
           src={heroImage}
           alt={org.name}

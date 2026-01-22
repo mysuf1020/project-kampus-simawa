@@ -21,6 +21,7 @@ import {
   Label,
 } from '@/components/ui'
 import { resetPassword } from '@/lib/apis/auth'
+import { getEmailPlaceholder } from '@/lib/config/email'
 
 const resetPasswordSchema = z
   .object({
@@ -102,7 +103,7 @@ function ResetPasswordContent() {
                 <Input
                   id="email"
                   type="email"
-                  placeholder="nama@raharja.info"
+                  placeholder={getEmailPlaceholder()}
                   className="pl-10 h-11 bg-neutral-50"
                   readOnly
                   {...form.register('email')}
