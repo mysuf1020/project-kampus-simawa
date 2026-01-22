@@ -47,6 +47,81 @@ type reviseSuratRequest struct {
 	Note string `json:"note" binding:"required"`
 }
 
+// Upload handles direct PDF upload without generating from template
+func (h *SuratHandler) Upload(c *gin.Context) {
+	userID, err := h.currentUser(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, response.Err(err.Error()))
+		return
+	}
+
+	orgIDStr := c.PostForm("org_id")
+	if orgIDStr == "" {
+		c.JSON(http.StatusBadRequest, response.Err("org_id is required"))
+		return
+	}
+	orgID, err := uuid.Parse(orgIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.Err("invalid org_id"))
+		return
+	}
+
+	subject := sanitize.String(c.PostForm("subject"))
+	if subject == "" {
+		c.JSON(http.StatusBadRequest, response.Err("subject is required"))
+		return
+	}
+
+	number := sanitize.String(c.PostForm("number"))
+	toRole := sanitize.String(c.PostForm("to_role"))
+	toName := sanitize.String(c.PostForm("to_name"))
+	variant := sanitize.String(c.PostForm("variant"))
+	if variant == "" {
+		variant = "PEMINJAMAN"
+	}
+
+	file, header, err := c.Request.FormFile("file")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.Err("file is required"))
+		return
+	}
+	defer file.Close()
+
+	// Validate file type
+	if !strings.HasSuffix(strings.ToLower(header.Filename), ".pdf") {
+		c.JSON(http.StatusBadRequest, response.Err("only PDF files are allowed"))
+		return
+	}
+
+	// Validate file size (max 10MB)
+	if header.Size > 10*1024*1024 {
+		c.JSON(http.StatusBadRequest, response.Err("file size exceeds 10MB limit"))
+		return
+	}
+
+	row, err := h.svc.Upload(c.Request.Context(), &service.UploadSuratInput{
+		OrgID:     orgID,
+		Subject:   subject,
+		Number:    number,
+		ToRole:    toRole,
+		ToName:    toName,
+		Variant:   variant,
+		File:      file,
+		FileName:  header.Filename,
+		CreatedBy: userID,
+	}, h.minio, h.bucket)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.Err(err.Error()))
+		return
+	}
+
+	url, _ := h.svc.PresignOrURL(c.Request.Context(), h.minio, h.bucket, row.FileKey, 15*time.Minute)
+	if url != "" {
+		row.FileURL = url
+	}
+	c.JSON(http.StatusOK, response.OK(row))
+}
+
 // Create generates surat, uploads PDF to Minio, dan simpan metadata sebagai pending/draft.
 func (h *SuratHandler) Create(c *gin.Context) {
 	var req createSuratRequest

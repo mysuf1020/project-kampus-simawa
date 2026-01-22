@@ -1,102 +1,20 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
-import { useQuery, useInfiniteQuery } from '@tanstack/react-query'
-import { RefreshCcw, Mail, Plus } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { FileText, FileUp, Archive, ArrowRight } from 'lucide-react'
 
 import {
   Badge,
   Button,
+  Card,
+  CardContent,
   Container,
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
 } from '@/components/ui'
 import { Page } from '@/components/commons'
-import { listInboxSurat, listOutboxSurat } from '@/lib/apis/surat'
-import { listOrganizations } from '@/lib/apis/org'
-import {
-  QueryParamsStateProvider,
-  useQueryParamsState,
-} from '@/lib/hooks/use-queryparams-state'
-import type { SuratPageQueryParamsState } from '@/features/surat/query-params'
-import { FilterOutbox } from './_components/filter-outbox'
-import { InboxListCard } from './_components/inbox-list'
-import { OutboxListCard } from './_components/outbox-list'
-import { DraftFormCard } from './_components/draft-form'
 
-function SuratPageInner() {
-  const [orgId, setOrgId] = useState('')
-  const { queryParams, setQueryParams } = useQueryParamsState<SuratPageQueryParamsState>()
-  const { tab, outboxPage, outboxPageSize, outboxStatus, outboxSearch } = queryParams
-
-  const { data: orgs } = useQuery({ queryKey: ['orgs'], queryFn: listOrganizations })
-
-  useEffect(() => {
-    if (!orgId && orgs?.length) setOrgId(orgs[0].id)
-  }, [orgId, orgs])
-
-  const inboxQuery = useQuery({
-    queryKey: ['surat-inbox'],
-    queryFn: () => listInboxSurat(),
-  })
-  // Desktop: useQuery with pagination
-  const outboxQuery = useQuery({
-    queryKey: ['surat-outbox', orgId, outboxPage, outboxPageSize, outboxStatus],
-    queryFn: () =>
-      listOutboxSurat(orgId, {
-        page: outboxPage,
-        size: outboxPageSize,
-        status: outboxStatus,
-      }),
-    enabled: Boolean(orgId),
-  })
-
-  // Mobile: useInfiniteQuery for infinite scroll
-  const outboxInfiniteQuery = useInfiniteQuery({
-    queryKey: ['surat-outbox-infinite', orgId, outboxStatus],
-    queryFn: ({ pageParam = 1 }) =>
-      listOutboxSurat(orgId, {
-        page: String(pageParam),
-        size: '10',
-        status: outboxStatus,
-      }),
-    enabled: Boolean(orgId),
-    initialPageParam: 1,
-    getNextPageParam: (lastPage, allPages) => {
-      if (lastPage && lastPage.length >= 10) {
-        return allPages.length + 1
-      }
-      return undefined
-    },
-  })
-
-  const allInfiniteOutbox = useMemo(
-    () => outboxInfiniteQuery.data?.pages.flat() ?? [],
-    [outboxInfiniteQuery.data?.pages],
-  )
-
-  const filteredOutbox = (outboxQuery.data || []).filter((item) => {
-    if (!outboxSearch) return true
-    const q = outboxSearch.toLowerCase()
-    const inSubject = item.subject?.toLowerCase().includes(q)
-    const inNumber = item.number?.toLowerCase().includes(q)
-    return Boolean(inSubject || inNumber)
-  })
-
-  const filteredInfiniteOutbox = allInfiniteOutbox.filter((item) => {
-    if (!outboxSearch) return true
-    const q = outboxSearch.toLowerCase()
-    const inSubject = item.subject?.toLowerCase().includes(q)
-    const inNumber = item.number?.toLowerCase().includes(q)
-    return Boolean(inSubject || inNumber)
-  })
-
-  const activeTab = tab || 'inbox'
-  const pendingInboxCount =
-    (inboxQuery.data || []).filter((item) => item.status === 'PENDING').length || 0
+export default function SuratPage() {
+  const router = useRouter()
 
   return (
     <Page>
@@ -109,141 +27,119 @@ function SuratPageInner() {
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-neutral-900">
-              Surat Masuk & Riwayat
+              Manajemen Surat
             </h1>
             <p className="mt-1 text-sm text-neutral-500">
-              Kelola surat masuk yang perlu tinjauan dan pantau riwayat surat keluar.
+              Buat surat baru atau lihat arsip surat yang sudah ada.
             </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Link href="/surat/create">
-              <Button
-                size="sm"
-                className="bg-brand-600 hover:bg-brand-700 text-white gap-2"
-              >
-                <Plus className="h-4 w-4" /> Buat Surat
-              </Button>
-            </Link>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                inboxQuery.refetch()
-                outboxQuery.refetch()
-              }}
-              className="gap-2"
-            >
-              <RefreshCcw className="h-3.5 w-3.5" />
-            </Button>
           </div>
         </div>
       </Page.Header>
 
       <Page.Body>
         <Container>
-          <Tabs
-            value={activeTab}
-            onValueChange={(value) => {
-              setQueryParams({ tab: value as string })
-            }}
-            className="w-full space-y-6"
-          >
-            <TabsList className="w-full flex-wrap h-auto gap-1 p-1 bg-neutral-100/50 border border-neutral-200">
-              <TabsTrigger
-                value="inbox"
-                className="flex-1 min-w-[80px] gap-1.5 text-xs sm:text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm"
+          <div className="max-w-4xl mx-auto py-8">
+            {/* Main Action Cards */}
+            <div className="grid gap-6 md:grid-cols-2 mb-8">
+              {/* Buat Surat - Isi Form */}
+              <button
+                onClick={() => router.push('/surat/create')}
+                className="group relative flex flex-col items-center gap-4 p-8 rounded-2xl border-2 border-neutral-200 bg-white hover:border-brand-500 hover:shadow-xl hover:shadow-brand-500/10 transition-all duration-300 text-left"
               >
-                Daftar Surat
-                {pendingInboxCount > 0 && (
-                  <Badge
-                    variant="secondary"
-                    className="bg-brand-100 text-brand-700 hover:bg-brand-100 border-none px-1.5 py-0.5 text-[10px]"
-                  >
-                    {pendingInboxCount}
+                <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-brand-50 to-brand-100 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <FileText className="w-10 h-10 text-brand-600" />
+                </div>
+                <div className="text-center space-y-2">
+                  <h3 className="text-xl font-bold text-neutral-900">Buat Surat Baru</h3>
+                  <p className="text-sm text-neutral-500 leading-relaxed">
+                    Buat surat dengan mengisi formulir atau upload file PDF yang sudah jadi.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 text-brand-600 font-medium text-sm group-hover:gap-3 transition-all">
+                  Mulai Buat Surat <ArrowRight className="w-4 h-4" />
+                </div>
+                <div className="absolute top-4 right-4">
+                  <Badge variant="secondary" className="bg-brand-50 text-brand-700 text-[10px]">
+                    Utama
                   </Badge>
-                )}
-              </TabsTrigger>
-              <TabsTrigger
-                value="create"
-                className="flex-1 min-w-[80px] text-xs sm:text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm"
-              >
-                Buat Surat
-              </TabsTrigger>
-              <TabsTrigger
-                value="outbox"
-                className="flex-1 min-w-[80px] text-xs sm:text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm"
-              >
-                Riwayat
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="inbox" className="animate-in fade-in-50 duration-300">
-              <InboxListCard data={inboxQuery.data} isLoading={inboxQuery.isLoading} />
-            </TabsContent>
-
-            <TabsContent value="create" className="animate-in fade-in-50 duration-300">
-              <DraftFormCard
-                orgId={orgId}
-                onSent={() => {
-                  inboxQuery.refetch()
-                  outboxQuery.refetch()
-                  setQueryParams({ tab: 'inbox' })
-                }}
-              />
-            </TabsContent>
-
-            <TabsContent value="outbox" className="animate-in fade-in-50 duration-300">
-              <div className="space-y-6">
-                <FilterOutbox
-                  orgs={orgs}
-                  orgId={orgId}
-                  onChange={setOrgId}
-                  count={filteredOutbox.length}
-                  queryParams={queryParams}
-                  setQueryParams={setQueryParams}
-                />
-                {/* Desktop View */}
-                <div className="hidden sm:block">
-                  <OutboxListCard
-                    data={filteredOutbox}
-                    isLoading={outboxQuery.isLoading}
-                    page={Number(outboxPage || '1') || 1}
-                    onChangePage={(next) =>
-                      setQueryParams({ outboxPage: String(Math.max(1, next)) })
-                    }
-                  />
                 </div>
-                {/* Mobile View with Infinite Scroll */}
-                <div className="sm:hidden">
-                  <OutboxListCard
-                    data={filteredInfiniteOutbox}
-                    isLoading={outboxInfiniteQuery.isLoading}
-                    hasNextPage={outboxInfiniteQuery.hasNextPage}
-                    onLoadMore={() => outboxInfiniteQuery.fetchNextPage()}
-                    isFetchingNextPage={outboxInfiniteQuery.isFetchingNextPage}
-                  />
+              </button>
+
+              {/* Arsip Surat */}
+              <button
+                onClick={() => router.push('/arsip')}
+                className="group relative flex flex-col items-center gap-4 p-8 rounded-2xl border-2 border-neutral-200 bg-white hover:border-green-500 hover:shadow-xl hover:shadow-green-500/10 transition-all duration-300 text-left"
+              >
+                <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-green-50 to-green-100 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <Archive className="w-10 h-10 text-green-600" />
                 </div>
-              </div>
-            </TabsContent>
-          </Tabs>
+                <div className="text-center space-y-2">
+                  <h3 className="text-xl font-bold text-neutral-900">Arsip Surat</h3>
+                  <p className="text-sm text-neutral-500 leading-relaxed">
+                    Lihat daftar surat masuk, riwayat surat keluar, dan kelola arsip surat.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 text-green-600 font-medium text-sm group-hover:gap-3 transition-all">
+                  Lihat Arsip <ArrowRight className="w-4 h-4" />
+                </div>
+              </button>
+            </div>
+
+            {/* Quick Info */}
+            <Card className="border-neutral-200 bg-neutral-50/50">
+              <CardContent className="p-6">
+                <h4 className="font-semibold text-neutral-900 mb-4">Panduan Cepat</h4>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="flex gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-brand-100 flex items-center justify-center flex-shrink-0">
+                      <FileText className="w-4 h-4 text-brand-600" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-sm text-neutral-900">Isi Form Surat</p>
+                      <p className="text-xs text-neutral-500">
+                        Buat surat dengan mengisi formulir langkah demi langkah. PDF akan digenerate otomatis.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center flex-shrink-0">
+                      <FileUp className="w-4 h-4 text-green-600" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-sm text-neutral-900">Upload Surat</p>
+                      <p className="text-xs text-neutral-500">
+                        Upload file PDF surat yang sudah jadi untuk didaftarkan ke sistem.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
+                      <Archive className="w-4 h-4 text-blue-600" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-sm text-neutral-900">Arsip & Riwayat</p>
+                      <p className="text-xs text-neutral-500">
+                        Lihat semua surat masuk dan keluar, filter berdasarkan status dan organisasi.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0">
+                      <span className="text-amber-600 font-bold text-xs">✓</span>
+                    </div>
+                    <div>
+                      <p className="font-medium text-sm text-neutral-900">Approval</p>
+                      <p className="text-xs text-neutral-500">
+                        Setujui atau tolak surat masuk yang memerlukan persetujuan Anda.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </Container>
       </Page.Body>
     </Page>
-  )
-}
-
-export default function SuratPage() {
-  return (
-    <QueryParamsStateProvider<SuratPageQueryParamsState>
-      defaultValues={{
-        tab: 'inbox',
-        outboxPage: '1',
-        outboxPageSize: '10',
-        outboxStatus: '',
-        outboxSearch: '',
-      }}
-    >
-      <SuratPageInner />
-    </QueryParamsStateProvider>
   )
 }

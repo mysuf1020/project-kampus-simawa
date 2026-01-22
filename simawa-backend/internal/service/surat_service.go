@@ -26,6 +26,18 @@ type CreateSuratInput struct {
 	Status      string
 }
 
+type UploadSuratInput struct {
+	OrgID     uuid.UUID
+	Subject   string
+	Number    string
+	ToRole    string
+	ToName    string
+	Variant   string
+	File      interface{} // io.Reader
+	FileName  string
+	CreatedBy uuid.UUID
+}
+
 type InboxFilter struct {
 	OrgIDs []uuid.UUID
 	Roles  []string
@@ -38,6 +50,7 @@ type SuratService interface {
 	Generate(ctx context.Context, payload suratpdf.Payload, theme *suratpdf.Theme) ([]byte, error)
 	GenerateAndUpload(ctx context.Context, payload suratpdf.Payload, theme *suratpdf.Theme, mc *minio.Client, bucket string) (string, error)
 	Create(ctx context.Context, in *CreateSuratInput, mc *minio.Client, bucket string) (*model.Surat, error)
+	Upload(ctx context.Context, in *UploadSuratInput, mc *minio.Client, bucket string) (*model.Surat, error)
 	Submit(ctx context.Context, userID uuid.UUID, id uint) (*model.Surat, error)
 	Decide(ctx context.Context, approver uuid.UUID, id uint, approve bool, note string) (*model.Surat, error)
 	Revise(ctx context.Context, approver uuid.UUID, id uint, note string) (*model.Surat, error)
@@ -174,6 +187,78 @@ func (s *suratService) Create(ctx context.Context, in *CreateSuratInput, mc *min
 
 	if s.audit != nil && in.CreatedBy != uuid.Nil {
 		s.audit.Log(ctx, in.CreatedBy, "surat_create", map[string]any{"surat_id": row.ID, "org_id": row.OrgID, "status": row.Status})
+	}
+	return row, nil
+}
+
+func (s *suratService) Upload(ctx context.Context, in *UploadSuratInput, mc *minio.Client, bucket string) (*model.Surat, error) {
+	if in == nil {
+		return nil, errors.New("input nil")
+	}
+	if s.suratRepo == nil {
+		return nil, fmt.Errorf("surat repository not wired")
+	}
+	if in.OrgID == uuid.Nil {
+		return nil, errors.New("org_id required")
+	}
+	if in.Subject == "" {
+		return nil, errors.New("subject required")
+	}
+	if in.File == nil {
+		return nil, errors.New("file required")
+	}
+
+	// Upload file to Minio
+	reader, ok := in.File.(interface{ Read([]byte) (int, error) })
+	if !ok {
+		return nil, errors.New("invalid file type")
+	}
+
+	key := fmt.Sprintf("surat/%s.pdf", uuid.New().String())
+
+	// Read file content to get size
+	buf := new(bytes.Buffer)
+	size, err := buf.ReadFrom(reader.(interface {
+		Read([]byte) (int, error)
+	}))
+	if err != nil {
+		return nil, fmt.Errorf("failed to read file: %w", err)
+	}
+
+	_, err = mc.PutObject(ctx, bucket, key, bytes.NewReader(buf.Bytes()), size, minio.PutObjectOptions{ContentType: "application/pdf"})
+	if err != nil {
+		return nil, fmt.Errorf("failed to upload file: %w", err)
+	}
+
+	var createdByPtr *uuid.UUID
+	if in.CreatedBy != uuid.Nil {
+		createdByPtr = &in.CreatedBy
+	}
+
+	variant := in.Variant
+	if variant == "" {
+		variant = "PEMINJAMAN"
+	}
+
+	row := &model.Surat{
+		OrgID:       in.OrgID,
+		Variant:     variant,
+		Status:      model.SuratStatusDraft,
+		Number:      in.Number,
+		Subject:     in.Subject,
+		ToRole:      in.ToRole,
+		ToName:      in.ToName,
+		FileKey:     key,
+		FileURL:     "",
+		CreatedBy:   createdByPtr,
+	}
+
+	if err := s.suratRepo.Create(ctx, row); err != nil {
+		return nil, err
+	}
+
+	if s.audit != nil && in.CreatedBy != uuid.Nil {
+		s.audit.Log(ctx, in.CreatedBy, "surat_upload", map[string]any{"surat_id": row.ID, "org_id": row.OrgID})
 	}
 	return row, nil
 }

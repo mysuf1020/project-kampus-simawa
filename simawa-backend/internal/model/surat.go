@@ -16,8 +16,10 @@ const (
 )
 
 const (
-	SuratVariantUndangan = "UNDANGAN"
-	SuratVariantResmi    = "RESMI"
+	SuratVariantPeminjaman = "PEMINJAMAN"
+	SuratVariantPengajuan  = "PENGAJUAN"
+	SuratVariantPermohonan = "PERMOHONAN"
+	SuratVariantUndangan   = "UNDANGAN"
 )
 
 type Surat struct {

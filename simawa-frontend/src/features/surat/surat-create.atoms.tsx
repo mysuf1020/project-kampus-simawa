@@ -11,8 +11,18 @@ export type SuratSigner = {
   nip: string
 }
 
+export const SURAT_VARIANTS = [
+  { value: 'PEMINJAMAN', label: 'Surat Peminjaman' },
+  { value: 'PENGAJUAN', label: 'Surat Pengajuan' },
+  { value: 'PERMOHONAN', label: 'Surat Permohonan' },
+  { value: 'UNDANGAN', label: 'Surat Undangan' },
+] as const
+
+export type SuratVariant = typeof SURAT_VARIANTS[number]['value']
+
 export type SuratCreateForm = {
   orgId: string
+  variant: SuratVariant
 
   // Meta
   number: string
@@ -51,6 +61,7 @@ export type SuratCreateForm = {
 
 const initialCreateForm: SuratCreateForm = {
   orgId: '',
+  variant: 'PEMINJAMAN',
   number: '',
   subject: '',
   lampiran: '',
@@ -82,6 +93,7 @@ const initialCreateForm: SuratCreateForm = {
 // Zod Schema for validation
 export const suratSchema = z.object({
   orgId: z.string().min(1, 'Organisasi wajib dipilih'),
+  variant: z.string().min(1, 'Jenis surat wajib dipilih'),
   subject: z.string().min(1, 'Perihal wajib diisi'),
   placeAndDate: z.string().min(1, 'Tempat & tanggal wajib diisi'),
   // Step 2 validation

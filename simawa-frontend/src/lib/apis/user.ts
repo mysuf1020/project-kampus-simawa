@@ -111,3 +111,31 @@ export const searchUsers = async (params?: { q?: string; size?: number }) => {
   })
   return data.items
 }
+
+export const getUser = async (id: string) => {
+  const { data } = await api.get<{ data: User }>(`/v1/users/${id}`)
+  return data.data
+}
+
+export type UpdateUserPayload = {
+  firstname?: string
+  secondname?: string
+  organisasi?: boolean
+  ukm?: string
+  hmj?: string
+  jurusan?: string
+  phone?: string
+  alamat?: string
+  tanggal_lahir?: string
+  password?: string
+}
+
+export const updateUser = async (id: string, payload: UpdateUserPayload) => {
+  const { data } = await api.put<ApiResponse<User>>(`/v1/users/${id}`, payload)
+  return data.data
+}
+
+export const deleteUser = async (id: string) => {
+  const { data } = await api.delete<{ message: string }>(`/v1/users/${id}`)
+  return data
+}

@@ -44,4 +44,14 @@ func RegisterUserRoutes(r *gin.Engine, cfg *config.Env, uh *handler.UserHandler,
 		middleware.RequireRoles(rbac, adminRoles...),
 		uh.AssignRoles,
 	)
+
+	v1.PUT("/users/:id",
+		middleware.RequireRoles(rbac, adminRoles...),
+		uh.Update,
+	)
+
+	v1.DELETE("/users/:id",
+		middleware.RequireRoles(rbac, adminRoles...),
+		uh.Delete,
+	)
 }
