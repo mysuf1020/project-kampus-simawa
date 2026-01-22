@@ -5,6 +5,7 @@ import (
 	"simawa-backend/internal/config"
 	"simawa-backend/internal/handler"
 	"simawa-backend/internal/middleware"
+	"simawa-backend/internal/model"
 	"simawa-backend/internal/service"
 )
 
@@ -18,7 +19,11 @@ func RegisterOrgJoinRequestRoutes(r *gin.Engine, cfg *config.Env, h *handler.Org
 	api := r.Group("/v1/orgs/:id/join-requests")
 	api.Use(middleware.AuthJWT(cfg))
 
-	// Org admins can review.
-	api.GET("", h.List)
-	api.PATCH("/:request_id", h.Decide)
+	// Roles that can view join requests
+	viewRoles := []string{model.RoleAdmin, model.RoleOrgAdmin, model.RoleBEMAdmin, model.RoleDEMAAdmin}
+	// Roles that can decide on join requests (BEM only, not DEMA)
+	decideRoles := []string{model.RoleAdmin, model.RoleOrgAdmin, model.RoleBEMAdmin}
+
+	api.GET("", middleware.RequireRoles(rbac, viewRoles...), h.List) // Both can view
+	api.PATCH("/:request_id", middleware.RequireRoles(rbac, decideRoles...), h.Decide) // BEM only
 }

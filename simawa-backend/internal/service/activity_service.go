@@ -14,14 +14,15 @@ import (
 
 type ActivityService struct {
 	repo    repository.ActivityRepository
+	org     repository.OrganizationRepository
 	history repository.ActivityHistoryRepository
 	rbac    *RBACService
 	notify  *NotificationService
 	audit   *AuditService
 }
 
-func NewActivityService(repo repository.ActivityRepository, history repository.ActivityHistoryRepository, rbac *RBACService, notify *NotificationService, audit *AuditService) *ActivityService {
-	return &ActivityService{repo: repo, history: history, rbac: rbac, notify: notify, audit: audit}
+func NewActivityService(repo repository.ActivityRepository, org repository.OrganizationRepository, history repository.ActivityHistoryRepository, rbac *RBACService, notify *NotificationService, audit *AuditService) *ActivityService {
+	return &ActivityService{repo: repo, org: org, history: history, rbac: rbac, notify: notify, audit: audit}
 }
 
 type CreateActivityInput struct {
@@ -45,6 +46,17 @@ func (s *ActivityService) Create(ctx context.Context, in *CreateActivityInput) (
 	if in.Title == "" || in.OrgID == uuid.Nil {
 		return nil, errors.New("title/org required")
 	}
+	
+	// Check if user can manage this org
+	org, err := s.org.GetByID(ctx, in.OrgID)
+	if err != nil {
+		return nil, errors.New("organization not found")
+	}
+	ok, err := s.rbac.CanManageOrg(ctx, in.CreatedBy, org)
+	if err != nil || !ok {
+		return nil, errors.New("forbidden: you don't have permission to create activity for this organization")
+	}
+	
 	a := &model.Activity{
 		OrgID:       in.OrgID,
 		Title:       in.Title,
