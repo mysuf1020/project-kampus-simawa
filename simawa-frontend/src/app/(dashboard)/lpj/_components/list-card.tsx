@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Check, Download, Info, Loader2, RefreshCw, X, FileText } from 'lucide-react'
 import { toast } from 'sonner'
@@ -14,6 +15,13 @@ import {
   CardTitle,
   Spinner,
   InfiniteScrollLoader,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  TextArea,
 } from '@/components/ui'
 import { Skeleton } from '@/components/ui/skeleton'
 import { approveLPJ, addLPJRevision, getLPJDownloadURL, type LPJ } from '@/lib/apis/lpj'
@@ -35,6 +43,13 @@ type Props = {
   isFetchingNextPage?: boolean
 }
 
+type NoteModalState = {
+  open: boolean
+  type: 'reject' | 'revision' | null
+  lpjId: string
+  note: string
+}
+
 export function LPJListCard({
   items,
   isLoading,
@@ -48,6 +63,12 @@ export function LPJListCard({
   isFetchingNextPage,
 }: Props) {
   const queryClient = useQueryClient()
+  const [noteModal, setNoteModal] = useState<NoteModalState>({
+    open: false,
+    type: null,
+    lpjId: '',
+    note: '',
+  })
 
   const { mutateAsync: approve, isPending: isApproving } = useMutation({
     mutationFn: ({
@@ -99,18 +120,17 @@ export function LPJListCard({
       toast.error('ID LPJ tidak ditemukan')
       return
     }
-    let note: string | undefined
     if (!approveValue) {
-      note =
-        typeof window !== 'undefined'
-          ? window.prompt('Catatan penolakan LPJ', 'Perlu perbaikan') || ''
-          : ''
-      if (!note) {
-        toast.error('Catatan wajib diisi untuk penolakan')
-        return
-      }
+      // Open modal for rejection note
+      setNoteModal({
+        open: true,
+        type: 'reject',
+        lpjId: targetId,
+        note: 'Perlu perbaikan',
+      })
+      return
     }
-    await approve({ lpjId: targetId, approve: approveValue, note })
+    await approve({ lpjId: targetId, approve: approveValue })
   }
 
   const handleRevision = async (lpj: LPJ) => {
@@ -119,11 +139,30 @@ export function LPJListCard({
       toast.error('ID LPJ tidak ditemukan')
       return
     }
-    const note =
-      typeof window !== 'undefined'
-        ? window.prompt('Catatan revisi LPJ', 'Perlu revisi') || 'Perlu revisi'
-        : 'Perlu revisi'
-    await revise({ lpjId: targetId, note })
+    // Open modal for revision note
+    setNoteModal({
+      open: true,
+      type: 'revision',
+      lpjId: targetId,
+      note: 'Perlu revisi',
+    })
+  }
+
+  const handleNoteSubmit = async () => {
+    if (!noteModal.note.trim()) {
+      toast.error('Catatan wajib diisi')
+      return
+    }
+    if (noteModal.type === 'reject') {
+      await approve({ lpjId: noteModal.lpjId, approve: false, note: noteModal.note })
+    } else if (noteModal.type === 'revision') {
+      await revise({ lpjId: noteModal.lpjId, note: noteModal.note })
+    }
+    setNoteModal({ open: false, type: null, lpjId: '', note: '' })
+  }
+
+  const closeNoteModal = () => {
+    setNoteModal({ open: false, type: null, lpjId: '', note: '' })
   }
 
   const busy = isApproving || isRevising
@@ -378,6 +417,48 @@ export function LPJListCard({
           </div>
         )}
       </CardContent>
+
+      {/* Note Modal for Rejection/Revision */}
+      <Dialog open={noteModal.open} onOpenChange={(open) => !open && closeNoteModal()}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {noteModal.type === 'reject' ? 'Catatan Penolakan LPJ' : 'Catatan Revisi LPJ'}
+            </DialogTitle>
+            <DialogDescription>
+              {noteModal.type === 'reject'
+                ? 'Berikan alasan penolakan LPJ ini.'
+                : 'Berikan catatan untuk revisi LPJ ini.'}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <TextArea
+              value={noteModal.note}
+              onChange={(e) => setNoteModal((prev) => ({ ...prev, note: e.target.value }))}
+              placeholder={noteModal.type === 'reject' ? 'Alasan penolakan...' : 'Catatan revisi...'}
+              rows={4}
+              className="w-full"
+            />
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={closeNoteModal} disabled={busy}>
+              Batal
+            </Button>
+            <Button
+              onClick={handleNoteSubmit}
+              disabled={busy || !noteModal.note.trim()}
+              className={
+                noteModal.type === 'reject'
+                  ? 'bg-red-600 hover:bg-red-700 text-white'
+                  : 'bg-amber-600 hover:bg-amber-700 text-white'
+              }
+            >
+              {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {noteModal.type === 'reject' ? 'Tolak LPJ' : 'Minta Revisi'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   )
 }

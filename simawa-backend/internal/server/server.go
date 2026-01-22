@@ -165,7 +165,7 @@ func (s *Server) initRepositories() {
 }
 
 func (s *Server) initServices() {
-	s.Services.User = service.NewUserService(s.Repositories.User)
+	s.Services.User = service.NewUserService(s.Repositories.User, s.Config.App.EmailDomain)
 	s.Services.RBAC = service.NewRBACService(s.Repositories.UserRole)
 	s.Services.Audit = service.NewAuditService(s.Repositories.Audit)
 	s.Services.Captcha = service.NewCaptchaService(s.Config)

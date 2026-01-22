@@ -11,6 +11,7 @@ import { ArrowRight, Mail, User, ShieldCheck, RefreshCw } from 'lucide-react'
 
 import { Button, Card, CardContent, Input, InputPassword, Label } from '@/components/ui'
 import { register, verifyEmail, resendOTP } from '@/lib/apis/auth'
+import { EMAIL_DOMAIN, getEmailPlaceholder, getEmailDomainError } from '@/lib/config/email'
 
 const registerSchema = z
   .object({
@@ -20,8 +21,8 @@ const registerSchema = z
       .string()
       .min(1, 'Email wajib diisi')
       .email('Format email tidak valid')
-      .refine((val) => val.endsWith('@raharja.info'), {
-        message: 'Wajib menggunakan email @raharja.info',
+      .refine((val) => val.toLowerCase().endsWith(EMAIL_DOMAIN.toLowerCase()), {
+        message: getEmailDomainError(),
       }),
     password: z.string().min(8, 'Password minimal 8 karakter'),
     confirm_password: z.string().min(1, 'Konfirmasi password wajib diisi'),
@@ -212,12 +213,12 @@ function RegisterContent() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="email">Email (@raharja.info)</Label>
+                    <Label htmlFor="email">Email ({EMAIL_DOMAIN})</Label>
                     <div className="relative">
                       <Input
                         id="email"
                         type="email"
-                        placeholder="nama@raharja.info"
+                        placeholder={getEmailPlaceholder()}
                         className="pl-10 h-11"
                         {...form.register('email')}
                       />

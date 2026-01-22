@@ -38,6 +38,14 @@ export function FilterLPJ({
   const statusValue = queryParams?.status || 'ALL'
   const [searchDraft, setSearchDraft] = useState(queryParams?.search || '')
 
+  const statusLabels: Record<string, string> = {
+    ALL: 'Semua',
+    PENDING: 'Menunggu',
+    APPROVED: 'Disetujui',
+    REVISION_REQUESTED: 'Revisi',
+    REJECTED: 'Ditolak',
+  }
+
   const { value: searchDebounced } = useDebounce({
     value: searchDraft,
     delay: 100,
@@ -53,7 +61,14 @@ export function FilterLPJ({
 
   return (
     <div className="flex flex-wrap items-center gap-2 p-2 px-4 bg-white rounded-lg border border-neutral-200 shadow-sm">
-      <Select value={orgId} onValueChange={onChange} disabled={isLoading}>
+      <Select 
+        value={orgId} 
+        onValueChange={(value) => {
+          onChange(value)
+          setQueryParams?.({ page: '1' }) // Reset page when org changes
+        }} 
+        disabled={isLoading}
+      >
         <SelectTrigger className="h-7 w-auto min-w-[120px] bg-white border-neutral-200 text-xs px-2">
           <SelectValue placeholder="Organisasi">
             {selectedOrg?.name || 'Organisasi'}
@@ -78,7 +93,9 @@ export function FilterLPJ({
         }
       >
         <SelectTrigger className="h-7 w-auto min-w-[90px] bg-white border-neutral-200 text-xs px-2">
-          <SelectValue />
+          <SelectValue placeholder="Status">
+            {statusLabels[statusValue] || 'Semua'}
+          </SelectValue>
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="ALL" className="text-xs">

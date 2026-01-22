@@ -24,6 +24,7 @@ import {
   SelectValue,
   Switch,
 } from '@/components/ui'
+import { EMAIL_DOMAIN, getEmailPlaceholder, isValidEmailDomain } from '@/lib/config/email'
 import {
   assignUserRoles,
   createUser,
@@ -97,8 +98,8 @@ export function UserCreateCard() {
       return
     }
     const emailLower = email.toLowerCase().trim()
-    if (!emailLower.endsWith('@raharja.info')) {
-      toast.error('Email wajib menggunakan domain @raharja.info')
+    if (!isValidEmailDomain(emailLower)) {
+      toast.error(`Email wajib menggunakan domain ${EMAIL_DOMAIN}`)
       return
     }
     if (!/^\d{8}$/.test(tanggal_lahir)) {
@@ -313,7 +314,7 @@ export function UserCreateCard() {
               <div className="relative">
                 <Input
                   type="email"
-                  placeholder="nama@raharja.info"
+                  placeholder={getEmailPlaceholder()}
                   value={createPayload.email}
                   onChange={(e) =>
                     setCreatePayload((prev) => ({ ...prev, email: e.target.value }))

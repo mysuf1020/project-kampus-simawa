@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -13,7 +14,8 @@ import (
 )
 
 var (
-	ErrInvalidEmailDomain = errors.New("email must end with @raharja.info")
+	ErrInvalidEmailDomain = errors.New("email must end with configured domain")
+	ErrEmailAlreadyExists = errors.New("email already registered")
 	ErrPasswordWeak       = errors.New("password does not meet minimal strength")
 	ErrOrgMissing         = errors.New("when organisasi=true, either ukm or hmj must be provided")
 	ErrBirthDateRequired  = errors.New("birth_date is required (yyyyMMdd)")
@@ -21,11 +23,15 @@ var (
 )
 
 type UserService struct {
-	users repository.UserRepository
+	users       repository.UserRepository
+	emailDomain string
 }
 
-func NewUserService(users repository.UserRepository) *UserService {
-	return &UserService{users: users}
+func NewUserService(users repository.UserRepository, emailDomain string) *UserService {
+	if emailDomain == "" {
+		emailDomain = "@raharja.info"
+	}
+	return &UserService{users: users, emailDomain: emailDomain}
 }
 
 // --------- DTOs for service layer ---------
@@ -70,9 +76,20 @@ type UserFilter struct {
 
 // --------- Business rules ---------
 func (s *UserService) Create(ctx context.Context, in *CreateUserInput) (*model.User, error) {
-	if !strings.HasSuffix(strings.ToLower(in.Email), "@raharja.info") {
-		return nil, ErrInvalidEmailDomain
+	// Validate email domain
+	if !strings.HasSuffix(strings.ToLower(in.Email), strings.ToLower(s.emailDomain)) {
+		return nil, fmt.Errorf("email must end with %s", s.emailDomain)
 	}
+	
+	// Check if email already exists
+	exists, err := s.users.ExistsByEmail(ctx, in.Email)
+	if err != nil {
+		return nil, fmt.Errorf("failed to check email: %w", err)
+	}
+	if exists {
+		return nil, ErrEmailAlreadyExists
+	}
+	
 	if in.Organisasi {
 		if strings.TrimSpace(in.UKM) == "" && strings.TrimSpace(in.HMJ) == "" {
 			return nil, ErrOrgMissing

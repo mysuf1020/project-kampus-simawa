@@ -19,6 +19,7 @@ import {
   Label,
 } from '@/components/ui'
 import { forgotPassword } from '@/lib/apis/auth'
+import { getEmailPlaceholder } from '@/lib/config/email'
 
 const forgotPasswordSchema = z.object({
   email: z.string().min(1, 'Email wajib diisi').email('Format email tidak valid'),
@@ -80,7 +81,7 @@ export default function ForgotPasswordPage() {
                   <Input
                     id="email"
                     type="email"
-                    placeholder="nama@raharja.info"
+                    placeholder={getEmailPlaceholder()}
                     className="pl-10 h-11"
                     {...form.register('email')}
                   />

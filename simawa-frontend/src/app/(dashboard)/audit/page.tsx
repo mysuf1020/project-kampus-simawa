@@ -26,6 +26,27 @@ import { Page } from '@/components/commons'
 import { listAuditLogs } from '@/lib/apis/audit'
 import { SkeletonTable } from '@/components/ui/skeleton/skeleton-table'
 
+const actionLabels: Record<string, string> = {
+  '': 'Semua Aksi',
+  ALL: 'Semua Aksi',
+  LOGIN: 'Login',
+  CREATE: 'Create',
+  UPDATE: 'Update',
+  DELETE: 'Delete',
+  APPROVE: 'Approve',
+  REJECT: 'Reject',
+}
+
+const entityLabels: Record<string, string> = {
+  '': 'Semua Entitas',
+  ALL: 'Semua Entitas',
+  USER: 'User',
+  SURAT: 'Surat',
+  LPJ: 'LPJ',
+  ACTIVITY: 'Activity',
+  ORGANIZATION: 'Organization',
+}
+
 export default function AuditLogPage() {
   const [page, setPage] = useState(1)
   const [pageSize] = useState(20)
@@ -85,9 +106,14 @@ export default function AuditLogPage() {
                   </CardDescription>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <Select value={actionFilter} onValueChange={setActionFilter}>
+                  <Select value={actionFilter || 'ALL'} onValueChange={(value) => {
+                    setActionFilter(value === 'ALL' ? '' : value)
+                    setPage(1) // Reset page when filter changes
+                  }}>
                     <SelectTrigger className="w-[180px] h-9 text-xs">
-                      <SelectValue placeholder="Filter Aksi" />
+                      <SelectValue placeholder="Filter Aksi">
+                        {actionLabels[actionFilter] || 'Semua Aksi'}
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="ALL">Semua Aksi</SelectItem>
@@ -100,9 +126,14 @@ export default function AuditLogPage() {
                     </SelectContent>
                   </Select>
 
-                  <Select value={entityFilter} onValueChange={setEntityFilter}>
+                  <Select value={entityFilter || 'ALL'} onValueChange={(value) => {
+                    setEntityFilter(value === 'ALL' ? '' : value)
+                    setPage(1) // Reset page when filter changes
+                  }}>
                     <SelectTrigger className="w-[180px] h-9 text-xs">
-                      <SelectValue placeholder="Filter Entitas" />
+                      <SelectValue placeholder="Filter Entitas">
+                        {entityLabels[entityFilter] || 'Semua Entitas'}
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="ALL">Semua Entitas</SelectItem>
