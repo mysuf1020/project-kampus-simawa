@@ -27,6 +27,26 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'placehold.co',
       },
+      {
+        protocol: 'http',
+        hostname: 'instagram.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'instagram.com',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.instagram.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'scontent.cdninstagram.com',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.cdninstagram.com',
+      },
     ],
   },
   typescript: {
