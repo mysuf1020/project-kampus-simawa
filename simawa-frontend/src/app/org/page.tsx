@@ -35,6 +35,17 @@ type Organization = {
   gallery_urls?: string[]
 }
 
+// Helper to check if URL is a valid image URL (not a social media profile URL)
+const isValidImageUrl = (url?: string): boolean => {
+  if (!url) return false
+  // Reject social media profile URLs
+  if (url.includes('instagram.com') && !url.includes('/p/')) return false
+  if (url.includes('twitter.com') || url.includes('x.com')) return false
+  if (url.includes('facebook.com')) return false
+  if (url.includes('linkedin.com')) return false
+  return true
+}
+
 type Activity = {
   id: string
   title: string
@@ -123,17 +134,17 @@ export default function PublicOrganizationsPage() {
                     onClick={() => setSelectedOrg(org)}
                   >
                     <div className="relative aspect-video bg-neutral-100">
-                      {org.hero_image ? (
+                      {isValidImageUrl(org.hero_image) ? (
                         <Image
-                          src={org.hero_image}
+                          src={org.hero_image!}
                           alt={org.name}
                           fill
                           className="object-cover group-hover:scale-105 transition-transform"
                         />
-                      ) : org.logo_url ? (
+                      ) : isValidImageUrl(org.logo_url) ? (
                         <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-brand-50 to-brand-100">
                           <Image
-                            src={org.logo_url}
+                            src={org.logo_url!}
                             alt={org.name}
                             width={80}
                             height={80}
@@ -308,12 +319,14 @@ export default function PublicOrganizationsPage() {
                       key={`${org.id}-${idx}`}
                       className="relative aspect-square rounded-xl overflow-hidden group"
                     >
-                      <Image
-                        src={url}
-                        alt={`${org.name} gallery ${idx + 1}`}
-                        fill
-                        className="object-cover group-hover:scale-105 transition-transform"
-                      />
+                      {isValidImageUrl(url) && (
+                        <Image
+                          src={url}
+                          alt={`${org.name} gallery ${idx + 1}`}
+                          fill
+                          className="object-cover group-hover:scale-105 transition-transform"
+                        />
+                      )}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
                         <span className="text-white text-sm font-medium">{org.name}</span>
                       </div>

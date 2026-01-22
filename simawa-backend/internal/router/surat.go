@@ -16,6 +16,7 @@ func RegisterSuratRoutes(r *gin.Engine, cfg *config.Env, sh *handler.SuratHandle
 	api.Use(middleware.RequireRoles(rbac, model.RoleAdmin, model.RoleOrgAdmin, model.RoleBEMAdmin, model.RoleDEMAAdmin))
 
 	api.POST("", sh.Create)
+	api.POST("/upload", sh.Upload)
 	api.POST("/preview", sh.Generate)
 	api.POST("/:id/submit", sh.Submit)
 	api.POST("/:id/approve", sh.Approve)

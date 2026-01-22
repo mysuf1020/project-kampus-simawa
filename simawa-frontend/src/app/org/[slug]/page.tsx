@@ -25,6 +25,17 @@ const DUMMY_GALLERY = [
   'https://images.unsplash.com/photo-1475721027785-f74eccf877e2?w=600&q=80',
 ]
 
+// Helper to check if URL is a valid image URL (not a social media profile URL)
+const isValidImageUrl = (url?: string): boolean => {
+  if (!url) return false
+  // Reject social media profile URLs
+  if (url.includes('instagram.com') && !url.includes('/p/')) return false
+  if (url.includes('twitter.com') || url.includes('x.com')) return false
+  if (url.includes('facebook.com')) return false
+  if (url.includes('linkedin.com')) return false
+  return true
+}
+
 export default function OrganizationDetailPage() {
   const params = useParams()
   const slug = params.slug as string
@@ -46,10 +57,11 @@ export default function OrganizationDetailPage() {
 
   const orgActivities = activities?.filter((a) => a.org_id === org?.id) || []
 
-  // Use dummy images if no real images available
-  const heroImage = org?.hero_image || DUMMY_HERO
-  const logoImage = org?.logo_url || DUMMY_LOGO
-  const galleryImages = (org?.gallery_urls && org.gallery_urls.length > 0) ? org.gallery_urls : DUMMY_GALLERY
+  // Use dummy images if no real images available or if URL is invalid
+  const heroImage = (org && isValidImageUrl(org.hero_image)) ? org.hero_image! : DUMMY_HERO
+  const logoImage = (org && isValidImageUrl(org.logo_url)) ? org.logo_url! : DUMMY_LOGO
+  const validGalleryUrls = org?.gallery_urls?.filter(isValidImageUrl) || []
+  const galleryImages = validGalleryUrls.length > 0 ? validGalleryUrls : DUMMY_GALLERY
 
   if (orgLoading) {
     return (

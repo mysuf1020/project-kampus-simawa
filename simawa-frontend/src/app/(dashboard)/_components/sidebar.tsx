@@ -16,6 +16,7 @@ import {
   LogOut,
   Users,
   Bell,
+  Archive,
 } from 'lucide-react'
 import {
   Avatar,
@@ -49,9 +50,15 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Overview', href: '/dashboard', icon: LayoutDashboard, group: 'General' },
   { label: 'Aktivitas', href: '/activities', icon: FolderKanban, group: 'General' },
   {
-    label: 'Surat',
+    label: 'Buat Surat',
     href: '/surat',
     icon: Mail,
+    group: 'Administrasi',
+  },
+  {
+    label: 'Arsip Surat',
+    href: '/arsip',
+    icon: Archive,
     group: 'Administrasi',
   },
   {

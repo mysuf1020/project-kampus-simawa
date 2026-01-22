@@ -352,3 +352,56 @@ func ptrString(v string) *string {
 	}
 	return &v
 }
+
+// ---------- Update (admin) ----------
+func (h *UserHandler) Update(c *gin.Context) {
+	idStr := c.Param("id")
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "invalid id"})
+		return
+	}
+
+	var req UpdateMeRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		return
+	}
+
+	update := &service.UpdateUserInput{
+		ID:         id,
+		FirstName:  ptrString(req.FirstName),
+		SecondName: ptrString(req.SecondName),
+		Organisasi: req.Organisasi,
+		UKM:        ptrString(req.UKM),
+		HMJ:        ptrString(req.HMJ),
+		Jurusan:    ptrString(req.Jurusan),
+		Phone:      ptrString(req.Phone),
+		Alamat:     ptrString(req.Alamat),
+		BirthRaw:   ptrString(req.TanggalLahir),
+		Password:   ptrString(req.Password),
+	}
+
+	u, err := h.svc.Update(c.Request.Context(), update)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, response.OK(u))
+}
+
+// ---------- Delete (admin) ----------
+func (h *UserHandler) Delete(c *gin.Context) {
+	idStr := c.Param("id")
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "invalid id"})
+		return
+	}
+
+	if err := h.svc.Delete(c.Request.Context(), id); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "user deleted"})
+}

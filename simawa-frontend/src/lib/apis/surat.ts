@@ -155,3 +155,31 @@ export const downloadSurat = async (id: number | string) => {
   const { data } = await api.get<DownloadSuratResponse>(`/v1/surat/${id}/download`)
   return data
 }
+
+export type UploadSuratPayload = {
+  org_id: string
+  subject: string
+  number?: string
+  to_role?: string
+  to_name?: string
+  variant?: string
+  file: File
+}
+
+export const uploadSurat = async (payload: UploadSuratPayload) => {
+  const formData = new FormData()
+  formData.append('org_id', payload.org_id)
+  formData.append('subject', payload.subject)
+  if (payload.number) formData.append('number', payload.number)
+  if (payload.to_role) formData.append('to_role', payload.to_role)
+  if (payload.to_name) formData.append('to_name', payload.to_name)
+  if (payload.variant) formData.append('variant', payload.variant)
+  formData.append('file', payload.file)
+
+  const { data } = await api.post<ApiResponse<Surat>>('/v1/surat/upload', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  })
+  return data.data
+}
