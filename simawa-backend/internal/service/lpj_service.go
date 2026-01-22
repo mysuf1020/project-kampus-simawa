@@ -16,14 +16,15 @@ import (
 type LPJService struct {
 	repo    repository.LPJRepository
 	act     repository.ActivityRepository
+	org     repository.OrganizationRepository
 	rbac    *RBACService
 	notify  *NotificationService
 	history repository.LPJHistoryRepository
 	audit   *AuditService
 }
 
-func NewLPJService(repo repository.LPJRepository, act repository.ActivityRepository, rbac *RBACService, notify *NotificationService, history repository.LPJHistoryRepository, audit *AuditService) *LPJService {
-	return &LPJService{repo: repo, act: act, rbac: rbac, notify: notify, history: history, audit: audit}
+func NewLPJService(repo repository.LPJRepository, act repository.ActivityRepository, org repository.OrganizationRepository, rbac *RBACService, notify *NotificationService, history repository.LPJHistoryRepository, audit *AuditService) *LPJService {
+	return &LPJService{repo: repo, act: act, org: org, rbac: rbac, notify: notify, history: history, audit: audit}
 }
 
 type SubmitLPJInput struct {
@@ -45,6 +46,12 @@ func (s *LPJService) Submit(ctx context.Context, in *SubmitLPJInput) (*model.LPJ
 	if strings.TrimSpace(in.ReportKey) == "" {
 		return nil, errors.New("report_key required")
 	}
+	// Fetch org to get correct type for RBAC check
+	org, err := s.org.GetByID(ctx, in.OrgID)
+	if err != nil {
+		return nil, errors.New("organization not found")
+	}
+	
 	if in.ActivityID != nil {
 		act, err := s.act.Get(ctx, *in.ActivityID)
 		if err != nil {
@@ -53,26 +60,23 @@ func (s *LPJService) Submit(ctx context.Context, in *SubmitLPJInput) (*model.LPJ
 		if act.OrgID != in.OrgID {
 			return nil, errors.New("activity org mismatch")
 		}
-		ok, err := s.rbac.CanManageOrg(ctx, in.UserID, &model.Organization{ID: act.OrgID, Type: model.OrgTypeUKM})
-		if err != nil || !ok {
-			return nil, errors.New("forbidden")
-		}
-	} else {
-		ok, err := s.rbac.CanManageOrg(ctx, in.UserID, &model.Organization{ID: in.OrgID, Type: model.OrgTypeUKM})
-		if err != nil || !ok {
-			return nil, errors.New("forbidden")
-		}
+	}
+	
+	// Check if user can manage this org
+	ok, rbacErr := s.rbac.CanManageOrg(ctx, in.UserID, org)
+	if rbacErr != nil || !ok {
+		return nil, errors.New("forbidden")
 	}
 	var existing *model.LPJ
-	var err error
+	var existErr error
 	if in.ActivityID != nil {
-		existing, err = s.repo.GetByActivity(ctx, *in.ActivityID)
-		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, err
+		existing, existErr = s.repo.GetByActivity(ctx, *in.ActivityID)
+		if existErr != nil && !errors.Is(existErr, gorm.ErrRecordNotFound) {
+			return nil, existErr
 		}
 	}
 
-	if err == nil && existing != nil {
+	if existErr == nil && existing != nil {
 		if existing.Status != model.LPJStatusRevision && existing.Status != model.LPJStatusRejected {
 			return nil, errors.New("lpj already submitted")
 		}

@@ -174,8 +174,8 @@ func (s *Server) initServices() {
 	s.Services.Auth = service.NewAuthService(s.Config, s.Repositories.User, s.Repositories.UserRole, s.Repositories.RefreshToken, s.Redis, emailSvc, s.Services.Audit)
 	s.Services.Surat = service.NewSuratServiceWithRepo(s.Repositories.Surat, s.Repositories.Org, s.Services.Audit, s.Services.Notify)
 	s.Services.Org = service.NewOrganizationService(s.Repositories.Org, s.Services.RBAC, s.Services.Audit)
-	s.Services.Activity = service.NewActivityService(s.Repositories.Activity, s.Repositories.ActHistory, s.Services.RBAC, s.Services.Notify, s.Services.Audit)
-	s.Services.LPJ = service.NewLPJService(s.Repositories.LPJ, s.Repositories.Activity, s.Services.RBAC, s.Services.Notify, s.Repositories.LPJHistory, s.Services.Audit)
+	s.Services.Activity = service.NewActivityService(s.Repositories.Activity, s.Repositories.Org, s.Repositories.ActHistory, s.Services.RBAC, s.Services.Notify, s.Services.Audit)
+	s.Services.LPJ = service.NewLPJService(s.Repositories.LPJ, s.Repositories.Activity, s.Repositories.Org, s.Services.RBAC, s.Services.Notify, s.Repositories.LPJHistory, s.Services.Audit)
 	s.Services.Member = service.NewOrgMemberService(s.Repositories.OrgMember, s.Repositories.Org, s.Services.RBAC, s.Services.Audit)
 	s.Services.JoinReq = service.NewOrgJoinRequestService(s.Repositories.OrgJoinReq, s.Repositories.Org, s.Repositories.User, s.Repositories.OrgMember, s.Services.RBAC, s.Services.Audit)
 	s.Services.Dashboard = service.NewDashboardService(s.DB)
@@ -253,7 +253,7 @@ func (s *Server) initRouter() {
 	router.RegisterNotificationRoutes(engine, s.Config, s.Handlers.Notify)
 	router.RegisterDashboardRoutes(engine, s.Config, s.Handlers.Dashboard, s.Services.RBAC)
 	router.RegisterReportRoutes(engine, s.Config, s.Handlers.Report, s.Services.RBAC)
-	router.RegisterAuditLogRoutes(engine, s.Config, s.Handlers.Audit)
+	router.RegisterAuditLogRoutes(engine, s.Config, s.Handlers.Audit, s.Services.RBAC)
 	router.RegisterHealthRoutes(engine, s.Handlers.Health)
 	s.Engine = engine
 }

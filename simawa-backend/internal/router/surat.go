@@ -13,18 +13,24 @@ import (
 func RegisterSuratRoutes(r *gin.Engine, cfg *config.Env, sh *handler.SuratHandler, rbac *service.RBACService) {
 	api := r.Group("/v1/surat")
 	api.Use(middleware.AuthJWT(cfg))
-	api.Use(middleware.RequireRoles(rbac, model.RoleAdmin, model.RoleOrgAdmin, model.RoleBEMAdmin, model.RoleDEMAAdmin))
 
-	api.POST("", sh.Create)
-	api.POST("/upload", sh.Upload)
-	api.POST("/preview", sh.Generate)
-	api.POST("/:id/submit", sh.Submit)
-	api.POST("/:id/approve", sh.Approve)
-	api.POST("/:id/revise", sh.Revise)
-	api.GET("/outbox/:org_id", sh.ListOutbox)
-	api.GET("/inbox", sh.ListInbox)
-	api.GET("/archive", sh.ListArchive)
-	api.GET("", sh.List)
-	api.GET("/:id", sh.Get)
-	api.GET("/:id/download", sh.Download)
+	// Roles that can view surat
+	viewRoles := []string{model.RoleAdmin, model.RoleOrgAdmin, model.RoleBEMAdmin, model.RoleDEMAAdmin}
+	// Roles that can manage surat (DEMA can create surat for their org)
+	manageRoles := []string{model.RoleAdmin, model.RoleOrgAdmin, model.RoleBEMAdmin, model.RoleDEMAAdmin}
+	// Roles that can approve surat (BEM only)
+	approveRoles := []string{model.RoleBEMAdmin}
+
+	api.POST("", middleware.RequireRoles(rbac, manageRoles...), sh.Create) // DEMA can create
+	api.POST("/upload", middleware.RequireRoles(rbac, manageRoles...), sh.Upload)
+	api.POST("/preview", middleware.RequireRoles(rbac, manageRoles...), sh.Generate)
+	api.POST("/:id/submit", middleware.RequireRoles(rbac, manageRoles...), sh.Submit)
+	api.POST("/:id/approve", middleware.RequireRoles(rbac, approveRoles...), sh.Approve) // BEM only
+	api.POST("/:id/revise", middleware.RequireRoles(rbac, approveRoles...), sh.Revise) // BEM only
+	api.GET("/outbox/:org_id", middleware.RequireRoles(rbac, viewRoles...), sh.ListOutbox)
+	api.GET("/inbox", middleware.RequireRoles(rbac, viewRoles...), sh.ListInbox)
+	api.GET("/archive", middleware.RequireRoles(rbac, viewRoles...), sh.ListArchive)
+	api.GET("", middleware.RequireRoles(rbac, viewRoles...), sh.List)
+	api.GET("/:id", middleware.RequireRoles(rbac, viewRoles...), sh.Get)
+	api.GET("/:id/download", middleware.RequireRoles(rbac, viewRoles...), sh.Download)
 }

@@ -17,41 +17,43 @@ func RegisterUserRoutes(r *gin.Engine, cfg *config.Env, uh *handler.UserHandler,
 	v1.GET("/users/search", uh.Search)
 	v1.PUT("/users/change-password", uh.ChangePassword)
 
-	// Admin roles that can manage users: ADMIN, BEM_ADMIN, DEMA_ADMIN
-	adminRoles := []string{model.RoleAdmin, model.RoleBEMAdmin, model.RoleDEMAAdmin}
+	// Roles that can view users
+	viewRoles := []string{model.RoleAdmin, model.RoleBEMAdmin, model.RoleDEMAAdmin}
+	// Roles that can manage users (BEM only, not DEMA)
+	manageRoles := []string{model.RoleAdmin, model.RoleBEMAdmin}
 
 	v1.POST("/users",
-		middleware.RequireRoles(rbac, adminRoles...),
+		middleware.RequireRoles(rbac, manageRoles...), // BEM only
 		uh.Create,
 	)
 
 	v1.GET("/users",
-		middleware.RequireRoles(rbac, adminRoles...),
+		middleware.RequireRoles(rbac, viewRoles...), // Both can view
 		uh.List,
 	)
 
 	v1.GET("/users/:id",
-		middleware.RequireRoles(rbac, adminRoles...),
+		middleware.RequireRoles(rbac, viewRoles...), // Both can view
 		uh.GetByID,
 	)
 
 	v1.GET("/users/:id/roles",
-		middleware.RequireRoles(rbac, adminRoles...),
+		middleware.RequireRoles(rbac, viewRoles...), // Both can view
 		uh.ListAssignments,
 	)
 
 	v1.POST("/users/:id/roles",
-		middleware.RequireRoles(rbac, adminRoles...),
+		middleware.RequireRoles(rbac, manageRoles...), // BEM only
 		uh.AssignRoles,
 	)
 
 	v1.PUT("/users/:id",
-		middleware.RequireRoles(rbac, adminRoles...),
+		middleware.RequireRoles(rbac, manageRoles...), // BEM only
 		uh.Update,
 	)
 
 	v1.DELETE("/users/:id",
-		middleware.RequireRoles(rbac, adminRoles...),
+		middleware.RequireRoles(rbac, manageRoles...), // BEM only
 		uh.Delete,
 	)
 }

@@ -5,6 +5,7 @@ import (
 	"simawa-backend/internal/config"
 	"simawa-backend/internal/handler"
 	"simawa-backend/internal/middleware"
+	"simawa-backend/internal/model"
 	"simawa-backend/internal/service"
 )
 
@@ -19,9 +20,13 @@ func RegisterOrgRoutes(r *gin.Engine, cfg *config.Env, oh *handler.OrganizationH
 
 	auth := r.Group("/v1/orgs")
 	auth.Use(middleware.AuthJWT(cfg))
+	
+	// Roles that can edit organizations (ADMIN, ORG_ADMIN for their org, BEM, DEMA for their org)
+	editRoles := []string{model.RoleAdmin, model.RoleOrgAdmin, model.RoleBEMAdmin, model.RoleDEMAAdmin}
+	
 	auth.GET("", oh.ListAuth)
-	auth.PUT("/:id", oh.Update)
-	auth.POST("/:id/upload", oh.UploadImage)
-	auth.POST("/:id/upload-hero", oh.UploadImage) // Alias for specific requirement
-	auth.DELETE("/:id/hero", oh.DeleteHero)
+	auth.PUT("/:id", middleware.RequireRoles(rbac, editRoles...), oh.Update) // DEMA can edit their org
+	auth.POST("/:id/upload", middleware.RequireRoles(rbac, editRoles...), oh.UploadImage)
+	auth.POST("/:id/upload-hero", middleware.RequireRoles(rbac, editRoles...), oh.UploadImage)
+	auth.DELETE("/:id/hero", middleware.RequireRoles(rbac, editRoles...), oh.DeleteHero)
 }
