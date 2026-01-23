@@ -171,24 +171,6 @@ func (s *ActivityService) appendHistory(ctx context.Context, a *model.Activity, 
 	})
 }
 
-func (s *ActivityService) ApproveCover(ctx context.Context, approver uuid.UUID, id uuid.UUID, approve bool, note string) (*model.Activity, error) {
-	a, err := s.repo.Get(ctx, id)
-	if err != nil {
-		return nil, err
-	}
-	a.CoverApproved = approve
-	a.ApprovalNote = note
-	if err := s.repo.Update(ctx, a); err != nil {
-		return nil, err
-	}
-	s.appendHistory(ctx, a, approver, map[bool]string{true: "COVER_APPROVE", false: "COVER_REJECT"}[approve], note)
-	return a, nil
-}
-
-func (s *ActivityService) ListPendingCover(ctx context.Context, page, size int) ([]model.Activity, error) {
-	return s.repo.ListPendingCover(ctx, page, size)
-}
-
 func (s *ActivityService) AddGalleryPhoto(ctx context.Context, userID uuid.UUID, id uuid.UUID, url string) (*model.Activity, error) {
 	a, err := s.repo.Get(ctx, id)
 	if err != nil {

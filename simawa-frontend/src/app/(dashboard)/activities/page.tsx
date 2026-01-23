@@ -37,7 +37,6 @@ import type { ActivitiesPageQueryParamsState } from '@/features/activities/query
 
 import { ActivityCreateForm, ActivityFormValues } from './_components/create-form'
 import { ActivityList } from './_components/activity-list'
-import { ActivityPendingCoverCard } from './_components/pending-cover'
 import { ActivityProposalUploadCard } from './_components/proposal-upload'
 import { FilterActivities } from './_components/filter-activities'
 
@@ -221,12 +220,6 @@ function ActivitiesPageInner() {
               >
                 Buat Aktivitas
               </TabsTrigger>
-              <TabsTrigger
-                value="review"
-                className="flex-1 min-w-[100px] text-xs sm:text-sm"
-              >
-                Review Sampul
-              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="list" className="space-y-6">
@@ -293,9 +286,6 @@ function ActivitiesPageInner() {
               </div>
             </TabsContent>
 
-            <TabsContent value="review">
-              <ActivityPendingCoverCard />
-            </TabsContent>
           </Tabs>
         </Container>
       </Page.Body>

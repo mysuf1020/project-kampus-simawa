@@ -167,11 +167,6 @@ export default function PublicJoinPage() {
               <ArrowLeft className="w-4 h-4" />
               <span className="text-sm font-medium">Kembali</span>
             </Link>
-            <Link href="/login">
-              <Button variant="outline" size="sm">
-                Sudah punya akun? Login
-              </Button>
-            </Link>
           </div>
         </Container>
       </header>

@@ -122,31 +122,6 @@ func (h *ActivityHandler) Approve(c *gin.Context) {
 	c.JSON(http.StatusOK, response.OK(a))
 }
 
-type coverApprovalReq struct {
-	Approve bool   `json:"approve"`
-	Note    string `json:"note"`
-}
-
-func (h *ActivityHandler) ApproveCover(c *gin.Context) {
-	id, err := uuid.Parse(c.Param("id"))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, response.Err("invalid id"))
-		return
-	}
-	var req coverApprovalReq
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, response.Err(err.Error()))
-		return
-	}
-	userID, _ := uuid.Parse(c.GetString("sub"))
-	a, err := h.svc.ApproveCover(c.Request.Context(), userID, id, req.Approve, req.Note)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, response.Err(err.Error()))
-		return
-	}
-	c.JSON(http.StatusOK, response.OK(a))
-}
-
 type revisionReq struct {
 	Note string `json:"note"`
 }
@@ -217,7 +192,7 @@ func (h *ActivityHandler) Public(c *gin.Context) {
 	}
 	gallery := []model.Activity{}
 	for _, a := range rows {
-		if a.CoverKey != "" && a.CoverApproved {
+		if a.CoverKey != "" {
 			gallery = append(gallery, a)
 		}
 	}
@@ -262,18 +237,6 @@ func (h *ActivityHandler) PublicICS(c *gin.Context) {
 		c.Writer.WriteString("END:VEVENT\n")
 	}
 	c.Writer.WriteString("END:VCALENDAR\n")
-}
-
-// ListPendingCover menampilkan daftar kegiatan yang memiliki cover tetapi belum di-approve.
-func (h *ActivityHandler) ListPendingCover(c *gin.Context) {
-	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
-	size, _ := strconv.Atoi(c.DefaultQuery("size", "10"))
-	rows, err := h.svc.ListPendingCover(c.Request.Context(), page, size)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, response.Err(err.Error()))
-		return
-	}
-	c.JSON(http.StatusOK, gin.H{"items": rows})
 }
 
 // UploadProposal uploads proposal PDF to Minio and returns key.
@@ -407,7 +370,7 @@ func (h *ActivityHandler) ListPublicGallery(c *gin.Context) {
 	// Filter items that have Cover or Gallery
 	var withPhotos []model.Activity
 	for _, a := range rows {
-		hasCover := a.CoverKey != "" && a.CoverApproved
+		hasCover := a.CoverKey != ""
 		hasGallery := len(a.GalleryURLs) > 0 && string(a.GalleryURLs) != "null" && string(a.GalleryURLs) != "[]"
 		if hasCover || hasGallery {
 			withPhotos = append(withPhotos, a)

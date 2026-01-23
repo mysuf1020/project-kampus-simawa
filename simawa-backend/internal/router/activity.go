@@ -25,9 +25,7 @@ func RegisterActivityRoutes(r *gin.Engine, cfg *config.Env, ah *handler.Activity
 	api.POST("/:id/submit", middleware.RequireRoles(rbac, model.RoleAdmin, model.RoleOrgAdmin), ah.Submit)
 	api.POST("/:id/approve", middleware.RequireRoles(rbac, model.RoleBEMAdmin), ah.Approve) // BEM only
 	api.POST("/:id/revision", middleware.RequireRoles(rbac, model.RoleAdmin, model.RoleOrgAdmin, model.RoleBEMAdmin), ah.Revision) // BEM only (not DEMA)
-	api.POST("/:id/cover", middleware.RequireRoles(rbac, model.RoleBEMAdmin), ah.ApproveCover) // BEM only
 	api.POST("/:id/gallery", middleware.RequireRoles(rbac, model.RoleAdmin, model.RoleOrgAdmin), ah.AddGalleryPhoto) // Upload Photo
 	api.DELETE("/:id/gallery", middleware.RequireRoles(rbac, model.RoleAdmin, model.RoleOrgAdmin), ah.RemoveGalleryPhoto) // Remove Photo
-	api.GET("/pending-cover", middleware.RequireRoles(rbac, model.RoleBEMAdmin, model.RoleDEMAAdmin), ah.ListPendingCover) // View only - both can see
 	api.GET("/org/:org_id", middleware.RequireRoles(rbac, model.RoleAdmin, model.RoleOrgAdmin, model.RoleBEMAdmin, model.RoleDEMAAdmin), ah.ListByOrg)
 }

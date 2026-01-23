@@ -73,6 +73,7 @@ function buildPayload(form: SuratCreateForm): CreateSuratPayload | null {
 
   const header = hasHeader
     ? {
+        title: [] as string[],
         left_logo: leftLogo || '',
         right_logo: rightLogo || '',
         org_name: orgName,

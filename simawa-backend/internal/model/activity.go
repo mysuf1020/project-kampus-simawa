@@ -25,7 +25,6 @@ type Activity struct {
 	Public        bool              `json:"public"`
 	Status        string            `gorm:"size:20;index" json:"status"`
 	ApprovalNote  string            `gorm:"type:text" json:"approval_note"`
-	CoverApproved bool              `gorm:"default:false" json:"cover_approved"`
 	StartAt       time.Time         `json:"start_at"`
 	EndAt         time.Time         `json:"end_at"`
 	CoverKey      string            `gorm:"size:255" json:"cover_key"`
