@@ -392,6 +392,7 @@ func drawStamp(pdf *gofpdf.Fpdf, centerX, centerY, radius float64, imageSrc stri
 }
 
 // drawBase64OrFile tries base64 (data URI or plain) then file path/URL.
+// Returns false if image could not be drawn (missing file, invalid base64, etc.)
 func drawBase64OrFile(pdf *gofpdf.Fpdf, src string, x, y, w, h float64) bool {
 	if strings.TrimSpace(src) == "" {
 		return false
@@ -402,6 +403,7 @@ func drawBase64OrFile(pdf *gofpdf.Fpdf, src string, x, y, w, h float64) bool {
 			data = data[idx+1:]
 		}
 	}
+	// Try base64 decode first
 	if b, err := base64.StdEncoding.DecodeString(data); err == nil {
 		tmp := "/tmp/stamp_tmp.png"
 		if err := os.WriteFile(tmp, b, 0o644); err == nil {
@@ -410,8 +412,13 @@ func drawBase64OrFile(pdf *gofpdf.Fpdf, src string, x, y, w, h float64) bool {
 			return true
 		}
 	}
-	pdf.ImageOptions(src, x, y, w, h, false, gofpdf.ImageOptions{}, 0, "")
-	return true
+	// Try as file path - but check if file exists first to avoid error
+	if _, err := os.Stat(src); err == nil {
+		pdf.ImageOptions(src, x, y, w, h, false, gofpdf.ImageOptions{}, 0, "")
+		return true
+	}
+	// File doesn't exist or is a Minio key - skip silently
+	return false
 }
 
 func min(a, b int) int {

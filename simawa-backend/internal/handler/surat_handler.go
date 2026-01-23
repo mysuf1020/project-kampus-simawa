@@ -169,6 +169,7 @@ func (h *SuratHandler) Create(c *gin.Context) {
 		Status:      req.Status,
 	}, h.minio, h.bucket)
 	if err != nil {
+		fmt.Printf("❌ Surat Create Error: %v\n", err)
 		c.JSON(http.StatusBadRequest, response.Err(err.Error()))
 		return
 	}

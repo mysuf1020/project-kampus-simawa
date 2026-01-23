@@ -105,12 +105,6 @@ export default function OrganizationDetailPage() {
                 SIMAWA
               </span>
             </Link>
-            <Link href="/login">
-              <Button className="bg-brand-600 hover:bg-brand-700 text-white gap-2">
-                <LogIn className="h-4 w-4" />
-                Masuk
-              </Button>
-            </Link>
           </div>
         </Container>
       </header>
@@ -125,7 +119,7 @@ export default function OrganizationDetailPage() {
           priority
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/20" />
-        
+
         {/* Back Button */}
         <Link
           href="/org"
@@ -148,7 +142,7 @@ export default function OrganizationDetailPage() {
                 className="object-contain w-full h-full rounded-xl"
               />
             </div>
-            
+
             {/* Title & Type */}
             <div className="flex-1 text-white space-y-3">
               <h1 className="text-3xl md:text-5xl font-bold tracking-tight">{org.name}</h1>
@@ -191,9 +185,8 @@ export default function OrganizationDetailPage() {
                 {galleryImages.slice(0, 6).map((url, idx) => (
                   <div
                     key={idx}
-                    className={`relative rounded-xl overflow-hidden group cursor-pointer ${
-                      idx === 0 ? 'col-span-2 row-span-2 aspect-square' : 'aspect-square'
-                    }`}
+                    className={`relative rounded-xl overflow-hidden group cursor-pointer ${idx === 0 ? 'col-span-2 row-span-2 aspect-square' : 'aspect-square'
+                      }`}
                   >
                     <Image
                       src={url}
@@ -273,7 +266,7 @@ export default function OrganizationDetailPage() {
                     </div>
                   </a>
                 )}
-                
+
                 {org.contact_phone && (
                   <a
                     href={`tel:${org.contact_phone}`}

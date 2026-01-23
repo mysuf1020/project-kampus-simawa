@@ -10,7 +10,6 @@ export type Activity = {
   public?: boolean
   status?: string
   approval_note?: string
-  cover_approved?: boolean
   start_at?: string
   end_at?: string
   cover_key?: string
@@ -44,11 +43,6 @@ type ListActivitiesResponse = {
 }
 
 type ApproveActivityRequest = {
-  approve: boolean
-  note?: string
-}
-
-type CoverApprovalRequest = {
   approve: boolean
   note?: string
 }
@@ -161,18 +155,6 @@ export const reviseActivity = async (id: string, note?: string) => {
   return data.data
 }
 
-export const approveActivityCover = async (id: string, payload: CoverApprovalRequest) => {
-  const { data } = await api.post<ApiResponse<Activity>>(
-    `/v1/activities/${id}/cover`,
-    payload,
-  )
-  return data.data
-}
-
-export const listPendingCovers = async () => {
-  const { data } = await api.get<ListActivitiesResponse>('/v1/activities/pending-cover')
-  return data.items
-}
 
 export const listActivitiesByOrg = async (
   orgId: string,

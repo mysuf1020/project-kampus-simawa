@@ -15,7 +15,6 @@ type ActivityRepository interface {
 	Get(ctx context.Context, id uuid.UUID) (*model.Activity, error)
 	List(ctx context.Context, orgID uuid.UUID, status, actType string, publicOnly bool, page, size int, start, end time.Time) ([]model.Activity, error)
 	ListPublic(ctx context.Context, from time.Time) ([]model.Activity, error)
-	ListPendingCover(ctx context.Context, page, size int) ([]model.Activity, error)
 }
 
 type activityRepository struct {
@@ -86,22 +85,3 @@ func (r *activityRepository) ListPublic(ctx context.Context, from time.Time) ([]
 	return rows, nil
 }
 
-func (r *activityRepository) ListPendingCover(ctx context.Context, page, size int) ([]model.Activity, error) {
-	if page <= 0 {
-		page = 1
-	}
-	if size <= 0 || size > 100 {
-		size = 20
-	}
-	offset := (page - 1) * size
-
-	var rows []model.Activity
-	err := r.db.WithContext(ctx).
-		Model(&model.Activity{}).
-		Where("cover_key <> '' AND cover_approved = ?", false).
-		Order("updated_at DESC").
-		Limit(size).
-		Offset(offset).
-		Find(&rows).Error
-	return rows, err
-}

@@ -230,8 +230,6 @@ func (s *Server) initHandlers() {
 		var c int64
 		s.DB.Model(&model.Activity{}).Where("status = ?", model.ActivityStatusPending).Count(&c)
 		counts["activities_pending"] = c
-		s.DB.Model(&model.Activity{}).Where("cover_key <> '' AND cover_approved = ?", false).Count(&c)
-		counts["activities_cover_pending"] = c
 		s.DB.Model(&model.LPJ{}).Where("status = ?", model.LPJStatusPending).Count(&c)
 		counts["lpj_pending"] = c
 		s.DB.Model(&model.Surat{}).Where("status = ?", model.SuratStatusPending).Count(&c)
