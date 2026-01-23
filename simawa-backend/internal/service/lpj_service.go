@@ -130,6 +130,12 @@ func (s *LPJService) Submit(ctx context.Context, in *SubmitLPJInput) (*model.LPJ
 }
 
 func (s *LPJService) Approve(ctx context.Context, approver uuid.UUID, lpjID uuid.UUID, note string, approve bool) (*model.LPJ, error) {
+	// Double-check: only BEM_ADMIN can approve LPJ
+	canApprove, err := s.rbac.CanApproveLPJ(ctx, approver)
+	if err != nil || !canApprove {
+		return nil, errors.New("forbidden: only BEM Admin can approve LPJ")
+	}
+
 	l, err := s.repo.Get(ctx, lpjID)
 	if err != nil {
 		return nil, err

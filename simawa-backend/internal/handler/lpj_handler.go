@@ -18,10 +18,15 @@ type LPJHandler struct {
 	svc    *service.LPJService
 	minio  *minio.Client
 	bucket string
+	rbac   *service.RBACService
 }
 
 func NewLPJHandler(svc *service.LPJService, minio *minio.Client, bucket string) *LPJHandler {
 	return &LPJHandler{svc: svc, minio: minio, bucket: bucket}
+}
+
+func NewLPJHandlerWithRBAC(svc *service.LPJService, minio *minio.Client, bucket string, rbac *service.RBACService) *LPJHandler {
+	return &LPJHandler{svc: svc, minio: minio, bucket: bucket, rbac: rbac}
 }
 
 type submitLPJRequest struct {
@@ -81,12 +86,22 @@ func (h *LPJHandler) Approve(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, response.Err("invalid id"))
 		return
 	}
+	userID, _ := uuid.Parse(c.GetString("sub"))
+
+	// Double-check: only BEM_ADMIN can approve LPJ
+	if h.rbac != nil {
+		canApprove, rbacErr := h.rbac.CanApproveLPJ(c.Request.Context(), userID)
+		if rbacErr != nil || !canApprove {
+			c.JSON(http.StatusForbidden, response.Err("forbidden: only BEM Admin can approve LPJ"))
+			return
+		}
+	}
+
 	var req approveLPJReq
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, response.Err(err.Error()))
 		return
 	}
-	userID, _ := uuid.Parse(c.GetString("sub"))
 	lpj, err := h.svc.Approve(c.Request.Context(), userID, lpjID, req.Note, req.Approve)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, response.Err(err.Error()))
@@ -158,12 +173,22 @@ func (h *LPJHandler) Revision(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, response.Err("invalid id"))
 		return
 	}
+	userID, _ := uuid.Parse(c.GetString("sub"))
+
+	// Double-check: only BEM_ADMIN can add revision to LPJ
+	if h.rbac != nil {
+		canApprove, rbacErr := h.rbac.CanApproveLPJ(c.Request.Context(), userID)
+		if rbacErr != nil || !canApprove {
+			c.JSON(http.StatusForbidden, response.Err("forbidden: only BEM Admin can add revision to LPJ"))
+			return
+		}
+	}
+
 	var req approveLPJReq
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, response.Err(err.Error()))
 		return
 	}
-	userID, _ := uuid.Parse(c.GetString("sub"))
 	lpj, err := h.svc.AddRevision(c.Request.Context(), userID, lpjID, req.Note)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, response.Err(err.Error()))
