@@ -22,6 +22,7 @@ import {
   TextArea,
 } from '@/components/ui'
 import { Page } from '@/components/commons'
+import { AdminGuard } from '@/components/guards/role-guard'
 import {
   listUsers,
   listUserAssignments,
@@ -143,6 +144,7 @@ export default function UsersPage() {
   }, [data, page, pageSize, total])
 
   return (
+    <AdminGuard>
     <Page>
       <Page.Header
         breadcrumbs={[
@@ -382,6 +384,7 @@ export default function UsersPage() {
         }}
       />
     </Page>
+    </AdminGuard>
   )
 }
 

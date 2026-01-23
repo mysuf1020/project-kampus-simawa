@@ -99,6 +99,12 @@ func (s *ActivityService) Submit(ctx context.Context, userID uuid.UUID, id uuid.
 }
 
 func (s *ActivityService) Approve(ctx context.Context, approver uuid.UUID, id uuid.UUID, note string, approve bool) (*model.Activity, error) {
+	// Double-check: only BEM_ADMIN can approve activities
+	canApprove, err := s.rbac.CanApproveActivity(ctx, approver)
+	if err != nil || !canApprove {
+		return nil, errors.New("forbidden: only BEM Admin can approve activities")
+	}
+
 	a, err := s.repo.Get(ctx, id)
 	if err != nil {
 		return nil, err

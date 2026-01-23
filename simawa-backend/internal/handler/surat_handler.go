@@ -204,6 +204,16 @@ func (h *SuratHandler) Approve(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, response.Err(err.Error()))
 		return
 	}
+
+	// Double-check: only BEM_ADMIN can approve surat
+	if h.rbac != nil {
+		canApprove, rbacErr := h.rbac.CanApproveSurat(c.Request.Context(), userID)
+		if rbacErr != nil || !canApprove {
+			c.JSON(http.StatusForbidden, response.Err("forbidden: only BEM Admin can approve surat"))
+			return
+		}
+	}
+
 	var req approveSuratRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, response.Err(err.Error()))
@@ -417,6 +427,16 @@ func (h *SuratHandler) Revise(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, response.Err(err.Error()))
 		return
 	}
+
+	// Double-check: only BEM_ADMIN can revise surat
+	if h.rbac != nil {
+		canApprove, rbacErr := h.rbac.CanApproveSurat(c.Request.Context(), userID)
+		if rbacErr != nil || !canApprove {
+			c.JSON(http.StatusForbidden, response.Err("forbidden: only BEM Admin can revise surat"))
+			return
+		}
+	}
+
 	var req reviseSuratRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, response.Err(err.Error()))

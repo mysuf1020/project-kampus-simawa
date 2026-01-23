@@ -16,6 +16,7 @@ import {
   TabsTrigger,
 } from '@/components/ui'
 import { Page } from '@/components/commons'
+import { AdminGuard } from '@/components/guards/role-guard'
 import { fetchHealth } from '@/lib/apis/health'
 import { RoleGuideCard } from './_components/role-guide-card'
 import { RoleManagementCard, UserCreateCard } from './_components/user-management-card'
@@ -28,6 +29,7 @@ export default function SettingsPage() {
   })
 
   return (
+    <AdminGuard>
     <Page>
       <Page.Header
         breadcrumbs={[
@@ -136,6 +138,7 @@ export default function SettingsPage() {
         </Container>
       </Page.Body>
     </Page>
+    </AdminGuard>
   )
 }
 
