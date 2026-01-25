@@ -4,40 +4,20 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Suspense, useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
-import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
 import { ArrowRight, Mail, User, ShieldCheck, RefreshCw } from 'lucide-react'
 
 import { Button, Card, CardContent, Input, InputPassword, Label } from '@/components/ui'
 import { register, verifyEmail, resendOTP } from '@/lib/apis/auth'
-import { EMAIL_DOMAIN, getEmailPlaceholder, getEmailDomainError } from '@/lib/config/email'
-
-const registerSchema = z
-  .object({
-    username: z.string().min(4, 'Username minimal 4 karakter').max(64),
-    first_name: z.string().min(1, 'Nama Lengkap wajib diisi'),
-    email: z
-      .string()
-      .min(1, 'Email wajib diisi')
-      .email('Format email tidak valid')
-      .refine((val) => val.toLowerCase().endsWith(EMAIL_DOMAIN.toLowerCase()), {
-        message: getEmailDomainError(),
-      }),
-    password: z.string().min(8, 'Password minimal 8 karakter'),
-    confirm_password: z.string().min(1, 'Konfirmasi password wajib diisi'),
-  })
-  .refine((data) => data.password === data.confirm_password, {
-    message: 'Password tidak cocok',
-    path: ['confirm_password'],
-  })
-
-const otpSchema = z.object({
-  otp: z.string().min(6, 'Kode OTP harus 6 digit'),
-})
-
-type RegisterForm = z.infer<typeof registerSchema>
-type OtpForm = z.infer<typeof otpSchema>
+import { EMAIL_DOMAIN, getEmailPlaceholder } from '@/lib/config/email'
+import { 
+  registerFormSchema, 
+  otpVerificationSchema,
+  VALIDATION_LIMITS,
+  type RegisterFormData,
+  type OtpVerificationFormData,
+} from '@/lib/validations/form-schemas'
 
 export default function RegisterPage() {
   return (
@@ -63,8 +43,8 @@ function RegisterContent() {
     }
   }, [countdown])
 
-  const form = useForm<RegisterForm>({
-    resolver: zodResolver(registerSchema),
+  const form = useForm<RegisterFormData>({
+    resolver: zodResolver(registerFormSchema),
     defaultValues: {
       username: '',
       first_name: '',
@@ -75,12 +55,12 @@ function RegisterContent() {
     mode: 'onChange',
   })
 
-  const otpForm = useForm<OtpForm>({
-    resolver: zodResolver(otpSchema),
+  const otpForm = useForm<OtpVerificationFormData>({
+    resolver: zodResolver(otpVerificationSchema),
     defaultValues: { otp: '' },
   })
 
-  const onRegister = async (values: RegisterForm) => {
+  const onRegister = async (values: RegisterFormData) => {
     setIsSubmitting(true)
     try {
       await register(values)
@@ -94,7 +74,7 @@ function RegisterContent() {
     }
   }
 
-  const onVerify = async (values: OtpForm) => {
+  const onVerify = async (values: OtpVerificationFormData) => {
     setIsSubmitting(true)
     try {
       await verifyEmail({ email, otp: values.otp })
@@ -181,8 +161,9 @@ function RegisterContent() {
                     <div className="relative">
                       <Input
                         id="username"
-                        placeholder="Username"
+                        placeholder="Username (min 4, max 32 karakter)"
                         className="pl-10 h-11"
+                        maxLength={VALIDATION_LIMITS.USERNAME_MAX}
                         {...form.register('username')}
                       />
                       <User className="absolute left-3 top-3 h-5 w-5 text-neutral-400" />
@@ -201,6 +182,7 @@ function RegisterContent() {
                         id="first_name"
                         placeholder="Nama Lengkap"
                         className="pl-10 h-11"
+                        maxLength={VALIDATION_LIMITS.NAME_MAX}
                         {...form.register('first_name')}
                       />
                       <User className="absolute left-3 top-3 h-5 w-5 text-neutral-400" />
@@ -220,6 +202,7 @@ function RegisterContent() {
                         type="email"
                         placeholder={getEmailPlaceholder()}
                         className="pl-10 h-11"
+                        maxLength={VALIDATION_LIMITS.EMAIL_MAX}
                         {...form.register('email')}
                       />
                       <Mail className="absolute left-3 top-3 h-5 w-5 text-neutral-400" />
@@ -235,8 +218,9 @@ function RegisterContent() {
                     <Label htmlFor="password">Password</Label>
                     <InputPassword
                       id="password"
-                      placeholder="Password"
+                      placeholder="Password (min 8 karakter)"
                       className="h-11"
+                      maxLength={VALIDATION_LIMITS.PASSWORD_MAX}
                       {...form.register('password')}
                     />
                     {form.formState.errors.password && (
@@ -252,6 +236,7 @@ function RegisterContent() {
                       id="confirm_password"
                       placeholder="Ulangi Password"
                       className="h-11"
+                      maxLength={VALIDATION_LIMITS.PASSWORD_MAX}
                       {...form.register('confirm_password')}
                     />
                     {form.formState.errors.confirm_password && (

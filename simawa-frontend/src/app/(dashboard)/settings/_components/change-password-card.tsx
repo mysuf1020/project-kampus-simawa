@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
 import { Lock, Save } from 'lucide-react'
@@ -18,25 +17,31 @@ import {
   Label,
 } from '@/components/ui'
 import { changePassword } from '@/lib/apis/user'
+import { z } from 'zod'
+import { VALIDATION_LIMITS, ERROR_MESSAGES, passwordSchema } from '@/lib/validations/form-schemas'
 
-const changePasswordSchema = z
+const changePasswordFormSchema = z
   .object({
-    old_password: z.string().min(1, 'Password lama wajib diisi'),
-    new_password: z.string().min(8, 'Password baru minimal 8 karakter'),
-    confirm_password: z.string().min(1, 'Konfirmasi password wajib diisi'),
+    old_password: z.string().min(1, ERROR_MESSAGES.required('Password Lama')),
+    new_password: passwordSchema,
+    confirm_password: z.string().min(1, ERROR_MESSAGES.required('Konfirmasi Password')),
   })
   .refine((data) => data.new_password === data.confirm_password, {
-    message: 'Password baru tidak cocok',
+    message: ERROR_MESSAGES.passwordMismatch,
     path: ['confirm_password'],
   })
+  .refine((data) => data.old_password !== data.new_password, {
+    message: 'Password baru tidak boleh sama dengan password lama',
+    path: ['new_password'],
+  })
 
-type ChangePasswordForm = z.infer<typeof changePasswordSchema>
+type ChangePasswordFormData = z.infer<typeof changePasswordFormSchema>
 
 export function ChangePasswordCard() {
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const form = useForm<ChangePasswordForm>({
-    resolver: zodResolver(changePasswordSchema),
+  const form = useForm<ChangePasswordFormData>({
+    resolver: zodResolver(changePasswordFormSchema),
     defaultValues: {
       old_password: '',
       new_password: '',
@@ -44,7 +49,7 @@ export function ChangePasswordCard() {
     },
   })
 
-  const onSubmit = async (values: ChangePasswordForm) => {
+  const onSubmit = async (values: ChangePasswordFormData) => {
     setIsSubmitting(true)
     try {
       await changePassword(values)
@@ -75,6 +80,7 @@ export function ChangePasswordCard() {
             <InputPassword
               id="old_password"
               placeholder="Masukan password lama"
+              maxLength={VALIDATION_LIMITS.PASSWORD_MAX}
               {...form.register('old_password')}
             />
             {form.formState.errors.old_password && (
@@ -88,7 +94,8 @@ export function ChangePasswordCard() {
             <Label htmlFor="new_password">Password Baru</Label>
             <InputPassword
               id="new_password"
-              placeholder="Masukan password baru"
+              placeholder="Password baru (min 8 karakter)"
+              maxLength={VALIDATION_LIMITS.PASSWORD_MAX}
               {...form.register('new_password')}
             />
             {form.formState.errors.new_password && (
@@ -103,6 +110,7 @@ export function ChangePasswordCard() {
             <InputPassword
               id="confirm_password"
               placeholder="Ulangi password baru"
+              maxLength={VALIDATION_LIMITS.PASSWORD_MAX}
               {...form.register('confirm_password')}
             />
             {form.formState.errors.confirm_password && (
