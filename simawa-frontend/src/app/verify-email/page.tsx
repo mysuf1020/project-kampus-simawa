@@ -4,7 +4,6 @@ import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useState, useEffect, Suspense } from 'react'
 import { useForm } from 'react-hook-form'
-import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
 import { ArrowRight, KeyRound, Mail, RefreshCw } from 'lucide-react'
@@ -21,13 +20,15 @@ import {
 } from '@/components/ui'
 import { verifyEmail, resendOTP } from '@/lib/apis/auth'
 import { getEmailPlaceholder } from '@/lib/config/email'
+import { z } from 'zod'
+import { emailSchema, otpSchema, VALIDATION_LIMITS } from '@/lib/validations/form-schemas'
 
-const verifyEmailSchema = z.object({
-  email: z.string().min(1, 'Email wajib diisi').email('Format email tidak valid'),
-  otp: z.string().min(6, 'Kode OTP harus 6 digit'),
+const verifyEmailFormSchema = z.object({
+  email: emailSchema,
+  otp: otpSchema,
 })
 
-type VerifyEmailForm = z.infer<typeof verifyEmailSchema>
+type VerifyEmailFormData = z.infer<typeof verifyEmailFormSchema>
 
 export default function VerifyEmailPage() {
   return (
@@ -45,8 +46,8 @@ function VerifyEmailContent() {
   const [countdown, setCountdown] = useState(0)
   const emailFromQuery = searchParams.get('email') || ''
 
-  const form = useForm<VerifyEmailForm>({
-    resolver: zodResolver(verifyEmailSchema),
+  const form = useForm<VerifyEmailFormData>({
+    resolver: zodResolver(verifyEmailFormSchema),
     defaultValues: {
       email: emailFromQuery,
       otp: '',
@@ -68,7 +69,7 @@ function VerifyEmailContent() {
     }
   }, [countdown])
 
-  const onSubmit = async (values: VerifyEmailForm) => {
+  const onSubmit = async (values: VerifyEmailFormData) => {
     setIsSubmitting(true)
     try {
       await verifyEmail({
@@ -123,6 +124,7 @@ function VerifyEmailContent() {
                   placeholder={getEmailPlaceholder()}
                   className={`pl-10 h-11 ${emailFromQuery ? 'bg-neutral-50' : ''}`}
                   readOnly={!!emailFromQuery}
+                  maxLength={VALIDATION_LIMITS.EMAIL_MAX}
                   {...form.register('email')}
                 />
                 <Mail className="absolute left-3 top-3 h-5 w-5 text-neutral-400" />

@@ -3,7 +3,6 @@
 import Link from 'next/link'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
 import { ArrowRight, Mail } from 'lucide-react'
@@ -20,23 +19,22 @@ import {
 } from '@/components/ui'
 import { forgotPassword } from '@/lib/apis/auth'
 import { getEmailPlaceholder } from '@/lib/config/email'
-
-const forgotPasswordSchema = z.object({
-  email: z.string().min(1, 'Email wajib diisi').email('Format email tidak valid'),
-})
-
-type ForgotPasswordForm = z.infer<typeof forgotPasswordSchema>
+import { 
+  forgotPasswordFormSchema, 
+  VALIDATION_LIMITS,
+  type ForgotPasswordFormData,
+} from '@/lib/validations/form-schemas'
 
 export default function ForgotPasswordPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSent, setIsSent] = useState(false)
 
-  const form = useForm<ForgotPasswordForm>({
-    resolver: zodResolver(forgotPasswordSchema),
+  const form = useForm<ForgotPasswordFormData>({
+    resolver: zodResolver(forgotPasswordFormSchema),
     defaultValues: { email: '' },
   })
 
-  const onSubmit = async (values: ForgotPasswordForm) => {
+  const onSubmit = async (values: ForgotPasswordFormData) => {
     setIsSubmitting(true)
     try {
       await forgotPassword(values.email)
@@ -83,6 +81,7 @@ export default function ForgotPasswordPage() {
                     type="email"
                     placeholder={getEmailPlaceholder()}
                     className="pl-10 h-11"
+                    maxLength={VALIDATION_LIMITS.EMAIL_MAX}
                     {...form.register('email')}
                   />
                   <Mail className="absolute left-3 top-3 h-5 w-5 text-neutral-400" />

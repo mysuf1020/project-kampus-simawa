@@ -4,7 +4,6 @@ import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Suspense, useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
 import { signIn, useSession } from 'next-auth/react'
@@ -23,13 +22,7 @@ import {
   Label,
 } from '@/components/ui'
 import { getEmailPlaceholder } from '@/lib/config/email'
-
-const loginSchema = z.object({
-  login: z.string().min(1, 'Email wajib diisi').email('Format email tidak valid'),
-  password: z.string().min(1, 'Password wajib diisi'),
-})
-
-type LoginForm = z.infer<typeof loginSchema>
+import { loginFormSchema, VALIDATION_LIMITS, type LoginFormData } from '@/lib/validations/form-schemas'
 
 export default function LoginPage() {
   return (
@@ -47,8 +40,8 @@ function LoginContent() {
   const [captchaToken, setCaptchaToken] = useState<string | null>(null)
   const { status, data: session } = useSession()
 
-  const form = useForm<LoginForm>({
-    resolver: zodResolver(loginSchema),
+  const form = useForm<LoginFormData>({
+    resolver: zodResolver(loginFormSchema),
     defaultValues: { login: '', password: '' },
     mode: 'onChange',
   })
@@ -74,7 +67,7 @@ function LoginContent() {
     router.replace(callbackUrl)
   }, [router, searchParams, session, status])
 
-  const onCredentialsSubmit = async (values: LoginForm) => {
+  const onCredentialsSubmit = async (values: LoginFormData) => {
     setIsSubmitting(true)
     try {
       // Step 1: Call API to validate creds and trigger OTP
@@ -209,6 +202,7 @@ function LoginContent() {
                         autoComplete="username"
                         placeholder={getEmailPlaceholder()}
                         className="pl-10 h-11"
+                        maxLength={VALIDATION_LIMITS.EMAIL_MAX}
                         {...form.register('login')}
                       />
                       <Mail className="absolute left-3 top-3 h-5 w-5 text-neutral-400" />
@@ -235,6 +229,7 @@ function LoginContent() {
                       autoComplete="current-password"
                       placeholder="Masukan password Anda"
                       className="h-11"
+                      maxLength={VALIDATION_LIMITS.PASSWORD_MAX}
                       {...form.register('password')}
                     />
                     {form.formState.errors.password && (

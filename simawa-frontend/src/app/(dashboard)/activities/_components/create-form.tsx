@@ -18,13 +18,16 @@ import {
   Label,
   TextArea,
 } from '@/components/ui'
+import { VALIDATION_LIMITS, ERROR_MESSAGES } from '@/lib/validations/form-schemas'
 
 const activitySchema = z.object({
-  org_id: z.string().min(1, 'Pilih organisasi'),
-  title: z.string().min(3, 'Minimal 3 karakter'),
-  description: z.string().optional(),
-  location: z.string().optional(),
-  type: z.string().optional(),
+  org_id: z.string().min(1, ERROR_MESSAGES.required('Organisasi')),
+  title: z.string()
+    .min(VALIDATION_LIMITS.TITLE_MIN, ERROR_MESSAGES.titleMin)
+    .max(VALIDATION_LIMITS.TITLE_MAX, ERROR_MESSAGES.titleMax),
+  description: z.string().max(VALIDATION_LIMITS.DESCRIPTION_MAX, ERROR_MESSAGES.descriptionMax).optional(),
+  location: z.string().max(200, 'Lokasi maksimal 200 karakter').optional(),
+  type: z.string().max(100, 'Tipe maksimal 100 karakter').optional(),
   start_at: z.string().optional(),
   end_at: z.string().optional(),
 })
@@ -78,7 +81,8 @@ export function ActivityCreateForm({ orgId, onCreate, isLoading }: Props) {
             </Label>
             <Input
               id="title"
-              placeholder="Contoh: Rapat Koordinasi Awal Tahun"
+              placeholder="Judul kegiatan (min 3, max 200 karakter)"
+              maxLength={VALIDATION_LIMITS.TITLE_MAX}
               {...form.register('title')}
               className="h-9 text-sm"
             />
@@ -96,7 +100,8 @@ export function ActivityCreateForm({ orgId, onCreate, isLoading }: Props) {
             <TextArea
               id="description"
               rows={3}
-              placeholder="Jelaskan detail kegiatan secara singkat..."
+              placeholder="Jelaskan detail kegiatan (max 2000 karakter)"
+              maxLength={VALIDATION_LIMITS.DESCRIPTION_MAX}
               {...form.register('description')}
               className="text-sm resize-none"
             />
@@ -110,6 +115,7 @@ export function ActivityCreateForm({ orgId, onCreate, isLoading }: Props) {
               <Input
                 id="location"
                 placeholder="Gedung / Ruangan"
+                maxLength={200}
                 {...form.register('location')}
                 className="h-9 text-sm"
               />
@@ -121,6 +127,7 @@ export function ActivityCreateForm({ orgId, onCreate, isLoading }: Props) {
               <Input
                 id="type"
                 placeholder="Rapat / Seminar / Lomba"
+                maxLength={100}
                 {...form.register('type')}
                 className="h-9 text-sm"
               />

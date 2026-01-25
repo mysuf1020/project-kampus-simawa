@@ -4,7 +4,6 @@ import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useState, useEffect, Suspense } from 'react'
 import { useForm } from 'react-hook-form'
-import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
 import { ArrowRight, KeyRound, Mail } from 'lucide-react'
@@ -22,20 +21,28 @@ import {
 } from '@/components/ui'
 import { resetPassword } from '@/lib/apis/auth'
 import { getEmailPlaceholder } from '@/lib/config/email'
+import { 
+  VALIDATION_LIMITS,
+  emailSchema,
+  otpSchema,
+  passwordSchema,
+  ERROR_MESSAGES,
+} from '@/lib/validations/form-schemas'
+import { z } from 'zod'
 
-const resetPasswordSchema = z
+const resetPasswordFormSchema = z
   .object({
-    email: z.string().min(1, 'Email wajib diisi').email('Format email tidak valid'),
-    otp: z.string().min(6, 'Kode OTP harus 6 digit'),
-    new_password: z.string().min(8, 'Password minimal 8 karakter'),
-    confirm_password: z.string().min(1, 'Konfirmasi password wajib diisi'),
+    email: emailSchema,
+    otp: otpSchema,
+    new_password: passwordSchema,
+    confirm_password: z.string().min(1, ERROR_MESSAGES.required('Konfirmasi Password')),
   })
   .refine((data) => data.new_password === data.confirm_password, {
-    message: 'Password tidak cocok',
+    message: ERROR_MESSAGES.passwordMismatch,
     path: ['confirm_password'],
   })
 
-type ResetPasswordForm = z.infer<typeof resetPasswordSchema>
+type ResetPasswordFormData = z.infer<typeof resetPasswordFormSchema>
 
 export default function ResetPasswordPage() {
   return (
@@ -51,8 +58,8 @@ function ResetPasswordContent() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const emailFromQuery = searchParams.get('email') || ''
 
-  const form = useForm<ResetPasswordForm>({
-    resolver: zodResolver(resetPasswordSchema),
+  const form = useForm<ResetPasswordFormData>({
+    resolver: zodResolver(resetPasswordFormSchema),
     defaultValues: {
       email: emailFromQuery,
       otp: '',
@@ -68,7 +75,7 @@ function ResetPasswordContent() {
     }
   }, [emailFromQuery, form])
 
-  const onSubmit = async (values: ResetPasswordForm) => {
+  const onSubmit = async (values: ResetPasswordFormData) => {
     setIsSubmitting(true)
     try {
       await resetPassword({
@@ -145,8 +152,9 @@ function ResetPasswordContent() {
               <Label htmlFor="new_password">Password Baru</Label>
               <InputPassword
                 id="new_password"
-                placeholder="Password Baru"
+                placeholder="Password Baru (min 8 karakter)"
                 className="h-11"
+                maxLength={VALIDATION_LIMITS.PASSWORD_MAX}
                 {...form.register('new_password')}
               />
               {form.formState.errors.new_password && (
@@ -162,6 +170,7 @@ function ResetPasswordContent() {
                 id="confirm_password"
                 placeholder="Ulangi Password Baru"
                 className="h-11"
+                maxLength={VALIDATION_LIMITS.PASSWORD_MAX}
                 {...form.register('confirm_password')}
               />
               {form.formState.errors.confirm_password && (
