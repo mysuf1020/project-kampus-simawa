@@ -118,6 +118,11 @@ func (s *RBACService) AssignOrgRole(ctx context.Context, userID uuid.UUID, roleC
 	return s.userRoles.Assign(ctx, ur)
 }
 
+// RemoveRoleByCode removes a specific role from user.
+func (s *RBACService) RemoveRoleByCode(ctx context.Context, userID uuid.UUID, roleCode string) error {
+	return s.userRoles.RemoveByCode(ctx, userID, strings.ToUpper(strings.TrimSpace(roleCode)))
+}
+
 // ListAssignments returns raw user_roles (termasuk org scope) untuk kebutuhan akses granular.
 func (s *RBACService) ListAssignments(ctx context.Context, userID uuid.UUID) ([]model.UserRole, error) {
 	return s.userRoles.ListAssignments(ctx, userID)

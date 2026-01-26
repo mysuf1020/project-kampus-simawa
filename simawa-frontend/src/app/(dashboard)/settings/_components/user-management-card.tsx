@@ -3,7 +3,7 @@
 import { FormEvent, useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
-import { Loader2, UserPlus, Shield, User, Building2 } from 'lucide-react'
+import { Loader2, UserPlus, Shield, User, Building2, Trash2, X } from 'lucide-react'
 import { toast } from 'sonner'
 
 import {
@@ -28,9 +28,12 @@ import { EMAIL_DOMAIN, getEmailPlaceholder, isValidEmailDomain } from '@/lib/con
 import {
   assignUserRoles,
   createUser,
+  listUserAssignments,
+  removeUserRole,
   searchUsers,
   type CreateUserPayload,
   type UserSearchItem,
+  type UserRoleAssignment,
 } from '@/lib/apis/user'
 import { listOrganizations } from '@/lib/apis/org'
 import { useRBAC } from '@/lib/providers/rbac-provider'
@@ -365,8 +368,9 @@ export function UserCreateCard() {
 }
 
 export function RoleManagementCard() {
-  const { user } = useRBAC()
+  const { user, hasAnyRole } = useRBAC()
   const isAdmin = user?.roles?.includes('ADMIN')
+  const canManageRoles = hasAnyRole(['ADMIN', 'BEM_ADMIN'])
 
   const [rolesUserId, setRolesUserId] = useState('')
   const [selectedUser, setSelectedUser] = useState<UserSearchItem | null>(null)
@@ -378,10 +382,22 @@ export function RoleManagementCard() {
       assignUserRoles(id, roles),
   })
 
+  const { mutateAsync: removeRoleMutation, isPending: isRemoving } = useMutation({
+    mutationFn: ({ id, roleCode }: { id: string; roleCode: string }) =>
+      removeUserRole(id, roleCode),
+  })
+
+  // Fetch existing roles when user is selected
+  const existingRolesQuery = useQuery({
+    queryKey: ['user-roles', rolesUserId],
+    queryFn: () => listUserAssignments(rolesUserId),
+    enabled: Boolean(rolesUserId) && canManageRoles,
+  })
+
   const userSearchQuery = useQuery({
     queryKey: ['user-search', userSearch],
     queryFn: () => searchUsers({ q: userSearch, size: 10 }),
-    enabled: Boolean(isAdmin) && userSearch.trim().length > 0,
+    enabled: Boolean(canManageRoles) && userSearch.trim().length > 0,
   })
 
   const userOptions = [
@@ -447,9 +463,9 @@ export function RoleManagementCard() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        {!isAdmin && (
+        {!canManageRoles && (
           <div className="rounded-lg bg-amber-50 p-3 text-sm text-amber-800 border border-amber-100">
-            Hanya admin yang dapat mengubah peran pengguna.
+            Hanya Admin atau BEM Admin yang dapat mengubah peran pengguna.
           </div>
         )}
 
@@ -462,7 +478,7 @@ export function RoleManagementCard() {
                 value={rolesUserId}
                 options={userOptions}
                 isLoading={userSearchQuery.isFetching}
-                disabled={!isAdmin}
+                disabled={!canManageRoles}
                 onSearch={(txt) => setUserSearch(txt)}
                 onSelect={(value, option) => {
                   setRolesUserId(value || '')
@@ -497,7 +513,7 @@ export function RoleManagementCard() {
                 placeholder="Pilih role..."
                 value=""
                 options={ROLE_OPTIONS.filter((r) => !selectedRoles.includes(r.value))}
-                disabled={!isAdmin}
+                disabled={!canManageRoles}
                 onSelect={(value) => {
                   if (!value) return
                   setSelectedRoles((prev) => [...prev, value])
@@ -531,16 +547,72 @@ export function RoleManagementCard() {
             type="submit"
             size="sm"
             className="bg-brand-600 hover:bg-brand-700 text-white w-full sm:w-auto"
-            disabled={!isAdmin || isAssigning}
+            disabled={!canManageRoles || isAssigning}
           >
             {isAssigning ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
               <Shield className="mr-2 h-4 w-4" />
             )}
-            Simpan Perubahan Role
+            Tambah Role
           </Button>
         </form>
+
+        {/* Existing Roles Section */}
+        {rolesUserId && selectedUser && (
+          <div className="rounded-xl border border-neutral-200 bg-white p-4 space-y-3">
+            <h4 className="text-sm font-medium text-neutral-900 flex items-center gap-2">
+              <User className="h-4 w-4 text-brand-600" />
+              Role Aktif: {selectedUser.username}
+            </h4>
+            
+            {existingRolesQuery.isLoading ? (
+              <div className="flex items-center gap-2 text-xs text-neutral-500">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                Memuat role...
+              </div>
+            ) : existingRolesQuery.data && existingRolesQuery.data.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {existingRolesQuery.data.map((assignment) => (
+                  <Badge
+                    key={assignment.id}
+                    variant="secondary"
+                    className="flex items-center gap-1.5 pr-1 bg-neutral-100 text-neutral-700 border-neutral-200"
+                  >
+                    {assignment.role_code}
+                    {canManageRoles && (
+                      <button
+                        type="button"
+                        className="ml-1 p-0.5 rounded hover:bg-red-100 hover:text-red-600 transition-colors"
+                        disabled={isRemoving}
+                        onClick={async () => {
+                          if (!confirm(`Hapus role ${assignment.role_code} dari ${selectedUser.username}?`)) return
+                          try {
+                            await removeRoleMutation({ id: rolesUserId, roleCode: assignment.role_code })
+                            toast.success(`Role ${assignment.role_code} berhasil dihapus`)
+                            existingRolesQuery.refetch()
+                          } catch (err) {
+                            console.error(err)
+                            toast.error('Gagal menghapus role')
+                          }
+                        }}
+                        title="Hapus role ini"
+                      >
+                        {isRemoving ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <X className="h-3 w-3" />
+                        )}
+                      </button>
+                    )}
+                  </Badge>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-neutral-500 italic">User ini belum memiliki role sistem.</p>
+            )}
+          </div>
+        )}
 
         <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-4">
           <h4 className="flex items-center gap-2 font-medium text-blue-900 text-sm mb-2">
