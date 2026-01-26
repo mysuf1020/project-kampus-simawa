@@ -21,6 +21,11 @@ import (
 	"simawa-backend/internal/repository"
 )
 
+type otpEntry struct {
+	code      string
+	expiresAt time.Time
+}
+
 type AuthService struct {
 	cfg        *config.Env
 	users      repository.UserRepository
@@ -31,6 +36,7 @@ type AuthService struct {
 
 	mu        sync.Mutex
 	failTrack map[string]failedLogin
+	otpStore  map[string]otpEntry // in-memory fallback for OTP when Redis unavailable
 	audit     *AuditService
 }
 
@@ -423,50 +429,70 @@ func (s *AuthService) ResetPassword(ctx context.Context, req *dto.ResetPasswordR
 
 func (s *AuthService) generateOTP(ctx context.Context, email, purpose string) (string, error) {
 	// 6 digit numeric
-	b := make([]byte, 3)
-	if _, err := rand.Read(b); err != nil {
-		return "", err
-	}
-	// just a simple random number
-	// Better: crypto/rand -> int
-	
-	otp := "123456" // Default for DEV if no random
-	// Make it random
 	digits := "0123456789"
 	otpB := make([]byte, 6)
-	if _, err := rand.Read(otpB); err == nil {
-		for i := 0; i < 6; i++ {
-			otpB[i] = digits[int(otpB[i])%10]
-		}
-		otp = string(otpB)
+	if _, err := rand.Read(otpB); err != nil {
+		return "", err
 	}
+	for i := 0; i < 6; i++ {
+		otpB[i] = digits[int(otpB[i])%10]
+	}
+	otp := string(otpB)
 
 	key := fmt.Sprintf("otp:%s:%s", purpose, email)
-	// Store in Redis, TTL 5 mins
+	// Store in Redis if available, TTL 5 mins
 	if s.redis != nil {
 		err := s.redis.Set(ctx, key, otp, 5*time.Minute).Err()
 		if err != nil {
-			return "", err
+			// Log but continue - will use in-memory fallback
+			fmt.Printf("[OTP] Redis set error: %v, using in-memory fallback\n", err)
 		}
 	}
+	// Always store in memory as fallback
+	s.mu.Lock()
+	if s.otpStore == nil {
+		s.otpStore = make(map[string]otpEntry)
+	}
+	s.otpStore[key] = otpEntry{code: otp, expiresAt: time.Now().Add(5 * time.Minute)}
+	s.mu.Unlock()
 	return otp, nil
 }
 
 func (s *AuthService) validateOTP(ctx context.Context, email, purpose, otp string) (bool, error) {
-	if s.redis == nil {
-		return false, errors.New("redis not available")
-	}
 	key := fmt.Sprintf("otp:%s:%s", purpose, email)
-	val, err := s.redis.Get(ctx, key).Result()
-	if err == redis.Nil {
+	
+	// Try Redis first if available
+	if s.redis != nil {
+		val, err := s.redis.Get(ctx, key).Result()
+		if err == nil && val == otp {
+			s.redis.Del(ctx, key)
+			// Also clean from memory
+			s.mu.Lock()
+			delete(s.otpStore, key)
+			s.mu.Unlock()
+			return true, nil
+		}
+		if err != nil && err != redis.Nil {
+			fmt.Printf("[OTP] Redis get error: %v, trying in-memory fallback\n", err)
+		}
+	}
+	
+	// Fallback to in-memory store
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.otpStore == nil {
 		return false, nil
 	}
-	if err != nil {
-		return false, err
+	entry, ok := s.otpStore[key]
+	if !ok {
+		return false, nil
 	}
-	if val == otp {
-		// Consume OTP
-		s.redis.Del(ctx, key)
+	if time.Now().After(entry.expiresAt) {
+		delete(s.otpStore, key)
+		return false, nil
+	}
+	if entry.code == otp {
+		delete(s.otpStore, key)
 		return true, nil
 	}
 	return false, nil
