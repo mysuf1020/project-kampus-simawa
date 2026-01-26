@@ -13,6 +13,7 @@ import (
 
 type UserRoleRepository interface {
 	Assign(ctx context.Context, ur *model.UserRole) error
+	RemoveByCode(ctx context.Context, userID uuid.UUID, roleCode string) error
 	ListByUser(ctx context.Context, userID uuid.UUID) ([]model.Role, error)
 	ListAssignments(ctx context.Context, userID uuid.UUID) ([]model.UserRole, error)
 	EnsureBaseRoles(ctx context.Context) error
@@ -37,6 +38,12 @@ func (r *userRoleRepository) Assign(ctx context.Context, ur *model.UserRole) err
 			DoUpdates: clause.AssignmentColumns([]string{"role_code", "org_id"}),
 		}).
 		Create(ur).Error
+}
+
+func (r *userRoleRepository) RemoveByCode(ctx context.Context, userID uuid.UUID, roleCode string) error {
+	return r.db.WithContext(ctx).
+		Where("user_id = ? AND role_code = ?", userID, strings.ToUpper(strings.TrimSpace(roleCode))).
+		Delete(&model.UserRole{}).Error
 }
 
 func (r *userRoleRepository) ListByUser(ctx context.Context, userID uuid.UUID) ([]model.Role, error) {

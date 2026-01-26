@@ -79,6 +79,11 @@ export const assignUserRoles = async (id: string, roles: string[]) => {
   return data
 }
 
+export const removeUserRole = async (id: string, roleCode: string) => {
+  const { data } = await api.delete(`/v1/users/${id}/roles/${roleCode}`)
+  return data
+}
+
 export const listUserAssignments = async (id: string) => {
   const { data } = await api.get<{ items: UserRoleAssignment[] }>(`/v1/users/${id}/roles`)
   return data.items

@@ -90,6 +90,26 @@ func (h *UserHandler) AssignRoles(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"assigned": true})
 }
 
+// ---------- Remove a specific role from user ----------
+func (h *UserHandler) RemoveRole(c *gin.Context) {
+	idStr := c.Param("id")
+	userID, err := uuid.Parse(idStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "invalid user id"})
+		return
+	}
+	roleCode := c.Param("role_code")
+	if roleCode == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "role_code is required"})
+		return
+	}
+	if err := h.rbacSvc.RemoveRoleByCode(c.Request.Context(), userID, roleCode); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"removed": true})
+}
+
 // ---------- List role assignments (admin, debug RBAC) ----------
 func (h *UserHandler) ListAssignments(c *gin.Context) {
 	if h.rbacSvc == nil {

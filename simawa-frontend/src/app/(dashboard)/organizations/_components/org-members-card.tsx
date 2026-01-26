@@ -2,7 +2,7 @@
 
 import { FormEvent, useState, useCallback } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Loader2, Mail, Trash2, UserPlus, Users, Pencil } from 'lucide-react'
+import { Loader2, Mail, Trash2, UserPlus, Users, Pencil, ShieldX } from 'lucide-react'
 import { toast } from 'sonner'
 
 import {
@@ -31,6 +31,18 @@ import {
 } from '@/lib/apis/member'
 import { mentionUser } from '@/lib/apis/notification'
 import { searchUsers, type UserSearchItem } from '@/lib/apis/user'
+import { useRBAC } from '@/lib/providers/rbac-provider'
+import { ROLE_ADMIN, ROLE_BEM_ADMIN } from '@/components/guards/role-guard'
+
+// Organization member role options - moved to top for reuse
+const ORG_ROLE_OPTIONS = [
+  { value: 'ADMIN', label: 'Admin' },
+  { value: 'KETUA', label: 'Ketua' },
+  { value: 'WAKIL_KETUA', label: 'Wakil Ketua' },
+  { value: 'SEKRETARIS', label: 'Sekretaris' },
+  { value: 'BENDAHARA', label: 'Bendahara' },
+  { value: 'ANGGOTA', label: 'Anggota' },
+]
 
 type Props = {
   orgId?: string
@@ -39,6 +51,8 @@ type Props = {
 
 export function OrgMembersCard({ orgId, orgName }: Props) {
   const queryClient = useQueryClient()
+  const { hasAnyRole } = useRBAC()
+  const canManageRoles = hasAnyRole([ROLE_ADMIN, ROLE_BEM_ADMIN])
 
   const { data, isLoading, isError, refetch } = useQuery<OrgMember[]>({
     queryKey: ['org-members', orgId],
@@ -221,15 +235,16 @@ export function OrgMembersCard({ orgId, orgName }: Props) {
                   <Label className="text-xs">Peran / Role</Label>
                   <Select value={roleInput} onValueChange={setRoleInput}>
                     <SelectTrigger className="h-9">
-                      <SelectValue placeholder="Pilih role" />
+                      <SelectValue placeholder="Pilih role">
+                        {roleInput ? ORG_ROLE_OPTIONS.find(r => r.value === roleInput)?.label : 'Pilih role'}
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="ADMIN">Admin</SelectItem>
-                      <SelectItem value="KETUA">Ketua</SelectItem>
-                      <SelectItem value="WAKIL_KETUA">Wakil Ketua</SelectItem>
-                      <SelectItem value="SEKRETARIS">Sekretaris</SelectItem>
-                      <SelectItem value="BENDAHARA">Bendahara</SelectItem>
-                      <SelectItem value="ANGGOTA">Anggota</SelectItem>
+                      {ORG_ROLE_OPTIONS.map((role) => (
+                        <SelectItem key={role.value} value={role.value}>
+                          {role.label}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -361,16 +376,6 @@ export function OrgMembersCard({ orgId, orgName }: Props) {
     </Card>
   )
 }
-
-// Organization member role options
-const ORG_ROLE_OPTIONS = [
-  { value: 'ADMIN', label: 'Admin' },
-  { value: 'KETUA', label: 'Ketua' },
-  { value: 'WAKIL_KETUA', label: 'Wakil Ketua' },
-  { value: 'SEKRETARIS', label: 'Sekretaris' },
-  { value: 'BENDAHARA', label: 'Bendahara' },
-  { value: 'ANGGOTA', label: 'Anggota' },
-]
 
 function MemberRoleSelect({
   member,
