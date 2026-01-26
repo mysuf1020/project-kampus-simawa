@@ -11,6 +11,9 @@ export type AuditLog = {
   description: string
   metadata: Record<string, unknown>
   created_at: string
+  // User info from backend join
+  username?: string
+  email?: string
 }
 
 export type AuditLogListParams = {

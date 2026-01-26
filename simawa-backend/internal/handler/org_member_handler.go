@@ -37,7 +37,11 @@ func (h *OrgMemberHandler) Add(c *gin.Context) {
 	}
 	userID, _ := uuid.Parse(req.UserID)
 	requester, _ := uuid.Parse(c.GetString("sub"))
-	if err := h.svc.Add(c.Request.Context(), requester, orgID, userID, req.Role); err != nil {
+	auditInfo := &service.AuditInfo{
+		IPAddress: c.GetString("client_ip"),
+		UserAgent: c.GetString("user_agent"),
+	}
+	if err := h.svc.Add(c.Request.Context(), requester, orgID, userID, req.Role, auditInfo); err != nil {
 		c.JSON(http.StatusBadRequest, response.Err(err.Error()))
 		return
 	}
@@ -65,7 +69,11 @@ func (h *OrgMemberHandler) Update(c *gin.Context) {
 		return
 	}
 	requester, _ := uuid.Parse(c.GetString("sub"))
-	if err := h.svc.UpdateRole(c.Request.Context(), requester, orgID, userID, req.Role); err != nil {
+	auditInfo := &service.AuditInfo{
+		IPAddress: c.GetString("client_ip"),
+		UserAgent: c.GetString("user_agent"),
+	}
+	if err := h.svc.UpdateRole(c.Request.Context(), requester, orgID, userID, req.Role, auditInfo); err != nil {
 		c.JSON(http.StatusBadRequest, response.Err(err.Error()))
 		return
 	}
@@ -84,7 +92,11 @@ func (h *OrgMemberHandler) Delete(c *gin.Context) {
 		return
 	}
 	requester, _ := uuid.Parse(c.GetString("sub"))
-	if err := h.svc.Delete(c.Request.Context(), requester, orgID, userID); err != nil {
+	auditInfo := &service.AuditInfo{
+		IPAddress: c.GetString("client_ip"),
+		UserAgent: c.GetString("user_agent"),
+	}
+	if err := h.svc.Delete(c.Request.Context(), requester, orgID, userID, auditInfo); err != nil {
 		c.JSON(http.StatusBadRequest, response.Err(err.Error()))
 		return
 	}
