@@ -1,0 +1,105 @@
+# Google Cloud Build configuration for SIMAWA
+# This file defines the build steps for deploying to Cloud Run
+
+steps:
+  # Build Frontend
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/simawa-frontend:$COMMIT_SHA'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/simawa-frontend:latest'
+      - '--build-arg'
+      - 'NEXT_PUBLIC_API_URL=${_NEXT_PUBLIC_API_URL}'
+      - '--build-arg'
+      - 'NEXTAUTH_URL=${_NEXTAUTH_URL}'
+      - '--build-arg'
+      - 'NEXTAUTH_SECRET=${_NEXTAUTH_SECRET}'
+      - '-f'
+      - 'simawa-frontend/Dockerfile'
+      - 'simawa-frontend'
+    id: 'build-frontend'
+
+  # Build Backend
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/simawa-backend:$COMMIT_SHA'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/simawa-backend:latest'
+      - '-f'
+      - 'simawa-backend/Dockerfile'
+      - 'simawa-backend'
+    id: 'build-backend'
+
+  # Push Frontend Image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/simawa-frontend:$COMMIT_SHA']
+    id: 'push-frontend'
+    waitFor: ['build-frontend']
+
+  # Push Backend Image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/simawa-backend:$COMMIT_SHA']
+    id: 'push-backend'
+    waitFor: ['build-backend']
+
+  # Deploy Frontend to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'simawa-frontend'
+      - '--image'
+      - 'gcr.io/$PROJECT_ID/simawa-frontend:$COMMIT_SHA'
+      - '--region'
+      - '${_REGION}'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+      - '--set-env-vars'
+      - 'NEXTAUTH_URL=${_NEXTAUTH_URL},NEXTAUTH_SECRET=${_NEXTAUTH_SECRET}'
+    id: 'deploy-frontend'
+    waitFor: ['push-frontend']
+
+  # Deploy Backend to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'simawa-backend'
+      - '--image'
+      - 'gcr.io/$PROJECT_ID/simawa-backend:$COMMIT_SHA'
+      - '--region'
+      - '${_REGION}'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+      - '--set-env-vars'
+      - 'DB_HOST=${_DB_HOST},DB_USER=${_DB_USER},DB_PASSWORD=${_DB_PASSWORD},DB_NAME=${_DB_NAME},JWT_SECRET=${_JWT_SECRET}'
+    id: 'deploy-backend'
+    waitFor: ['push-backend']
+
+images:
+  - 'gcr.io/$PROJECT_ID/simawa-frontend:$COMMIT_SHA'
+  - 'gcr.io/$PROJECT_ID/simawa-frontend:latest'
+  - 'gcr.io/$PROJECT_ID/simawa-backend:$COMMIT_SHA'
+  - 'gcr.io/$PROJECT_ID/simawa-backend:latest'
+
+substitutions:
+  _REGION: 'asia-southeast1'
+  _NEXT_PUBLIC_API_URL: 'https://simawa-backend-xxxxx.run.app'
+  _NEXTAUTH_URL: 'https://simawa-frontend-xxxxx.run.app'
+  _NEXTAUTH_SECRET: ''
+  _DB_HOST: ''
+  _DB_USER: ''
+  _DB_PASSWORD: ''
+  _DB_NAME: ''
+  _JWT_SECRET: ''
+
+options:
+  logging: CLOUD_LOGGING_ONLY

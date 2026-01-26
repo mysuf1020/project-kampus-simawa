@@ -22,7 +22,7 @@ type User struct {
 	Phone   string `gorm:"size:32;not null;default:''" json:"phone"`
 	Alamat  string `gorm:"size:255;not null;default:''" json:"alamat"`
 
-	BirthDate    *time.Time `gorm:"not null" json:"birth_date"` // sekarang wajib terisi
+	BirthDate    *time.Time `json:"birth_date"` // optional saat register, bisa diisi nanti di profile
 	EmailVerifiedAt *time.Time `json:"email_verified_at"`
 	PasswordHash string     `gorm:"size:255;not null" json:"-"`
 
