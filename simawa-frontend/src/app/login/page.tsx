@@ -181,7 +181,7 @@ function LoginContent() {
             </h2>
             <p className="mt-2 text-neutral-500">
               {step === 'credentials'
-                ? 'Masuk ke akun Anda untuk mengakses dashboard.'
+                ? 'Masuk ke SIMAWA Raharja untuk mengakses dashboard.'
                 : 'Masukan kode OTP yang dikirim ke email Anda.'}
             </p>
           </div>
