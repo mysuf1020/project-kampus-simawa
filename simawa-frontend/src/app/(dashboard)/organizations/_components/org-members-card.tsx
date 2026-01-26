@@ -233,13 +233,14 @@ export function OrgMembersCard({ orgId, orgName }: Props) {
                 </div>
                 <div className="space-y-2">
                   <Label className="text-xs">Peran / Role</Label>
-                  <Select value={roleInput} onValueChange={setRoleInput}>
+                  <Select value={roleInput} onValueChange={(val) => {
+                    console.log('Role selected:', val)
+                    setRoleInput(val)
+                  }}>
                     <SelectTrigger className="h-9">
-                      <SelectValue placeholder="Pilih role">
-                        {roleInput ? ORG_ROLE_OPTIONS.find(r => r.value === roleInput)?.label : 'Pilih role'}
-                      </SelectValue>
+                      <SelectValue placeholder="Pilih role" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent position="popper" sideOffset={4}>
                       {ORG_ROLE_OPTIONS.map((role) => (
                         <SelectItem key={role.value} value={role.value}>
                           {role.label}
