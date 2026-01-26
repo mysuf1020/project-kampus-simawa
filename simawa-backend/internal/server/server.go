@@ -36,6 +36,7 @@ type Server struct {
 		User         repository.UserRepository
 		UserRole     repository.UserRoleRepository
 		RefreshToken repository.RefreshTokenRepository
+		OTP          repository.OTPRepository
 		Surat        repository.SuratRepository
 		Org          repository.OrganizationRepository
 		Activity     repository.ActivityRepository
@@ -126,6 +127,7 @@ func (s *Server) autoMigrate() error {
 		&model.ActivityHistory{},
 		&model.LPJHistory{},
 		&model.AuditLog{},
+		&model.OTP{},
 	); err != nil {
 		return err
 	}
@@ -162,6 +164,7 @@ func (s *Server) initRepositories() {
 	s.Repositories.ActHistory = repository.NewActivityHistoryRepository(s.DB)
 	s.Repositories.Audit = repository.NewAuditLogRepository(s.DB)
 	s.Repositories.LPJHistory = repository.NewLPJHistoryRepository(s.DB)
+	s.Repositories.OTP = repository.NewOTPRepository(s.DB)
 }
 
 func (s *Server) initServices() {
@@ -171,7 +174,7 @@ func (s *Server) initServices() {
 	s.Services.Captcha = service.NewCaptchaService(s.Config)
 	s.Services.Notify = service.NewNotificationService(s.Repositories.Notify)
 	emailSvc := service.NewEmailService(&s.Config.SMTP)
-	s.Services.Auth = service.NewAuthService(s.Config, s.Repositories.User, s.Repositories.UserRole, s.Repositories.RefreshToken, s.Redis, emailSvc, s.Services.Audit)
+	s.Services.Auth = service.NewAuthService(s.Config, s.Repositories.User, s.Repositories.UserRole, s.Repositories.RefreshToken, s.Repositories.OTP, s.Redis, emailSvc, s.Services.Audit)
 	s.Services.Surat = service.NewSuratServiceWithRepo(s.Repositories.Surat, s.Repositories.Org, s.Services.Audit, s.Services.Notify)
 	s.Services.Org = service.NewOrganizationService(s.Repositories.Org, s.Services.RBAC, s.Services.Audit)
 	s.Services.Activity = service.NewActivityService(s.Repositories.Activity, s.Repositories.Org, s.Repositories.ActHistory, s.Services.RBAC, s.Services.Notify, s.Services.Audit)

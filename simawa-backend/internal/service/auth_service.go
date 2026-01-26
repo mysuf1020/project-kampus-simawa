@@ -31,6 +31,7 @@ type AuthService struct {
 	users      repository.UserRepository
 	userRoles  repository.UserRoleRepository
 	refreshTok repository.RefreshTokenRepository
+	otpRepo    repository.OTPRepository
 	redis      *redis.Client
 	email      *EmailService
 
@@ -50,6 +51,7 @@ func NewAuthService(
 	users repository.UserRepository,
 	userRoles repository.UserRoleRepository,
 	refresh repository.RefreshTokenRepository,
+	otpRepo repository.OTPRepository,
 	redis *redis.Client,
 	email *EmailService,
 	audit *AuditService,
@@ -59,6 +61,7 @@ func NewAuthService(
 		users:      users,
 		userRoles:  userRoles,
 		refreshTok: refresh,
+		otpRepo:    otpRepo,
 		redis:      redis,
 		email:      email,
 		failTrack:  make(map[string]failedLogin),
@@ -439,62 +442,62 @@ func (s *AuthService) generateOTP(ctx context.Context, email, purpose string) (s
 	}
 	otp := string(otpB)
 
-	key := fmt.Sprintf("otp:%s:%s", purpose, email)
-	// Store in Redis if available, TTL 5 mins
-	if s.redis != nil {
-		err := s.redis.Set(ctx, key, otp, 5*time.Minute).Err()
-		if err != nil {
-			// Log but continue - will use in-memory fallback
-			fmt.Printf("[OTP] Redis set error: %v, using in-memory fallback\n", err)
+	// Store in database (primary storage)
+	if s.otpRepo != nil {
+		otpModel := &model.OTP{
+			Email:     email,
+			Purpose:   purpose,
+			Code:      otp,
+			ExpiresAt: time.Now().Add(5 * time.Minute),
+			CreatedAt: time.Now(),
+		}
+		if err := s.otpRepo.Create(ctx, otpModel); err != nil {
+			fmt.Printf("[OTP] DB save error: %v\n", err)
 		}
 	}
-	// Always store in memory as fallback
-	s.mu.Lock()
-	if s.otpStore == nil {
-		s.otpStore = make(map[string]otpEntry)
+
+	// Also store in Redis if available (for faster lookup)
+	key := fmt.Sprintf("otp:%s:%s", purpose, email)
+	if s.redis != nil {
+		_ = s.redis.Set(ctx, key, otp, 5*time.Minute).Err()
 	}
-	s.otpStore[key] = otpEntry{code: otp, expiresAt: time.Now().Add(5 * time.Minute)}
-	s.mu.Unlock()
+
 	return otp, nil
 }
 
 func (s *AuthService) validateOTP(ctx context.Context, email, purpose, otp string) (bool, error) {
+	// Try Redis first if available (faster)
 	key := fmt.Sprintf("otp:%s:%s", purpose, email)
-	
-	// Try Redis first if available
 	if s.redis != nil {
 		val, err := s.redis.Get(ctx, key).Result()
 		if err == nil && val == otp {
 			s.redis.Del(ctx, key)
-			// Also clean from memory
-			s.mu.Lock()
-			delete(s.otpStore, key)
-			s.mu.Unlock()
+			// Also mark as used in DB
+			if s.otpRepo != nil {
+				if dbOtp, _ := s.otpRepo.GetValid(ctx, email, purpose); dbOtp != nil {
+					_ = s.otpRepo.MarkUsed(ctx, dbOtp.ID)
+				}
+			}
 			return true, nil
 		}
-		if err != nil && err != redis.Nil {
-			fmt.Printf("[OTP] Redis get error: %v, trying in-memory fallback\n", err)
+	}
+
+	// Fallback to database
+	if s.otpRepo != nil {
+		dbOtp, err := s.otpRepo.GetValid(ctx, email, purpose)
+		if err != nil {
+			return false, nil
+		}
+		if dbOtp.Code == otp {
+			_ = s.otpRepo.MarkUsed(ctx, dbOtp.ID)
+			// Also delete from Redis if available
+			if s.redis != nil {
+				s.redis.Del(ctx, key)
+			}
+			return true, nil
 		}
 	}
-	
-	// Fallback to in-memory store
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	if s.otpStore == nil {
-		return false, nil
-	}
-	entry, ok := s.otpStore[key]
-	if !ok {
-		return false, nil
-	}
-	if time.Now().After(entry.expiresAt) {
-		delete(s.otpStore, key)
-		return false, nil
-	}
-	if entry.code == otp {
-		delete(s.otpStore, key)
-		return true, nil
-	}
+
 	return false, nil
 }
 
