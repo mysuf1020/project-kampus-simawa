@@ -148,7 +148,10 @@ export function RoleGuideCard() {
                     ORG_*
                   </th>
                   <th className="border-b border-neutral-100 px-4 py-3 text-center">
-                    BEM/DEMA
+                    BEM
+                  </th>
+                  <th className="border-b border-neutral-100 px-4 py-3 text-center">
+                    DEMA
                   </th>
                   <th className="border-b border-neutral-100 px-4 py-3 text-center">
                     ADMIN
@@ -160,86 +163,61 @@ export function RoleGuideCard() {
                   <td className="px-4 py-3 font-medium text-neutral-900">
                     Kelola Profil Organisasi
                   </td>
-                  <td className="px-4 py-3 text-center">
-                    <No />
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <Yes />
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <Yes />
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <Yes />
-                  </td>
+                  <td className="px-4 py-3 text-center"><No /></td>
+                  <td className="px-4 py-3 text-center"><Yes /></td>
+                  <td className="px-4 py-3 text-center"><Yes /></td>
+                  <td className="px-4 py-3 text-center"><Yes /></td>
+                  <td className="px-4 py-3 text-center"><Yes /></td>
                 </tr>
                 <tr>
                   <td className="px-4 py-3 font-medium text-neutral-900">
                     Kelola Anggota
                   </td>
-                  <td className="px-4 py-3 text-center">
-                    <No />
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <Yes />
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <Yes />
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <Yes />
-                  </td>
+                  <td className="px-4 py-3 text-center"><No /></td>
+                  <td className="px-4 py-3 text-center"><Yes /></td>
+                  <td className="px-4 py-3 text-center"><Yes /></td>
+                  <td className="px-4 py-3 text-center"><Yes /></td>
+                  <td className="px-4 py-3 text-center"><Yes /></td>
                 </tr>
                 <tr>
                   <td className="px-4 py-3 font-medium text-neutral-900">
                     Proses Pendaftaran
                   </td>
-                  <td className="px-4 py-3 text-center">
-                    <No />
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <Yes />
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <Yes />
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <Yes />
-                  </td>
+                  <td className="px-4 py-3 text-center"><No /></td>
+                  <td className="px-4 py-3 text-center"><Yes /></td>
+                  <td className="px-4 py-3 text-center"><Yes /></td>
+                  <td className="px-4 py-3 text-center"><Yes /></td>
+                  <td className="px-4 py-3 text-center"><Yes /></td>
                 </tr>
                 <tr>
                   <td className="px-4 py-3 font-medium text-neutral-900">
                     Direktori User
                   </td>
-                  <td className="px-4 py-3 text-center">
-                    <No />
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <No />
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <Yes />
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <Yes />
-                  </td>
+                  <td className="px-4 py-3 text-center"><No /></td>
+                  <td className="px-4 py-3 text-center"><No /></td>
+                  <td className="px-4 py-3 text-center"><Yes /></td>
+                  <td className="px-4 py-3 text-center"><Yes /></td>
+                  <td className="px-4 py-3 text-center"><Yes /></td>
                 </tr>
                 <tr>
                   <td className="px-4 py-3 font-medium text-neutral-900">
                     Laporan / LPJ
                   </td>
-                  <td className="px-4 py-3 text-center">
-                    <No />
+                  <td className="px-4 py-3 text-center"><No /></td>
+                  <td className="px-4 py-3 text-center"><No /></td>
+                  <td className="px-4 py-3 text-center"><Yes /></td>
+                  <td className="px-4 py-3 text-center"><Yes /></td>
+                  <td className="px-4 py-3 text-center"><Yes /></td>
+                </tr>
+                <tr>
+                  <td className="px-4 py-3 font-medium text-neutral-900">
+                    Approve Surat/Kegiatan
                   </td>
-                  <td className="px-4 py-3 text-center">
-                    <No />
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <Yes />
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <Yes />
-                  </td>
+                  <td className="px-4 py-3 text-center"><No /></td>
+                  <td className="px-4 py-3 text-center"><No /></td>
+                  <td className="px-4 py-3 text-center"><Yes /></td>
+                  <td className="px-4 py-3 text-center"><No /></td>
+                  <td className="px-4 py-3 text-center"><Yes /></td>
                 </tr>
               </tbody>
             </table>

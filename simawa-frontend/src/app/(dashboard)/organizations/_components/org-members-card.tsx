@@ -1,8 +1,8 @@
 'use client'
 
-import { FormEvent, useState } from 'react'
+import { FormEvent, useState, useCallback } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Loader2, Mail, Trash2, UserPlus, Users } from 'lucide-react'
+import { Loader2, Mail, Trash2, UserPlus, Users, Pencil } from 'lucide-react'
 import { toast } from 'sonner'
 
 import {
@@ -308,12 +308,13 @@ export function OrgMembersCard({ orgId, orgName }: Props) {
                             )}
                           </p>
                           <div className="flex items-center gap-2 mt-0.5">
-                            <Badge
-                              variant="secondary"
-                              className="text-[10px] font-normal bg-neutral-100 text-neutral-600 border-neutral-200 px-1.5 py-0 h-5"
-                            >
-                              {member.role}
-                            </Badge>
+                            <MemberRoleSelect
+                              member={member}
+                              onUpdate={async (newRole: string) => {
+                                await addOrUpdate({ action: 'update', userId: member.user_id, role: newRole })
+                              }}
+                              isSaving={isSaving}
+                            />
                             {member.user?.email && (
                               <span className="text-xs text-neutral-400">
                                 • {member.user.email}
@@ -358,5 +359,67 @@ export function OrgMembersCard({ orgId, orgName }: Props) {
         )}
       </CardContent>
     </Card>
+  )
+}
+
+// Organization member role options
+const ORG_ROLE_OPTIONS = [
+  { value: 'ADMIN', label: 'Admin' },
+  { value: 'KETUA', label: 'Ketua' },
+  { value: 'WAKIL_KETUA', label: 'Wakil Ketua' },
+  { value: 'SEKRETARIS', label: 'Sekretaris' },
+  { value: 'BENDAHARA', label: 'Bendahara' },
+  { value: 'ANGGOTA', label: 'Anggota' },
+]
+
+function MemberRoleSelect({
+  member,
+  onUpdate,
+  isSaving,
+}: {
+  member: OrgMember
+  onUpdate: (newRole: string) => Promise<void>
+  isSaving: boolean
+}) {
+  const [isEditing, setIsEditing] = useState(false)
+  const [selectedRole, setSelectedRole] = useState(member.role)
+
+  const handleRoleChange = async (newRole: string) => {
+    if (newRole === member.role) {
+      setIsEditing(false)
+      return
+    }
+    setSelectedRole(newRole)
+    await onUpdate(newRole)
+    setIsEditing(false)
+  }
+
+  if (!isEditing) {
+    return (
+      <button
+        type="button"
+        onClick={() => setIsEditing(true)}
+        className="inline-flex items-center gap-1 text-[10px] font-normal bg-neutral-100 text-neutral-600 border border-neutral-200 px-1.5 py-0 h-5 rounded-md hover:bg-neutral-200 transition-colors"
+        title="Klik untuk ubah role"
+      >
+        {ORG_ROLE_OPTIONS.find((r) => r.value === member.role)?.label || member.role}
+        <Pencil className="h-2.5 w-2.5 opacity-50" />
+      </button>
+    )
+  }
+
+  return (
+    <Select value={selectedRole} onValueChange={handleRoleChange} disabled={isSaving}>
+      <SelectTrigger className="h-5 text-[10px] w-auto min-w-[100px] px-2 py-0">
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        {ORG_ROLE_OPTIONS.map((role) => (
+          <SelectItem key={role.value} value={role.value} className="text-xs">
+            {role.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   )
 }
