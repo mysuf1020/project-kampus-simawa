@@ -16,6 +16,19 @@ func NewAuditService(repo repository.AuditLogRepository) *AuditService {
 	return &AuditService{repo: repo}
 }
 
+// AuditLogInput contains all fields for creating an audit log entry
+type AuditLogInput struct {
+	UserID      uuid.UUID
+	Action      string
+	EntityType  string
+	EntityID    string
+	Description string
+	IPAddress   string
+	UserAgent   string
+	Metadata    map[string]any
+}
+
+// Log creates an audit log entry (legacy method for backward compatibility)
 func (s *AuditService) Log(ctx context.Context, userID uuid.UUID, action string, meta map[string]any) {
 	if s == nil || s.repo == nil {
 		return
@@ -24,5 +37,22 @@ func (s *AuditService) Log(ctx context.Context, userID uuid.UUID, action string,
 		UserID:   userID,
 		Action:   action,
 		Metadata: meta,
+	})
+}
+
+// LogDetailed creates an audit log entry with full details
+func (s *AuditService) LogDetailed(ctx context.Context, input AuditLogInput) {
+	if s == nil || s.repo == nil {
+		return
+	}
+	_ = s.repo.Create(ctx, &model.AuditLog{
+		UserID:      input.UserID,
+		Action:      input.Action,
+		EntityType:  input.EntityType,
+		EntityID:    input.EntityID,
+		Description: input.Description,
+		IPAddress:   input.IPAddress,
+		UserAgent:   input.UserAgent,
+		Metadata:    input.Metadata,
 	})
 }

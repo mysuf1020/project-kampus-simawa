@@ -164,11 +164,12 @@ export default function AuditLogPage() {
                     <table className="w-full text-sm text-left">
                       <thead className="bg-neutral-50 text-neutral-500 font-medium border-b border-neutral-200">
                         <tr>
-                          <th className="px-4 py-3 w-[180px]">Waktu</th>
-                          <th className="px-4 py-3 w-[150px]">Aksi</th>
+                          <th className="px-4 py-3 w-[160px]">Waktu</th>
+                          <th className="px-4 py-3 w-[140px]">User</th>
+                          <th className="px-4 py-3 w-[140px]">Aksi</th>
                           <th className="px-4 py-3">Deskripsi</th>
-                          <th className="px-4 py-3 w-[150px]">Entitas</th>
-                          <th className="px-4 py-3 w-[120px]">IP Address</th>
+                          <th className="px-4 py-3 w-[120px]">Entitas</th>
+                          <th className="px-4 py-3 w-[110px]">IP Address</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-neutral-100">
@@ -182,21 +183,57 @@ export default function AuditLogPage() {
                                 locale: id,
                               })}
                             </td>
+                            <td className="px-4 py-3">
+                              {log.username ? (
+                                <div className="flex flex-col">
+                                  <span className="text-xs font-medium text-neutral-900 truncate max-w-[120px]">
+                                    {log.username}
+                                  </span>
+                                  <span className="text-[10px] text-neutral-400 truncate max-w-[120px]">
+                                    {log.email}
+                                  </span>
+                                </div>
+                              ) : (
+                                <span className="text-xs text-neutral-400 italic">System</span>
+                              )}
+                            </td>
                             <td className="px-4 py-3 font-medium">
                               <span className="inline-flex items-center rounded-md bg-neutral-100 px-2 py-1 text-xs font-medium text-neutral-600 ring-1 ring-inset ring-neutral-500/10">
                                 {log.action}
                               </span>
                             </td>
-                            <td className="px-4 py-3 text-neutral-700 max-w-md truncate">
-                              {log.description}
+                            <td className="px-4 py-3 text-neutral-700 text-xs">
+                              <div className="max-w-[280px]">
+                                <p className="truncate">{log.description || '-'}</p>
+                                {log.metadata && Object.keys(log.metadata).length > 0 && (
+                                  <details className="mt-1">
+                                    <summary className="text-[10px] text-brand-600 cursor-pointer hover:underline">
+                                      Lihat detail
+                                    </summary>
+                                    <pre className="mt-1 p-2 bg-neutral-50 rounded text-[10px] text-neutral-600 overflow-x-auto max-h-32">
+                                      {JSON.stringify(log.metadata, null, 2)}
+                                    </pre>
+                                  </details>
+                                )}
+                              </div>
                             </td>
                             <td className="px-4 py-3 text-neutral-500 text-xs">
-                              {log.entity_type}{' '}
-                              <span className="text-neutral-300">#</span>
-                              {log.entity_id.substring(0, 8)}
+                              {log.entity_type ? (
+                                <>
+                                  {log.entity_type}{' '}
+                                  {log.entity_id && (
+                                    <>
+                                      <span className="text-neutral-300">#</span>
+                                      {log.entity_id.substring(0, 8)}
+                                    </>
+                                  )}
+                                </>
+                              ) : (
+                                <span className="text-neutral-300">-</span>
+                              )}
                             </td>
                             <td className="px-4 py-3 text-neutral-500 text-xs font-mono">
-                              {log.ip_address}
+                              {log.ip_address || <span className="text-neutral-300">-</span>}
                             </td>
                           </tr>
                         ))}

@@ -35,6 +35,9 @@ func AuthJWT(cfg *config.Env) gin.HandlerFunc {
 			c.Set("sub", sub)
 			c.Set("user_id", sub)
 		}
+		// Store IP address and user agent for audit logging
+		c.Set("client_ip", c.ClientIP())
+		c.Set("user_agent", c.GetHeader("User-Agent"))
 		c.Next()
 	}
 }

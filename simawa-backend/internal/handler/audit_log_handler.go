@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -15,6 +16,13 @@ type AuditLogHandler struct {
 
 func NewAuditLogHandler(db *gorm.DB) *AuditLogHandler {
 	return &AuditLogHandler{db: db}
+}
+
+// AuditLogResponse includes user info for display
+type AuditLogResponse struct {
+	model.AuditLog
+	Username string `json:"username"`
+	Email    string `json:"email"`
 }
 
 func (h *AuditLogHandler) List(c *gin.Context) {
@@ -40,16 +48,11 @@ func (h *AuditLogHandler) List(c *gin.Context) {
 	query := h.db.Model(&model.AuditLog{})
 	
 	if action != "" {
-		query = query.Where("action = ?", action)
+		query = query.Where("action ILIKE ?", "%"+action+"%")
 	}
 	if entityType != "" {
 		query = query.Where("entity_type = ?", entityType)
 	}
-	
-	// Preload user info? AuditLog has UserID.
-	// But AuditLog model definition in previous turn didn't show User relation, just UserID.
-	// We might want to join with users table to get names if needed, or fetch separately.
-	// Let's just return logs for now.
 	
 	query.Count(&total)
 	
@@ -59,8 +62,42 @@ func (h *AuditLogHandler) List(c *gin.Context) {
 		return
 	}
 	
+	// Collect unique user IDs
+	userIDs := make([]uuid.UUID, 0)
+	userIDMap := make(map[uuid.UUID]bool)
+	for _, log := range logs {
+		if log.UserID != uuid.Nil && !userIDMap[log.UserID] {
+			userIDs = append(userIDs, log.UserID)
+			userIDMap[log.UserID] = true
+		}
+	}
+	
+	// Fetch users
+	var users []model.User
+	if len(userIDs) > 0 {
+		h.db.Where("id IN ?", userIDs).Find(&users)
+	}
+	
+	// Create user lookup map
+	userLookup := make(map[uuid.UUID]model.User)
+	for _, u := range users {
+		userLookup[u.ID] = u
+	}
+	
+	// Build response with user info
+	responses := make([]AuditLogResponse, len(logs))
+	for i, log := range logs {
+		responses[i] = AuditLogResponse{
+			AuditLog: log,
+		}
+		if u, ok := userLookup[log.UserID]; ok {
+			responses[i].Username = u.Username
+			responses[i].Email = u.Email
+		}
+	}
+	
 	c.JSON(http.StatusOK, gin.H{
-		"items": logs,
+		"items": responses,
 		"total": total,
 		"page":  page,
 		"size":  size,
