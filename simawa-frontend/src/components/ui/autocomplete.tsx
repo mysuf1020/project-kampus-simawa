@@ -223,7 +223,7 @@ export function AutoComplete<TData>({
       </PopoverAnchor>
       <PopoverContent
         onOpenAutoFocus={(e) => e.preventDefault()}
-        className="px-0 py-0 border-border-secondary z-[999]"
+        className="px-0 py-0 border-border-secondary z-[9999]"
         style={{ width: 'var(--radix-popover-trigger-width)' }}
       >
         <Flex
