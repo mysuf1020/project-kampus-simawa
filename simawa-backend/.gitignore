@@ -13,6 +13,8 @@ go.work
 # Go build files
 simawa-backend
 tmp/
+seed-users
+main
 
 # Environment files
 .env
