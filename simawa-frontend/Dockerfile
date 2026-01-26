@@ -35,12 +35,10 @@ ENV NODE_ENV=production
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-# Copy necessary files (public folder may be empty, so create it first)
-RUN mkdir -p ./public
+# Copy necessary files
+COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-# Copy public folder if it exists and has content
-COPY --from=builder /app/public* ./public/
 
 USER nextjs
 
