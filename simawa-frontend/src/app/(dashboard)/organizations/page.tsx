@@ -20,6 +20,7 @@ import { Organization, listOrganizations, updateOrganization } from '@/lib/apis/
 import { OrgCard } from './_components/org-card'
 import { OrgMembersCard } from './_components/org-members-card'
 import { OrgJoinRequestsCard } from './_components/org-join-requests-card'
+import { OrgChartCard } from './_components/org-chart-card'
 
 export default function OrganizationsPage() {
   const queryClient = useQueryClient()
@@ -119,6 +120,12 @@ export default function OrganizationsPage() {
                     Anggota
                   </TabsTrigger>
                   <TabsTrigger
+                    value="structure"
+                    className="flex-1 min-w-[80px] text-xs sm:text-sm"
+                  >
+                    Struktur
+                  </TabsTrigger>
+                  <TabsTrigger
                     value="join"
                     className="flex-1 min-w-[80px] text-xs sm:text-sm"
                   >
@@ -174,6 +181,18 @@ export default function OrganizationsPage() {
                       isLoading={orgsQuery.isLoading}
                     />
                     <OrgMembersCard orgId={activeOrg?.id} orgName={activeOrg?.name} />
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="structure" className="animate-in fade-in-50 duration-300">
+                  <div className="flex flex-col gap-6">
+                    <OrgScopePicker
+                      orgs={manageableOrgs}
+                      orgId={activeOrgId}
+                      onChange={setActiveOrgId}
+                      isLoading={orgsQuery.isLoading}
+                    />
+                    <OrgChartCard orgId={activeOrg?.id} orgName={activeOrg?.name} />
                   </div>
                 </TabsContent>
 
