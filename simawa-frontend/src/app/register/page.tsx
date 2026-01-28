@@ -6,9 +6,9 @@ import { Suspense, useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
-import { ArrowRight, Mail, User, ShieldCheck, RefreshCw } from 'lucide-react'
+import { ArrowRight, Mail, User, ShieldCheck, RefreshCw, Phone, MapPin, Hash, GraduationCap } from 'lucide-react'
 
-import { Button, Card, CardContent, Input, InputPassword, Label } from '@/components/ui'
+import { Button, Card, CardContent, Input, InputPassword, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui'
 import { register, verifyEmail, resendOTP } from '@/lib/apis/auth'
 import { EMAIL_DOMAIN, getEmailPlaceholder } from '@/lib/config/email'
 import { 
@@ -48,7 +48,14 @@ function RegisterContent() {
     defaultValues: {
       username: '',
       first_name: '',
+      second_name: '',
       email: '',
+      nim: '',
+      jurusan: '',
+      phone: '',
+      gender: '',
+      alamat: '',
+      organisasi: false,
       password: '',
       confirm_password: '',
     },
@@ -155,94 +162,200 @@ function RegisterContent() {
           <Card className="border-neutral-200 shadow-lg shadow-neutral-200/50">
             <CardContent className="pt-6">
               {step === 'register' ? (
-                <form className="space-y-5" onSubmit={form.handleSubmit(onRegister)}>
-                  <div className="space-y-2">
-                    <Label htmlFor="username">Username</Label>
+                <form className="space-y-4" onSubmit={form.handleSubmit(onRegister)}>
+                  {/* Username */}
+                  <div className="space-y-1.5">
+                    <Label htmlFor="username">Username <span className="text-red-500">*</span></Label>
                     <div className="relative">
                       <Input
                         id="username"
-                        placeholder="Username (min 4, max 32 karakter)"
-                        className="pl-10 h-11"
+                        placeholder="Username (min 4 karakter)"
+                        className="pl-10 h-10"
                         maxLength={VALIDATION_LIMITS.USERNAME_MAX}
                         {...form.register('username')}
                       />
-                      <User className="absolute left-3 top-3 h-5 w-5 text-neutral-400" />
+                      <User className="absolute left-3 top-2.5 h-5 w-5 text-neutral-400" />
                     </div>
                     {form.formState.errors.username && (
-                      <p className="text-xs text-red-600 font-medium ml-1">
-                        {form.formState.errors.username.message}
-                      </p>
+                      <p className="text-xs text-red-600">{form.formState.errors.username.message}</p>
                     )}
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="first_name">Nama Lengkap</Label>
-                    <div className="relative">
+                  {/* Nama Depan & Belakang */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="first_name">Nama Depan <span className="text-red-500">*</span></Label>
                       <Input
                         id="first_name"
-                        placeholder="Nama Lengkap"
-                        className="pl-10 h-11"
+                        placeholder="Nama Depan"
+                        className="h-10"
                         maxLength={VALIDATION_LIMITS.NAME_MAX}
                         {...form.register('first_name')}
                       />
-                      <User className="absolute left-3 top-3 h-5 w-5 text-neutral-400" />
+                      {form.formState.errors.first_name && (
+                        <p className="text-xs text-red-600">{form.formState.errors.first_name.message}</p>
+                      )}
                     </div>
-                    {form.formState.errors.first_name && (
-                      <p className="text-xs text-red-600 font-medium ml-1">
-                        {form.formState.errors.first_name.message}
-                      </p>
-                    )}
+                    <div className="space-y-1.5">
+                      <Label htmlFor="second_name">Nama Belakang <span className="text-red-500">*</span></Label>
+                      <Input
+                        id="second_name"
+                        placeholder="Nama Belakang"
+                        className="h-10"
+                        maxLength={VALIDATION_LIMITS.NAME_MAX}
+                        {...form.register('second_name')}
+                      />
+                      {form.formState.errors.second_name && (
+                        <p className="text-xs text-red-600">{form.formState.errors.second_name.message}</p>
+                      )}
+                    </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email ({EMAIL_DOMAIN})</Label>
+                  {/* NIM & Jurusan */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="nim">NIM <span className="text-red-500">*</span></Label>
+                      <div className="relative">
+                        <Input
+                          id="nim"
+                          placeholder="Nomor Induk Mahasiswa"
+                          className="pl-10 h-10"
+                          maxLength={VALIDATION_LIMITS.NIM_MAX}
+                          {...form.register('nim')}
+                        />
+                        <Hash className="absolute left-3 top-2.5 h-5 w-5 text-neutral-400" />
+                      </div>
+                      {form.formState.errors.nim && (
+                        <p className="text-xs text-red-600">{form.formState.errors.nim.message}</p>
+                      )}
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="jurusan">Jurusan <span className="text-red-500">*</span></Label>
+                      <div className="relative">
+                        <Input
+                          id="jurusan"
+                          placeholder="Contoh: Sistem Informasi"
+                          className="pl-10 h-10"
+                          maxLength={128}
+                          {...form.register('jurusan')}
+                        />
+                        <GraduationCap className="absolute left-3 top-2.5 h-5 w-5 text-neutral-400" />
+                      </div>
+                      {form.formState.errors.jurusan && (
+                        <p className="text-xs text-red-600">{form.formState.errors.jurusan.message}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Email */}
+                  <div className="space-y-1.5">
+                    <Label htmlFor="email">Email ({EMAIL_DOMAIN}) <span className="text-red-500">*</span></Label>
                     <div className="relative">
                       <Input
                         id="email"
                         type="email"
                         placeholder={getEmailPlaceholder()}
-                        className="pl-10 h-11"
+                        className="pl-10 h-10"
                         maxLength={VALIDATION_LIMITS.EMAIL_MAX}
                         {...form.register('email')}
                       />
-                      <Mail className="absolute left-3 top-3 h-5 w-5 text-neutral-400" />
+                      <Mail className="absolute left-3 top-2.5 h-5 w-5 text-neutral-400" />
                     </div>
                     {form.formState.errors.email && (
-                      <p className="text-xs text-red-600 font-medium ml-1">
-                        {form.formState.errors.email.message}
-                      </p>
+                      <p className="text-xs text-red-600">{form.formState.errors.email.message}</p>
                     )}
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="password">Password</Label>
+                  {/* Phone & Gender */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="phone">No. HP <span className="text-red-500">*</span></Label>
+                      <div className="relative">
+                        <Input
+                          id="phone"
+                          placeholder="08xxxxxxxxxx"
+                          className="pl-10 h-10"
+                          maxLength={VALIDATION_LIMITS.PHONE_MAX}
+                          {...form.register('phone')}
+                        />
+                        <Phone className="absolute left-3 top-2.5 h-5 w-5 text-neutral-400" />
+                      </div>
+                      {form.formState.errors.phone && (
+                        <p className="text-xs text-red-600">{form.formState.errors.phone.message}</p>
+                      )}
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="gender">Jenis Kelamin</Label>
+                      <Select
+                        value={form.watch('gender') || ''}
+                        onValueChange={(val) => form.setValue('gender', val)}
+                      >
+                        <SelectTrigger className="h-10">
+                          <SelectValue placeholder="Pilih" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="L">Laki-laki</SelectItem>
+                          <SelectItem value="P">Perempuan</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  {/* Alamat */}
+                  <div className="space-y-1.5">
+                    <Label htmlFor="alamat">Alamat</Label>
+                    <div className="relative">
+                      <Input
+                        id="alamat"
+                        placeholder="Alamat lengkap (opsional)"
+                        className="pl-10 h-10"
+                        maxLength={500}
+                        {...form.register('alamat')}
+                      />
+                      <MapPin className="absolute left-3 top-2.5 h-5 w-5 text-neutral-400" />
+                    </div>
+                  </div>
+
+                  {/* Organisasi checkbox */}
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="organisasi"
+                      className="h-4 w-4 rounded border-neutral-300 text-brand-600 focus:ring-brand-500"
+                      {...form.register('organisasi')}
+                    />
+                    <Label htmlFor="organisasi" className="text-sm font-normal cursor-pointer">
+                      Saya tertarik mengikuti organisasi kemahasiswaan
+                    </Label>
+                  </div>
+
+                  {/* Password */}
+                  <div className="space-y-1.5">
+                    <Label htmlFor="password">Password <span className="text-red-500">*</span></Label>
                     <InputPassword
                       id="password"
                       placeholder="Password (min 8 karakter)"
-                      className="h-11"
+                      className="h-10"
                       maxLength={VALIDATION_LIMITS.PASSWORD_MAX}
                       {...form.register('password')}
                     />
                     {form.formState.errors.password && (
-                      <p className="text-xs text-red-600 font-medium ml-1">
-                        {form.formState.errors.password.message}
-                      </p>
+                      <p className="text-xs text-red-600">{form.formState.errors.password.message}</p>
                     )}
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="confirm_password">Konfirmasi Password</Label>
+                  {/* Confirm Password */}
+                  <div className="space-y-1.5">
+                    <Label htmlFor="confirm_password">Konfirmasi Password <span className="text-red-500">*</span></Label>
                     <InputPassword
                       id="confirm_password"
                       placeholder="Ulangi Password"
-                      className="h-11"
+                      className="h-10"
                       maxLength={VALIDATION_LIMITS.PASSWORD_MAX}
                       {...form.register('confirm_password')}
                     />
                     {form.formState.errors.confirm_password && (
-                      <p className="text-xs text-red-600 font-medium ml-1">
-                        {form.formState.errors.confirm_password.message}
-                      </p>
+                      <p className="text-xs text-red-600">{form.formState.errors.confirm_password.message}</p>
                     )}
                   </div>
 
