@@ -194,13 +194,13 @@ function LoginContent() {
                   onSubmit={form.handleSubmit(onCredentialsSubmit)}
                 >
                   <div className="space-y-2">
-                    <Label htmlFor="login">Email</Label>
+                    <Label htmlFor="login">Email atau Username</Label>
                     <div className="relative">
                       <Input
                         id="login"
-                        type="email"
+                        type="text"
                         autoComplete="username"
-                        placeholder={getEmailPlaceholder()}
+                        placeholder="Email atau username"
                         className="pl-10 h-11"
                         maxLength={VALIDATION_LIMITS.EMAIL_MAX}
                         {...form.register('login')}

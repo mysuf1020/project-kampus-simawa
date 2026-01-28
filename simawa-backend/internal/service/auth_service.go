@@ -113,15 +113,31 @@ func (s *AuthService) Register(ctx context.Context, req *dto.RegisterRequest) (*
 		return nil, err
 	}
 
+	// Check if NIM already exists
+	existingNIM, _ := s.users.FindByNIM(ctx, req.NIM)
+	if existingNIM != nil {
+		return nil, errors.New("NIM already registered")
+	}
+
+	// Check if username already exists
+	existingUsername, _ := s.users.FindByLogin(ctx, req.Username)
+	if existingUsername != nil {
+		return nil, errors.New("username already taken")
+	}
+
 	// 4. Create User
 	newUser := &model.User{
 		Username:     req.Username,
 		FirstName:    req.FirstName,
+		SecondName:   req.SecondName,
 		Email:        email,
+		NIM:          req.NIM,
+		Jurusan:      req.Jurusan,
+		Phone:        req.Phone,
+		Gender:       req.Gender,
+		Alamat:       req.Alamat,
+		Organisasi:   req.Organisasi,
 		PasswordHash: hash,
-		// Defaults
-		Jurusan: "Sistem Informasi", // Default or extract from somewhere
-		NIM:     "",                 // Optional at registration?
 	}
 	
 	if err := s.users.Create(ctx, newUser); err != nil {

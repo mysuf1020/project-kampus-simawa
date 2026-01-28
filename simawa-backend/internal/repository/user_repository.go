@@ -16,7 +16,8 @@ type UserRepository interface {
 	DeleteByUUID(ctx context.Context, id uuid.UUID) error
 
 	GetByUUID(ctx context.Context, id uuid.UUID) (*model.User, error)
-	FindByLogin(ctx context.Context, login string) (*model.User, error) // login via email only
+	FindByLogin(ctx context.Context, login string) (*model.User, error) // login via email or username
+	FindByNIM(ctx context.Context, nim string) (*model.User, error)
 	CheckPassword(ctx context.Context, u *model.User, plain string) error
 	ExistsByEmail(ctx context.Context, email string) (bool, error)
 
@@ -80,9 +81,21 @@ func (r *userRepository) GetByUUID(ctx context.Context, id uuid.UUID) (*model.Us
 
 func (r *userRepository) FindByLogin(ctx context.Context, login string) (*model.User, error) {
 	var u model.User
-	email := strings.TrimSpace(strings.ToLower(login))
+	loginLower := strings.TrimSpace(strings.ToLower(login))
+	// Support login via email or username
 	if err := r.db.WithContext(ctx).
-		Where("LOWER(email) = ?", email).
+		Where("LOWER(email) = ? OR LOWER(username) = ?", loginLower, loginLower).
+		First(&u).Error; err != nil {
+		return nil, err
+	}
+	return &u, nil
+}
+
+func (r *userRepository) FindByNIM(ctx context.Context, nim string) (*model.User, error) {
+	var u model.User
+	nimTrimmed := strings.TrimSpace(nim)
+	if err := r.db.WithContext(ctx).
+		Where("nim = ?", nimTrimmed).
 		First(&u).Error; err != nil {
 		return nil, err
 	}

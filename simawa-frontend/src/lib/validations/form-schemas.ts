@@ -163,9 +163,15 @@ export const phoneSchema = z
 // FORM SCHEMAS
 // ============================================
 
+// Login identifier (email or username)
+export const loginIdentifierSchema = z
+  .string()
+  .min(1, ERROR_MESSAGES.required('Email atau Username'))
+  .max(VALIDATION_LIMITS.EMAIL_MAX, 'Maksimal 100 karakter')
+
 // Login Schema
 export const loginFormSchema = z.object({
-  login: emailSchema,
+  login: loginIdentifierSchema,
   password: z
     .string()
     .min(1, ERROR_MESSAGES.required('Password'))
@@ -173,12 +179,38 @@ export const loginFormSchema = z.object({
 })
 export type LoginFormData = z.infer<typeof loginFormSchema>
 
+// Validasi jurusan
+export const jurusanSchema = z
+  .string()
+  .min(2, 'Jurusan minimal 2 karakter')
+  .max(128, 'Jurusan maksimal 128 karakter')
+
+// Validasi NIM (required)
+export const nimRequiredSchema = z
+  .string()
+  .min(VALIDATION_LIMITS.NIM_MIN, ERROR_MESSAGES.nimMin)
+  .max(VALIDATION_LIMITS.NIM_MAX, ERROR_MESSAGES.nimMax)
+
+// Validasi phone (required)
+export const phoneRequiredSchema = z
+  .string()
+  .min(VALIDATION_LIMITS.PHONE_MIN, ERROR_MESSAGES.phoneMin)
+  .max(VALIDATION_LIMITS.PHONE_MAX, ERROR_MESSAGES.phoneMax)
+  .regex(/^[0-9+\-\s]+$/, 'Nomor telepon tidak valid')
+
 // Register Schema
 export const registerFormSchema = z
   .object({
     username: usernameSchema,
     first_name: nameSchema,
+    second_name: nameSchema,
     email: emailWithDomainSchema,
+    nim: nimRequiredSchema,
+    jurusan: jurusanSchema,
+    phone: phoneRequiredSchema,
+    gender: z.string().optional(),
+    alamat: z.string().max(500, 'Alamat maksimal 500 karakter').optional(),
+    organisasi: z.boolean().optional(),
     password: passwordSchema,
     confirm_password: z
       .string()
