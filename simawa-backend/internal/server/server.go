@@ -2,9 +2,7 @@ package server
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"os"
 	"strings"
 	"time"
 
@@ -185,29 +183,12 @@ func (s *Server) initServices() {
 	s.Services.Dashboard = service.NewDashboardService(s.DB)
 	s.Services.Report = service.NewReportService(s.Repositories.Activity, s.Repositories.Surat, s.Repositories.LPJ)
 
-	// Seed base roles
+	// Ensure base roles exist
 	_ = s.Repositories.UserRole.EnsureBaseRoles(context.Background())
-	// Seed base organizations
-	_ = s.Repositories.Org.EnsureSeeds(context.Background(), seedOrganizations())
-	// One-off rename: "Raharja FC" -> "FC Raharja" while keeping slug "raharja-fc".
-	_ = s.renameOrgIfNeeded(context.Background(), "raharja-fc", "Raharja FC", "FC Raharja")
-	// Seed default super admin
-	_ = s.seedAdminUser()
 
 	go s.reminderLoop()
 }
 
-func (s *Server) renameOrgIfNeeded(ctx context.Context, slug string, from string, to string) error {
-	org, err := s.Repositories.Org.GetBySlug(ctx, slug)
-	if err != nil {
-		return nil
-	}
-	if org.Name != from {
-		return nil
-	}
-	org.Name = to
-	return s.Repositories.Org.Update(ctx, org)
-}
 
 func (s *Server) initHandlers() {
 	s.Handlers.User = handler.NewUserHandler(s.Services.User, s.Services.Auth, s.Services.RBAC)
@@ -292,100 +273,3 @@ func (s *Server) reminderLoop() {
 	}
 }
 
-func (s *Server) seedAdminUser() error {
-	ctx := context.Background()
-	const login = "admin@simawa.local"
-	const username = "admin"
-	// Password is read from environment variable ADMIN_SEED_PASSWORD
-	password := os.Getenv("ADMIN_SEED_PASSWORD")
-	if password == "" {
-		password = "ChangeMe@123" // Default placeholder - MUST be changed in production
-	}
-
-	if s.Repositories.User == nil || s.Repositories.UserRole == nil {
-		return nil
-	}
-
-	if existing, err := s.Repositories.User.FindByLogin(ctx, login); err == nil && existing != nil {
-		// Ensure the admin role is present even if the user was seeded earlier.
-		_ = s.Repositories.UserRole.Assign(ctx, &model.UserRole{
-			UserID:   existing.ID,
-			RoleCode: model.RoleAdmin,
-		})
-		return nil
-	} else if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-		return err
-	}
-
-	hash, err := repository.BcryptHash(password)
-	if err != nil {
-		return err
-	}
-
-	user := &model.User{
-		Username:     username,
-		FirstName:    "Admin",
-		SecondName:   "SIMAWA",
-		Organisasi:   false,
-		Jurusan:      "Teknik",
-		NIM:          "0001",
-		Email:        login,
-		Phone:        "0800000000",
-		Alamat:       "",
-		PasswordHash: hash,
-	}
-
-	if err := s.Repositories.User.Create(ctx, user); err != nil {
-		return err
-	}
-
-	_ = s.Repositories.UserRole.Assign(ctx, &model.UserRole{
-		UserID:   user.ID,
-		RoleCode: model.RoleAdmin,
-	})
-
-	return nil
-}
-
-func seedOrganizations() []model.Organization {
-	names := []struct {
-		Name string
-		Slug string
-		Type model.OrganizationType
-	}{
-		{Name: "Himtif", Type: model.OrgTypeUKM},
-		{Name: "Komasi", Type: model.OrgTypeUKM},
-		{Name: "Himasikom", Type: model.OrgTypeUKM},
-		{Name: "Immi", Type: model.OrgTypeUKM},
-		{Name: "Ripala", Type: model.OrgTypeUKM},
-		{Name: "Fummri", Type: model.OrgTypeUKM},
-		{Name: "Abster", Type: model.OrgTypeUKM},
-		{Name: "PB Raharja", Type: model.OrgTypeUKM},
-		// Keep the historical slug to avoid breaking existing URLs.
-		{Name: "FC Raharja", Slug: "raharja-fc", Type: model.OrgTypeUKM},
-		{Name: "Apsi", Type: model.OrgTypeUKM},
-		{Name: "Maranatha", Type: model.OrgTypeUKM},
-		{Name: "BEM", Type: model.OrgTypeBEM},
-		{Name: "DEMA", Type: model.OrgTypeDEMA},
-	}
-
-	res := make([]model.Organization, 0, len(names))
-	for _, n := range names {
-		slug := n.Slug
-		if strings.TrimSpace(slug) == "" {
-			slug = slugify(n.Name)
-		}
-		res = append(res, model.Organization{
-			Name: n.Name,
-			Slug: slug,
-			Type: n.Type,
-		})
-	}
-	return res
-}
-
-func slugify(s string) string {
-	s = strings.ToLower(strings.TrimSpace(s))
-	s = strings.ReplaceAll(s, " ", "-")
-	return s
-}
