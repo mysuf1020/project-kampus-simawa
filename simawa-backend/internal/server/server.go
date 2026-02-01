@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -295,7 +296,11 @@ func (s *Server) seedAdminUser() error {
 	ctx := context.Background()
 	const login = "admin@simawa.local"
 	const username = "admin"
-	const password = "REDACTED"
+	// Password is read from environment variable ADMIN_SEED_PASSWORD
+	password := os.Getenv("ADMIN_SEED_PASSWORD")
+	if password == "" {
+		password = "ChangeMe@123" // Default placeholder - MUST be changed in production
+	}
 
 	if s.Repositories.User == nil || s.Repositories.UserRole == nil {
 		return nil
