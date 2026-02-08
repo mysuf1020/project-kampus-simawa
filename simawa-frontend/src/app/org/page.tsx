@@ -105,30 +105,32 @@ export default function PublicOrganizationsPage() {
       {/* Hero Section */}
       <section className="bg-gradient-to-br from-brand-600 to-brand-800 text-white py-16">
         <Container>
-          <div className="text-center max-w-3xl mx-auto">
+          <div className="flex flex-row gap-8 items-center justify-center text-center max-w-3xl mx-auto">
             {/* Logos - Left and Right */}
-            <div className="flex justify-center items-center gap-8 mb-6">
-              <Image
-                src="/images/logos/logo-raharja.png"
-                alt="Logo Universitas Raharja"
-                width={80}
-                height={80}
-                className="object-contain"
-              />
-              <Image
-                src="/images/logos/partnership-logo.png"
-                alt="Partnership Logo"
-                width={80}
-                height={80}
-                className="object-contain"
-              />
+
+
+            <Image
+              src="/images/logos/partnership-logo.png"
+              alt="Partnership Logo"
+              width={80}
+              height={80}
+              className="object-contain"
+            />
+            <div>
+              <h1 className="text-4xl lg:text-5xl font-bold tracking-tight mb-4">
+                Organisasi Mahasiswa
+              </h1>
+              <p className="text-lg text-brand-100">
+                Jelajahi organisasi mahasiswa Universitas Raharja beserta kegiatan dan galeri mereka.
+              </p>
             </div>
-            <h1 className="text-4xl lg:text-5xl font-bold tracking-tight mb-4">
-              Organisasi Mahasiswa
-            </h1>
-            <p className="text-lg text-brand-100">
-              Jelajahi organisasi mahasiswa Universitas Raharja beserta kegiatan dan galeri mereka.
-            </p>
+            <Image
+              src="/images/logos/logo-raharja.png"
+              alt="Logo Universitas Raharja"
+              width={80}
+              height={80}
+              className="object-contain"
+            />
           </div>
         </Container>
       </section>
@@ -194,7 +196,7 @@ export default function PublicOrganizationsPage() {
                     <CardHeader>
                       <div className="flex items-start justify-between">
                         <div>
-                          <CardTitle className="line-clamp-1">{org.name}</CardTitle>
+                          <CardTitle className="line-clamp-1">{org.name.toUpperCase()}</CardTitle>
                           {org.type && (
                             <span className="inline-block mt-1 px-2 py-0.5 text-xs font-medium bg-brand-50 text-brand-700 rounded-full">
                               {org.type}
@@ -256,7 +258,7 @@ export default function PublicOrganizationsPage() {
                       : 'bg-white text-neutral-700 border-neutral-200 hover:border-brand-300'
                       }`}
                   >
-                    {org.name}
+                    {org.name.toUpperCase()}
                   </button>
                 ))}
               </div>
@@ -288,7 +290,7 @@ export default function PublicOrganizationsPage() {
                             <CardTitle className="text-lg">{activity.title}</CardTitle>
                             {org && (
                               <span className="text-sm text-brand-600 font-medium">
-                                {org.name}
+                                {org.name.toUpperCase()}
                               </span>
                             )}
                             <CardDescription className="line-clamp-2 mt-1">
@@ -336,7 +338,7 @@ export default function PublicOrganizationsPage() {
                       : 'bg-white text-neutral-700 border-neutral-200 hover:border-brand-300'
                       }`}
                   >
-                    {org.name}
+                    {org.name.toUpperCase()}
                   </button>
                 ))}
               </div>
@@ -358,7 +360,7 @@ export default function PublicOrganizationsPage() {
                         />
                       )}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
-                        <span className="text-white text-sm font-medium">{org.name}</span>
+                        <span className="text-white text-sm font-medium">{org.name.toUpperCase()}</span>
                       </div>
                     </div>
                   )),
