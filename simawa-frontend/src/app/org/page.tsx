@@ -106,6 +106,23 @@ export default function PublicOrganizationsPage() {
       <section className="bg-gradient-to-br from-brand-600 to-brand-800 text-white py-16">
         <Container>
           <div className="text-center max-w-3xl mx-auto">
+            {/* Logos - Left and Right */}
+            <div className="flex justify-center items-center gap-8 mb-6">
+              <Image
+                src="/images/logos/logo-raharja.png"
+                alt="Logo Universitas Raharja"
+                width={80}
+                height={80}
+                className="object-contain"
+              />
+              <Image
+                src="/images/logos/partnership-logo.png"
+                alt="Partnership Logo"
+                width={80}
+                height={80}
+                className="object-contain"
+              />
+            </div>
             <h1 className="text-4xl lg:text-5xl font-bold tracking-tight mb-4">
               Organisasi Mahasiswa
             </h1>
@@ -224,8 +241,8 @@ export default function PublicOrganizationsPage() {
                 <button
                   onClick={() => setSelectedOrg(null)}
                   className={`px-3 py-1.5 text-sm rounded-full border transition-colors ${!selectedOrg
-                      ? 'bg-brand-600 text-white border-brand-600'
-                      : 'bg-white text-neutral-700 border-neutral-200 hover:border-brand-300'
+                    ? 'bg-brand-600 text-white border-brand-600'
+                    : 'bg-white text-neutral-700 border-neutral-200 hover:border-brand-300'
                     }`}
                 >
                   Semua
@@ -235,8 +252,8 @@ export default function PublicOrganizationsPage() {
                     key={org.id}
                     onClick={() => setSelectedOrg(org)}
                     className={`px-3 py-1.5 text-sm rounded-full border transition-colors ${selectedOrg?.id === org.id
-                        ? 'bg-brand-600 text-white border-brand-600'
-                        : 'bg-white text-neutral-700 border-neutral-200 hover:border-brand-300'
+                      ? 'bg-brand-600 text-white border-brand-600'
+                      : 'bg-white text-neutral-700 border-neutral-200 hover:border-brand-300'
                       }`}
                   >
                     {org.name}
@@ -304,8 +321,8 @@ export default function PublicOrganizationsPage() {
                 <button
                   onClick={() => setSelectedOrg(null)}
                   className={`px-3 py-1.5 text-sm rounded-full border transition-colors ${!selectedOrg
-                      ? 'bg-brand-600 text-white border-brand-600'
-                      : 'bg-white text-neutral-700 border-neutral-200 hover:border-brand-300'
+                    ? 'bg-brand-600 text-white border-brand-600'
+                    : 'bg-white text-neutral-700 border-neutral-200 hover:border-brand-300'
                     }`}
                 >
                   Semua
@@ -315,8 +332,8 @@ export default function PublicOrganizationsPage() {
                     key={org.id}
                     onClick={() => setSelectedOrg(org)}
                     className={`px-3 py-1.5 text-sm rounded-full border transition-colors ${selectedOrg?.id === org.id
-                        ? 'bg-brand-600 text-white border-brand-600'
-                        : 'bg-white text-neutral-700 border-neutral-200 hover:border-brand-300'
+                      ? 'bg-brand-600 text-white border-brand-600'
+                      : 'bg-white text-neutral-700 border-neutral-200 hover:border-brand-300'
                       }`}
                   >
                     {org.name}
@@ -362,17 +379,23 @@ export default function PublicOrganizationsPage() {
       </main>
 
       {/* Footer */}
-      <footer className="py-8 bg-white border-t border-neutral-200 mt-8">
+      <footer className="py-6 bg-neutral-900 text-white mt-8">
         <Container>
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <div className="flex items-center gap-2">
-              <div className="h-8 w-8 bg-neutral-900 rounded-lg flex items-center justify-center text-white text-sm font-bold">
-                S
-              </div>
-              <span className="font-bold text-neutral-900">SIMAWA</span>
+            <div className="flex items-center gap-3">
+              <Image
+                src="/images/logos/logo-raharja.png"
+                alt="Logo Universitas Raharja"
+                width={32}
+                height={32}
+                className="object-contain"
+              />
+              <span className="font-bold text-white">SIMAWA</span>
+              <span className="text-neutral-500">|</span>
+              <span className="text-sm text-neutral-400">Universitas Raharja</span>
             </div>
-            <p className="text-sm text-neutral-500">
-              © {new Date().getFullYear()} Universitas Raharja. All rights reserved.
+            <p className="text-sm text-neutral-400">
+              © {new Date().getFullYear()} All rights reserved.
             </p>
           </div>
         </Container>
