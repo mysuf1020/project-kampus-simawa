@@ -55,9 +55,9 @@ export const config = {
     /*
      * Match all paths except:
      * - _next (Next.js internals)
-     * - static files
+     * - static files (images, fonts, etc.)
      * - api routes
      */
-    '/((?!_next|favicon.ico|api).*)',
+    '/((?!_next|favicon.ico|api|images|fonts|.*\\.png$|.*\\.jpg$|.*\\.jpeg$|.*\\.gif$|.*\\.svg$|.*\\.ico$|.*\\.webp$).*)',
   ],
 }
