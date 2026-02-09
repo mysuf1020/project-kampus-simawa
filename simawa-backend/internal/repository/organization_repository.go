@@ -11,6 +11,7 @@ import (
 type OrganizationRepository interface {
 	Create(ctx context.Context, org *model.Organization) error
 	Update(ctx context.Context, org *model.Organization) error
+	Delete(ctx context.Context, id uuid.UUID) error
 	GetByID(ctx context.Context, id uuid.UUID) (*model.Organization, error)
 	GetBySlug(ctx context.Context, slug string) (*model.Organization, error)
 	List(ctx context.Context, orgType string) ([]model.Organization, error)
@@ -31,6 +32,10 @@ func (r *organizationRepository) Create(ctx context.Context, org *model.Organiza
 
 func (r *organizationRepository) Update(ctx context.Context, org *model.Organization) error {
 	return r.db.WithContext(ctx).Save(org).Error
+}
+
+func (r *organizationRepository) Delete(ctx context.Context, id uuid.UUID) error {
+	return r.db.WithContext(ctx).Delete(&model.Organization{}, "id = ?", id).Error
 }
 
 func (r *organizationRepository) GetByID(ctx context.Context, id uuid.UUID) (*model.Organization, error) {

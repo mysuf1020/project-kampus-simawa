@@ -26,6 +26,32 @@ func (s *OrganizationService) List(ctx context.Context, orgType string) ([]model
 	return s.repo.List(ctx, orgType)
 }
 
+func (s *OrganizationService) Create(ctx context.Context, userID uuid.UUID, input CreateOrgInput) (*model.Organization, error) {
+	org := &model.Organization{
+		Name:        strings.TrimSpace(input.Name),
+		Slug:        strings.TrimSpace(input.Slug),
+		Type:        model.OrganizationType(strings.ToUpper(strings.TrimSpace(input.Type))),
+		Description: strings.TrimSpace(input.Description),
+	}
+	if err := s.repo.Create(ctx, org); err != nil {
+		return nil, err
+	}
+	if s.audit != nil {
+		s.audit.Log(ctx, userID, "org_create", map[string]any{"org_id": org.ID, "name": org.Name})
+	}
+	return org, nil
+}
+
+func (s *OrganizationService) Delete(ctx context.Context, userID uuid.UUID, id uuid.UUID) error {
+	if err := s.repo.Delete(ctx, id); err != nil {
+		return err
+	}
+	if s.audit != nil {
+		s.audit.Log(ctx, userID, "org_delete", map[string]any{"org_id": id})
+	}
+	return nil
+}
+
 func (s *OrganizationService) Get(ctx context.Context, id uuid.UUID) (*model.Organization, error) {
 	return s.repo.GetByID(ctx, id)
 }
@@ -105,6 +131,13 @@ func (s *OrganizationService) Update(ctx context.Context, userID uuid.UUID, org 
 		s.audit.Log(ctx, userID, "org_update", map[string]any{"org_id": org.ID})
 	}
 	return org, nil
+}
+
+type CreateOrgInput struct {
+	Name        string
+	Slug        string
+	Type        string
+	Description string
 }
 
 type UpdateOrgInput struct {

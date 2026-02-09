@@ -17,6 +17,7 @@ import {
   Upload,
   ImageIcon,
   X,
+  Trash2,
 } from 'lucide-react'
 
 import {
@@ -42,9 +43,11 @@ type OrgCardProps = {
   canManage: boolean
   isPending: boolean
   onSubmit: (id: string, payload: Partial<Organization>) => Promise<void>
+  onDelete?: (id: string) => Promise<void>
+  isAdmin?: boolean
 }
 
-export function OrgCard({ org, canManage, isPending, onSubmit }: OrgCardProps) {
+export function OrgCard({ org, canManage, isPending, onSubmit, onDelete, isAdmin }: OrgCardProps) {
   const queryClient = useQueryClient()
   const [editorOpen, setEditorOpen] = useState(false)
   const [logoUploading, setLogoUploading] = useState(false)
@@ -232,26 +235,42 @@ export function OrgCard({ org, canManage, isPending, onSubmit }: OrgCardProps) {
           </div>
           <div className="flex items-center gap-2 shrink-0">
             {canManage ? (
-              <CollapsibleTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className={
-                    editorOpen ? 'bg-brand-50 border-brand-200 text-brand-700' : ''
-                  }
-                >
-                  {editorOpen ? (
-                    <>
-                      Tutup <ChevronUp className="ml-2 h-3.5 w-3.5" />
-                    </>
-                  ) : (
-                    <>
-                      <Settings2 className="mr-2 h-3.5 w-3.5" />
-                      Kelola
-                    </>
-                  )}
-                </Button>
-              </CollapsibleTrigger>
+              <>
+                <CollapsibleTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className={
+                      editorOpen ? 'bg-brand-50 border-brand-200 text-brand-700' : ''
+                    }
+                  >
+                    {editorOpen ? (
+                      <>
+                        Tutup <ChevronUp className="ml-2 h-3.5 w-3.5" />
+                      </>
+                    ) : (
+                      <>
+                        <Settings2 className="mr-2 h-3.5 w-3.5" />
+                        Kelola
+                      </>
+                    )}
+                  </Button>
+                </CollapsibleTrigger>
+                {isAdmin && onDelete && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300"
+                    onClick={() => {
+                      if (confirm(`Apakah Anda yakin ingin menghapus organisasi "${org.name}"? Tindakan ini tidak dapat dibatalkan.`)) {
+                        onDelete(org.id)
+                      }
+                    }}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                )}
+              </>
             ) : (
               <Badge variant="outline" className="bg-neutral-50 text-neutral-500">
                 View Only

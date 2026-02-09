@@ -81,3 +81,20 @@ export const deleteOrgHero = async (id: string) => {
   const { data } = await api.delete<ApiResponse<void>>(`/v1/orgs/${id}/hero`)
   return data
 }
+
+export type CreateOrganizationInput = {
+  name: string
+  slug: string
+  type: string
+  description?: string
+}
+
+export const createOrganization = async (input: CreateOrganizationInput) => {
+  const { data } = await api.post<ApiResponse<Organization>>('/v1/orgs', input)
+  return data.data
+}
+
+export const deleteOrganization = async (id: string) => {
+  const { data } = await api.delete<ApiResponse<void>>(`/v1/orgs/${id}`)
+  return data
+}

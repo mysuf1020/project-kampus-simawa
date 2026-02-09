@@ -253,3 +253,70 @@ func (h *OrganizationHandler) PublicProfile(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, response.OK(org))
 }
+
+type createOrgRequest struct {
+	Name        string `json:"name" binding:"required"`
+	Slug        string `json:"slug" binding:"required"`
+	Type        string `json:"type" binding:"required"`
+	Description string `json:"description"`
+}
+
+// Create a new organization (admin only).
+func (h *OrganizationHandler) Create(c *gin.Context) {
+	sub, _ := c.Get("sub")
+	userID, err := uuid.Parse(fmt.Sprint(sub))
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, response.Err("invalid user context"))
+		return
+	}
+
+	var req createOrgRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, response.Err(err.Error()))
+		return
+	}
+
+	if len(strings.TrimSpace(req.Name)) < 2 {
+		c.JSON(http.StatusBadRequest, response.Err("Nama organisasi minimal 2 karakter"))
+		return
+	}
+	if len(strings.TrimSpace(req.Slug)) < 2 {
+		c.JSON(http.StatusBadRequest, response.Err("Slug minimal 2 karakter"))
+		return
+	}
+
+	org, err := h.svc.Create(c.Request.Context(), userID, service.CreateOrgInput{
+		Name:        req.Name,
+		Slug:        req.Slug,
+		Type:        req.Type,
+		Description: req.Description,
+	})
+	if err != nil {
+		status, message := mapOrgUpdateError(err)
+		c.JSON(status, response.Err(message))
+		return
+	}
+	c.JSON(http.StatusCreated, response.OK(org))
+}
+
+// Delete an organization (admin only).
+func (h *OrganizationHandler) Delete(c *gin.Context) {
+	sub, _ := c.Get("sub")
+	userID, err := uuid.Parse(fmt.Sprint(sub))
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, response.Err("invalid user context"))
+		return
+	}
+
+	id, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.Err("invalid id"))
+		return
+	}
+
+	if err := h.svc.Delete(c.Request.Context(), userID, id); err != nil {
+		c.JSON(http.StatusInternalServerError, response.Err(err.Error()))
+		return
+	}
+	c.JSON(http.StatusOK, response.OK(nil))
+}

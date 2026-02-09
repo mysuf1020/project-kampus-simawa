@@ -16,8 +16,9 @@ import {
   TabsTrigger,
 } from '@/components/ui'
 import { Page } from '@/components/commons'
-import { Organization, listOrganizations, updateOrganization } from '@/lib/apis/org'
+import { Organization, listOrganizations, updateOrganization, deleteOrganization } from '@/lib/apis/org'
 import { OrgCard } from './_components/org-card'
+import { CreateOrgDialog } from './_components/create-org-dialog'
 import { OrgMembersCard } from './_components/org-members-card'
 import { OrgJoinRequestsCard } from './_components/org-join-requests-card'
 import { OrgChartCard } from './_components/org-chart-card'
@@ -51,6 +52,22 @@ export default function OrganizationsPage() {
         : err instanceof Error
           ? err.message
           : 'Gagal menyimpan organisasi'
+      toast.error(message)
+    },
+  })
+
+  const { mutateAsync: deleteOrg } = useMutation({
+    mutationFn: deleteOrganization,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['orgs'] })
+      toast.success('Organisasi berhasil dihapus')
+    },
+    onError: (err: unknown) => {
+      const message = axios.isAxiosError(err)
+        ? (err.response?.data as { message?: string } | undefined)?.message || err.message
+        : err instanceof Error
+          ? err.message
+          : 'Gagal menghapus organisasi'
       toast.error(message)
     },
   })
@@ -90,14 +107,17 @@ export default function OrganizationsPage() {
               Atur profil, anggota, dan pendaftaran keanggotaan organisasi.
             </p>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => orgsQuery.refetch()}
-            className="gap-2"
-          >
-            <RefreshCcw className="h-3.5 w-3.5" /> Muat ulang
-          </Button>
+          <div className="flex items-center gap-2">
+            <CreateOrgDialog />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => orgsQuery.refetch()}
+              className="gap-2"
+            >
+              <RefreshCcw className="h-3.5 w-3.5" /> Muat ulang
+            </Button>
+          </div>
         </div>
       </Page.Header>
 
@@ -161,6 +181,8 @@ export default function OrganizationsPage() {
                       canManage={Boolean(org.can_manage)}
                       isPending={isPending}
                       onSubmit={async (id, payload) => update({ id, payload })}
+                      onDelete={async (id) => { await deleteOrg(id) }}
+                      isAdmin={true}
                     />
                   ))}
                 </div>

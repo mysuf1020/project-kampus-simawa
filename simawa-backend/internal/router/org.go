@@ -23,9 +23,13 @@ func RegisterOrgRoutes(r *gin.Engine, cfg *config.Env, oh *handler.OrganizationH
 	
 	// Roles that can edit organizations (ADMIN, ORG_ADMIN for their org, BEM, DEMA for their org)
 	editRoles := []string{model.RoleAdmin, model.RoleOrgAdmin, model.RoleBEMAdmin, model.RoleDEMAAdmin}
+	// Only ADMIN can create/delete organizations
+	adminOnly := []string{model.RoleAdmin}
 	
 	auth.GET("", oh.ListAuth)
-	auth.PUT("/:id", middleware.RequireRoles(rbac, editRoles...), oh.Update) // DEMA can edit their org
+	auth.POST("", middleware.RequireRoles(rbac, adminOnly...), oh.Create)
+	auth.PUT("/:id", middleware.RequireRoles(rbac, editRoles...), oh.Update)
+	auth.DELETE("/:id", middleware.RequireRoles(rbac, adminOnly...), oh.Delete)
 	auth.POST("/:id/upload", middleware.RequireRoles(rbac, editRoles...), oh.UploadImage)
 	auth.POST("/:id/upload-hero", middleware.RequireRoles(rbac, editRoles...), oh.UploadImage)
 	auth.DELETE("/:id/hero", middleware.RequireRoles(rbac, editRoles...), oh.DeleteHero)
