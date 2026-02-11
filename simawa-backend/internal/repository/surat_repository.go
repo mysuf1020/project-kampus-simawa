@@ -21,6 +21,7 @@ type ListSuratQuery struct {
 	ToRole      string
 	ForOrgIDs   []uuid.UUID
 	ForRoles    []string
+	InboxOnly   bool // when true, ForOrgIDs only matches target_org_id (received surat)
 	Page        int
 	Size        int
 }
@@ -85,7 +86,11 @@ func (r *suratRepository) List(ctx context.Context, q ListSuratQuery) ([]model.S
 			sub := db
 			first := true
 			if len(q.ForOrgIDs) > 0 {
-				sub = sub.Where("org_id IN ? OR target_org_id IN ?", q.ForOrgIDs, q.ForOrgIDs)
+				if q.InboxOnly {
+					sub = sub.Where("target_org_id IN ?", q.ForOrgIDs)
+				} else {
+					sub = sub.Where("org_id IN ? OR target_org_id IN ?", q.ForOrgIDs, q.ForOrgIDs)
+				}
 				first = false
 			}
 			if len(q.ForRoles) > 0 {

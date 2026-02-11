@@ -118,6 +118,19 @@ const Sidebar = () => {
     await refetchNotifications()
   }
 
+  const getNotificationHref = (n: Notification): string => {
+    const d = n.data || {}
+    if (d.surat_id) return '/arsip'
+    if (d.lpj_id) return '/lpj'
+    if (d.activity_id) return '/activities'
+    return '/dashboard'
+  }
+
+  const handleNotificationClick = async (n: Notification) => {
+    if (!n.read_at) await handleMarkRead(n.id)
+    router.push(getNotificationHref(n))
+  }
+
   // Close sidebar on route change
   useEffect(() => {
     setIsOpen(false)
@@ -199,7 +212,7 @@ const Sidebar = () => {
                     {notifications.slice(0, 5).map((n) => (
                       <button
                         key={n.id}
-                        onClick={() => !n.read_at && handleMarkRead(n.id)}
+                        onClick={() => handleNotificationClick(n)}
                         className={cn(
                           'w-full flex items-start gap-3 p-3 text-left transition-colors hover:bg-neutral-50',
                           !n.read_at && 'bg-brand-50/40',

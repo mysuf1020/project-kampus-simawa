@@ -362,9 +362,10 @@ func (s *suratService) ListInbox(ctx context.Context, in InboxFilter) ([]model.S
 	}
 
 	q := repository.ListSuratQuery{
-		Status: in.Status,
-		Page:   in.Page,
-		Size:   in.Size,
+		Status:    in.Status,
+		Page:      in.Page,
+		Size:      in.Size,
+		InboxOnly: true,
 	}
 	if !isAdmin {
 		q.ForOrgIDs = in.OrgIDs

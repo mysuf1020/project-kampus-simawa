@@ -145,6 +145,7 @@ function SuratCard({ surat, onView, onDownload }: { surat: Surat; onView?: () =>
 function SuratDetailCard({ surat, orgs, onApprove }: { surat: Surat; orgs?: { id: string; name: string }[]; onApprove?: () => void }) {
   const [showApproval, setShowApproval] = useState(false)
   const orgName = orgs?.find((o) => o.id === surat.org_id)?.name || 'Organisasi'
+  const targetOrgName = surat.target_org_id ? orgs?.find((o) => o.id === surat.target_org_id)?.name : null
 
   const formattedDate = surat.created_at
     ? new Date(surat.created_at).toLocaleDateString('id-ID', {
@@ -201,6 +202,15 @@ function SuratDetailCard({ surat, orgs, onApprove }: { surat: Surat; orgs?: { id
                 {orgName}
               </span>
             </div>
+            {targetOrgName && (
+              <div className="flex items-center gap-3">
+                <span className="text-neutral-400 w-20 flex-shrink-0">Tujuan</span>
+                <span className="font-medium text-neutral-700 flex items-center gap-1.5">
+                  <Building2 className="w-3.5 h-3.5 text-brand-400" />
+                  {targetOrgName}
+                </span>
+              </div>
+            )}
             {(surat.to_role || surat.to_name) && (
               <div className="flex items-center gap-3">
                 <span className="text-neutral-400 w-20 flex-shrink-0">Kepada</span>

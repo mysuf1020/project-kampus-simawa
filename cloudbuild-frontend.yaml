@@ -2,10 +2,18 @@
 # Triggered when changes in simawa-frontend/ folder
 
 steps:
-  # Build Frontend Image
+  # Pull latest image for cache
+  - name: 'gcr.io/cloud-builders/docker'
+    entrypoint: 'bash'
+    args: ['-c', 'docker pull gcr.io/$PROJECT_ID/simawa-frontend:latest || true']
+    id: 'pull-cache-frontend'
+
+  # Build Frontend Image with cache
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'build'
+      - '--cache-from'
+      - 'gcr.io/$PROJECT_ID/simawa-frontend:latest'
       - '-t'
       - 'gcr.io/$PROJECT_ID/simawa-frontend:$COMMIT_SHA'
       - '-t'
@@ -14,10 +22,14 @@ steps:
       - 'simawa-frontend/Dockerfile'
       - 'simawa-frontend'
     id: 'build-frontend'
+    waitFor: ['pull-cache-frontend']
 
-  # Push Frontend Image
+  # Push Frontend Images (SHA + latest for cache)
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'gcr.io/$PROJECT_ID/simawa-frontend:$COMMIT_SHA']
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - 'docker push gcr.io/$PROJECT_ID/simawa-frontend:$COMMIT_SHA && docker push gcr.io/$PROJECT_ID/simawa-frontend:latest'
     id: 'push-frontend'
     waitFor: ['build-frontend']
 
