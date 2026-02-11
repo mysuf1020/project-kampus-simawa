@@ -237,29 +237,49 @@ export default function OrganizationDetailPage() {
                     return name.charAt(0).toUpperCase()
                   }
 
+                  const renderMember = (m: PublicMember, i: number) => {
+                    const config = getRoleConfig(m.role)
+                    return (
+                      <div key={i} className="flex flex-col items-center w-[130px] shrink-0">
+                        <div className={`w-16 h-16 rounded-full ${config.color} flex items-center justify-center text-white shadow-lg`}>
+                          <span className="text-lg font-bold">{getInitials(m.name)}</span>
+                        </div>
+                        <div className="mt-2 text-center">
+                          <p className="text-sm font-semibold text-neutral-900 max-w-[120px] truncate">{m.name}</p>
+                          <p className="text-xs text-neutral-500">{config.label}</p>
+                        </div>
+                      </div>
+                    )
+                  }
+
                   return (
                     <div className="flex flex-col items-center py-4">
                       {sortedLevels.map(({ level, members: lvlMembers }, idx) => (
                         <Fragment key={level}>
+                          {/* Vertical connector from previous level */}
                           {idx > 0 && (
-                            <div className="w-px h-8 bg-neutral-200 shrink-0" />
+                            <div className="w-px h-6 bg-neutral-200 shrink-0" />
                           )}
-                          <div className="flex justify-center gap-8">
-                            {lvlMembers.map((m, i) => {
-                              const config = getRoleConfig(m.role)
-                              return (
+
+                          {/* Single member: render directly */}
+                          {lvlMembers.length === 1 && renderMember(lvlMembers[0], 0)}
+
+                          {/* Multiple members: horizontal branch + vertical drops */}
+                          {lvlMembers.length > 1 && (
+                            <div className="relative inline-flex gap-8">
+                              {/* Horizontal line between first and last member centers */}
+                              <div
+                                className="absolute top-0 h-px bg-neutral-200"
+                                style={{ left: 65, right: 65 }}
+                              />
+                              {lvlMembers.map((m, i) => (
                                 <div key={i} className="flex flex-col items-center w-[130px] shrink-0">
-                                  <div className={`w-16 h-16 rounded-full ${config.color} flex items-center justify-center text-white shadow-lg`}>
-                                    <span className="text-lg font-bold">{getInitials(m.name)}</span>
-                                  </div>
-                                  <div className="mt-2 text-center">
-                                    <p className="text-sm font-semibold text-neutral-900 max-w-[120px] truncate">{m.name}</p>
-                                    <p className="text-xs text-neutral-500">{config.label}</p>
-                                  </div>
+                                  <div className="w-px h-6 bg-neutral-200" />
+                                  {renderMember(m, i)}
                                 </div>
-                              )
-                            })}
-                          </div>
+                              ))}
+                            </div>
+                          )}
                         </Fragment>
                       ))}
                     </div>

@@ -145,19 +145,37 @@ export function OrgChartCard({ orgId, orgName }: Props) {
           <div className="flex flex-col items-center py-4">
             {sortedLevels.map(({ level, members }, idx) => (
               <Fragment key={level}>
+                {/* Vertical connector from previous level */}
                 {idx > 0 && (
-                  <div className="w-px h-8 bg-neutral-200 shrink-0" />
+                  <div className="w-px h-6 bg-neutral-200 shrink-0" />
                 )}
-                <div className="flex justify-center gap-8">
-                  {members.map((member) => (
-                    <MemberNode key={member.user_id} member={member} />
-                  ))}
-                </div>
+
+                {/* Single member: render directly */}
+                {members.length === 1 && (
+                  <MemberNode member={members[0]} />
+                )}
+
+                {/* Multiple members: horizontal branch + vertical drops */}
+                {members.length > 1 && (
+                  <div className="relative inline-flex gap-8">
+                    {/* Horizontal line between first and last member centers */}
+                    <div
+                      className="absolute top-0 h-px bg-neutral-200"
+                      style={{ left: 65, right: 65 }}
+                    />
+                    {members.map((member) => (
+                      <div key={member.user_id} className="flex flex-col items-center w-[130px] shrink-0">
+                        <div className="w-px h-6 bg-neutral-200" />
+                        <MemberNode member={member} />
+                      </div>
+                    ))}
+                  </div>
+                )}
               </Fragment>
             ))}
 
             {/* Legend */}
-            <div className="mt-8 pt-6 border-t border-neutral-100">
+            <div className="mt-8 pt-6 border-t border-neutral-100 w-full">
               <p className="text-xs text-neutral-500 mb-3 font-medium">Keterangan:</p>
               <div className="flex flex-wrap gap-3">
                 {ROLE_HIERARCHY.map((role) => {
