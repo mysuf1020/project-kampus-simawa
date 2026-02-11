@@ -1,0 +1,5 @@
+.git
+.gitignore
+simawa-frontend/node_modules
+simawa-frontend/.next
+simawa-backend/tmp
