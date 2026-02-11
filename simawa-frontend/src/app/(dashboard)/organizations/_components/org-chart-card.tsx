@@ -141,32 +141,20 @@ export function OrgChartCard({ orgId, orgName }: Props) {
             Belum ada anggota terdaftar.
           </div>
         ) : (
-          <div className="space-y-8 py-4">
-            {sortedLevels.map(({ level, members }) => (
-              <div key={level} className="relative">
-                {/* Connector line from above */}
-                {level > 1 && (
-                  <div className="absolute left-1/2 -top-8 w-px h-8 bg-neutral-200" />
+          <div className="flex flex-col items-center py-4">
+            {sortedLevels.map(({ level, members }, idx) => (
+              <div key={level} className="flex flex-col items-center w-full">
+                {/* Vertical connector line between levels */}
+                {idx > 0 && (
+                  <div className="w-px h-8 bg-neutral-200" />
                 )}
 
                 {/* Members at this level */}
                 <div className="flex flex-wrap justify-center gap-6">
                   {members.map((member) => (
-                    <div key={member.user_id} className="relative">
-                      <MemberNode member={member} />
-                    </div>
+                    <MemberNode key={member.user_id} member={member} />
                   ))}
                 </div>
-
-                {/* Horizontal connector for multiple members */}
-                {members.length > 1 && level < 4 && (
-                  <div className="absolute top-8 left-1/4 right-1/4 h-px bg-neutral-200" />
-                )}
-
-                {/* Connector line to below */}
-                {level < Math.max(...sortedLevels.map((l) => l.level)) && (
-                  <div className="absolute left-1/2 -bottom-8 w-px h-8 bg-neutral-200" />
-                )}
               </div>
             ))}
 

@@ -237,12 +237,12 @@ export default function OrganizationDetailPage() {
                   }
 
                   return (
-                    <div className="space-y-8 py-4">
+                    <div className="flex flex-col items-center py-4">
                       {sortedLevels.map(({ level, members: lvlMembers }, idx) => (
-                        <div key={level} className="relative">
-                          {/* Connector line from above */}
+                        <div key={level} className="flex flex-col items-center w-full">
+                          {/* Vertical connector line between levels */}
                           {idx > 0 && (
-                            <div className="absolute left-1/2 -top-8 w-px h-8 bg-neutral-200" />
+                            <div className="w-px h-8 bg-neutral-200" />
                           )}
 
                           {/* Members at this level */}
@@ -262,11 +262,6 @@ export default function OrganizationDetailPage() {
                               )
                             })}
                           </div>
-
-                          {/* Connector line to below */}
-                          {idx < sortedLevels.length - 1 && (
-                            <div className="absolute left-1/2 -bottom-8 w-px h-8 bg-neutral-200" />
-                          )}
                         </div>
                       ))}
                     </div>
