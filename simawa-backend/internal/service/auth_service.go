@@ -98,13 +98,13 @@ func (s *AuthService) Register(ctx context.Context, req *dto.RegisterRequest) (*
 	// 1. Validate email domain (mahasiswa only)
 	email := strings.TrimSpace(strings.ToLower(req.Email))
 	if !strings.HasSuffix(email, "@raharja.info") {
-		return nil, errors.New("email must be @raharja.info")
+		return nil, errors.New("Email harus menggunakan domain @raharja.info")
 	}
 
 	// 2. Check if user exists
 	existing, _ := s.users.FindByLogin(ctx, email)
 	if existing != nil {
-		return nil, errors.New("email already registered")
+		return nil, errors.New("Email sudah terdaftar. Silakan login atau gunakan email lain.")
 	}
 
 	// 3. Hash password
@@ -116,13 +116,13 @@ func (s *AuthService) Register(ctx context.Context, req *dto.RegisterRequest) (*
 	// Check if NIM already exists
 	existingNIM, _ := s.users.FindByNIM(ctx, req.NIM)
 	if existingNIM != nil {
-		return nil, errors.New("NIM already registered")
+		return nil, errors.New("NIM sudah terdaftar. Hubungi admin jika ini milik Anda.")
 	}
 
 	// Check if username already exists
 	existingUsername, _ := s.users.FindByLogin(ctx, req.Username)
 	if existingUsername != nil {
-		return nil, errors.New("username already taken")
+		return nil, errors.New("Username sudah digunakan. Silakan pilih username lain.")
 	}
 
 	// 4. Create User
@@ -183,13 +183,13 @@ func (s *AuthService) VerifyEmail(ctx context.Context, email, otp string) error 
 		return err
 	}
 	if !valid {
-		return errors.New("invalid or expired OTP")
+		return errors.New("Kode OTP salah atau sudah kedaluwarsa.")
 	}
 
 	// Update User
 	u, err := s.users.FindByLogin(ctx, email)
 	if err != nil {
-		return errors.New("user not found")
+		return errors.New("Pengguna tidak ditemukan.")
 	}
 
 	now := time.Now()
@@ -214,31 +214,31 @@ func (s *AuthService) Login(ctx context.Context, req *LoginRequest) error {
 	
 	// Check failure block
 	if s.isBlocked(login) {
-		return errors.New("account locked, try again later")
+		return errors.New("Akun terkunci sementara karena terlalu banyak percobaan. Coba lagi nanti.")
 	}
 
 	u, err := s.users.FindByLogin(ctx, login)
 	if err != nil {
 		s.registerFailure(login)
-		return errors.New("invalid credentials")
+		return errors.New("Email/username atau password salah.")
 	}
 
 	// Check password
 	if err := s.users.CheckPassword(ctx, u, req.Password); err != nil {
 		s.registerFailure(login)
-		return errors.New("invalid credentials")
+		return errors.New("Email/username atau password salah.")
 	}
 	s.resetFailure(login)
 
 	// Check Verification
 	if u.EmailVerifiedAt == nil && login != "admin@simawa.local" {
-		return errors.New("email not verified")
+		return errors.New("Email belum diverifikasi. Silakan cek email Anda untuk kode OTP.")
 	}
 
 	// Generate & Send OTP
 	otp, err := s.generateOTP(ctx, login, "login")
 	if err != nil {
-		return errors.New("failed to generate otp")
+		return errors.New("Gagal mengirim kode OTP. Silakan coba lagi.")
 	}
 
 	// Send OTP via Email
@@ -267,12 +267,12 @@ func (s *AuthService) LoginVerify(ctx context.Context, req *dto.LoginOTPRequest)
 		return nil, err
 	}
 	if !valid {
-		return nil, errors.New("invalid or expired OTP")
+		return nil, errors.New("Kode OTP salah atau sudah kedaluwarsa.")
 	}
 
 	u, err := s.users.FindByLogin(ctx, login)
 	if err != nil {
-		return nil, errors.New("user not found")
+		return nil, errors.New("Pengguna tidak ditemukan.")
 	}
 
 	if s.audit != nil {
@@ -309,7 +309,7 @@ func (s *AuthService) ResendOTP(ctx context.Context, email, purpose string) erro
 	// Check if user exists
 	_, err := s.users.FindByLogin(ctx, email)
 	if err != nil {
-		return errors.New("user not found")
+		return errors.New("Pengguna tidak ditemukan.")
 	}
 	
 	otp, err := s.generateOTP(ctx, email, purpose)
@@ -342,12 +342,12 @@ func (s *AuthService) LoginLegacy(ctx context.Context, req *LoginRequest) (*Auth
 func (s *AuthService) ChangePassword(ctx context.Context, userID uuid.UUID, req *dto.ChangePasswordRequest) error {
 	u, err := s.users.GetByUUID(ctx, userID)
 	if err != nil {
-		return errors.New("user not found")
+		return errors.New("Pengguna tidak ditemukan.")
 	}
 
 	// Verify old password
 	if err := s.users.CheckPassword(ctx, u, req.OldPassword); err != nil {
-		return errors.New("invalid old password")
+		return errors.New("Password lama tidak sesuai.")
 	}
 
 	// Hash new password
@@ -416,12 +416,12 @@ func (s *AuthService) ResetPassword(ctx context.Context, req *dto.ResetPasswordR
 		return err
 	}
 	if !valid {
-		return errors.New("invalid or expired OTP")
+		return errors.New("Kode OTP salah atau sudah kedaluwarsa.")
 	}
 
 	u, err := s.users.FindByLogin(ctx, email)
 	if err != nil {
-		return errors.New("user not found")
+		return errors.New("Pengguna tidak ditemukan.")
 	}
 
 	hash, err := repository.BcryptHash(req.NewPassword)

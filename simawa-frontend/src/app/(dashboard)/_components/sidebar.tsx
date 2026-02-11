@@ -33,6 +33,7 @@ import {
   markNotificationRead,
   type Notification,
 } from '@/lib/apis/notification'
+import { fetchDashboardSummary } from '@/lib/apis/dashboard'
 import { cn } from '@/lib/utils'
 import { signOut } from 'next-auth/react'
 import { useRBAC } from '@/lib/providers/rbac-provider'
@@ -98,7 +99,19 @@ const Sidebar = () => {
     },
   )
 
+  const { data: dashSummary } = useQuery({
+    queryKey: ['dashboard-summary'],
+    queryFn: fetchDashboardSummary,
+    staleTime: 60_000,
+  })
+
   const unreadCount = notifications?.filter((n) => !n.read_at).length ?? 0
+
+  const pendingBadges: Record<string, number> = {
+    '/activities': dashSummary?.activities_pending ?? 0,
+    '/arsip': dashSummary?.surat_pending ?? 0,
+    '/lpj': dashSummary?.lpj_pending ?? 0,
+  }
 
   const handleMarkRead = async (id: string) => {
     await markNotificationRead(id)
@@ -336,6 +349,14 @@ const Sidebar = () => {
                           className="px-1.5 py-0 text-[10px] font-semibold bg-brand-100 text-brand-700 border-none"
                         >
                           {item.badge}
+                        </Badge>
+                      )}
+                      {!item.badge && pendingBadges[item.href] > 0 && (
+                        <Badge
+                          variant="secondary"
+                          className="px-1.5 py-0 text-[10px] font-semibold bg-amber-100 text-amber-700 border-none"
+                        >
+                          {pendingBadges[item.href]}
                         </Badge>
                       )}
                     </Link>

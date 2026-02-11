@@ -516,7 +516,7 @@ function CreateUserModal({
   const createMutation = useMutation({
     mutationFn: () => createUser(form),
     onSuccess: () => {
-      toast.success('User berhasil dibuat')
+      toast.success('Pengguna berhasil dibuat')
       onSuccess()
       onClose()
       setForm({
@@ -533,7 +533,7 @@ function CreateUserModal({
       })
     },
     onError: (err: Error) => {
-      toast.error(err.message || 'Gagal membuat user')
+      toast.error(err.message || 'Gagal membuat pengguna')
     },
   })
 
@@ -844,12 +844,12 @@ function EditUserModal({
   const updateMutation = useMutation({
     mutationFn: () => updateUser(userId!, form),
     onSuccess: () => {
-      toast.success('User berhasil diupdate')
+      toast.success('Pengguna berhasil diperbarui')
       onSuccess()
       onClose()
     },
     onError: (err: Error) => {
-      toast.error(err.message || 'Gagal mengupdate user')
+      toast.error(err.message || 'Gagal memperbarui pengguna')
     },
   })
 
@@ -987,12 +987,12 @@ function DeleteUserModal({
   const deleteMutation = useMutation({
     mutationFn: () => deleteUser(userId!),
     onSuccess: () => {
-      toast.success('User berhasil dihapus')
+      toast.success('Pengguna berhasil dihapus')
       onSuccess()
       onClose()
     },
     onError: (err: Error) => {
-      toast.error(err.message || 'Gagal menghapus user')
+      toast.error(err.message || 'Gagal menghapus pengguna')
     },
   })
 

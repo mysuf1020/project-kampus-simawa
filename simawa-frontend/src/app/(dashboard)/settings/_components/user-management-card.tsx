@@ -589,11 +589,11 @@ export function RoleManagementCard() {
                           if (!confirm(`Hapus role ${assignment.role_code} dari ${selectedUser.username}?`)) return
                           try {
                             await removeRoleMutation({ id: rolesUserId, roleCode: assignment.role_code })
-                            toast.success(`Role ${assignment.role_code} berhasil dihapus`)
+                            toast.success(`Peran ${assignment.role_code} berhasil dihapus`)
                             existingRolesQuery.refetch()
                           } catch (err) {
                             console.error(err)
-                            toast.error('Gagal menghapus role')
+                            toast.error('Gagal menghapus peran')
                           }
                         }}
                         title="Hapus role ini"

@@ -6,7 +6,7 @@ import { Button } from './button'
 function CopyButton({ copyValue }: { copyValue: string }) {
   const onCopyClicked = (e: MouseEvent<HTMLButtonElement>) => {
     navigator.clipboard.writeText(copyValue).then(() => {
-      toast.success('Copied to clipboard')
+      toast.success('Berhasil disalin ke clipboard')
     })
     e.stopPropagation()
   }

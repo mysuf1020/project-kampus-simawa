@@ -142,9 +142,9 @@ export function OrgCard({ org, canManage, isPending, onSubmit, onDelete, isAdmin
     try {
       await uploadOrganizationImage(org.id, 'hero', file)
       await queryClient.invalidateQueries({ queryKey: ['orgs'] })
-      toast.success('Hero image berhasil diupload')
+      toast.success('Gambar hero berhasil diupload')
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Gagal upload hero image'
+      const message = err instanceof Error ? err.message : 'Gagal upload gambar hero'
       toast.error(message)
     } finally {
       setHeroUploading(false)
@@ -158,9 +158,9 @@ export function OrgCard({ org, canManage, isPending, onSubmit, onDelete, isAdmin
     try {
       await deleteOrgHero(org.id)
       await queryClient.invalidateQueries({ queryKey: ['orgs'] })
-      toast.success('Hero image berhasil dihapus')
+      toast.success('Gambar hero berhasil dihapus')
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Gagal menghapus hero image'
+      const message = err instanceof Error ? err.message : 'Gagal menghapus gambar hero'
       toast.error(message)
     }
   }

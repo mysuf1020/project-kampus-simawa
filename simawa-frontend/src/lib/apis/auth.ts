@@ -15,7 +15,14 @@ export type LoginOTPPayload = {
 export type RegisterPayload = {
   username: string
   first_name: string
+  second_name: string
   email: string
+  nim: string
+  jurusan: string
+  phone: string
+  gender?: string
+  alamat?: string
+  organisasi?: boolean
   password: string
   confirm_password: string
   captcha_token?: string

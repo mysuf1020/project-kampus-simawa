@@ -2,13 +2,63 @@ package handler
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
 
 	"simawa-backend/internal/dto"
 	"simawa-backend/internal/service"
 	"simawa-backend/pkg/response"
 )
+
+// translateValidationErrors converts Gin binding validation errors to Indonesian
+func translateValidationErrors(err error) string {
+	ve, ok := err.(validator.ValidationErrors)
+	if !ok {
+		return "Data yang dikirim tidak valid."
+	}
+
+	fieldNames := map[string]string{
+		"Username":        "Username",
+		"FirstName":       "Nama Depan",
+		"SecondName":      "Nama Belakang",
+		"Email":           "Email",
+		"NIM":             "NIM",
+		"Jurusan":         "Jurusan",
+		"Phone":           "No. HP",
+		"Password":        "Password",
+		"ConfirmPassword": "Konfirmasi Password",
+		"OTP":             "Kode OTP",
+		"Login":           "Email/Username",
+		"RefreshToken":    "Token",
+		"OldPassword":     "Password Lama",
+		"NewPassword":     "Password Baru",
+	}
+
+	var msgs []string
+	for _, fe := range ve {
+		field := fe.Field()
+		if name, ok := fieldNames[field]; ok {
+			field = name
+		}
+		switch fe.Tag() {
+		case "required":
+			msgs = append(msgs, field+" wajib diisi")
+		case "min":
+			msgs = append(msgs, field+" minimal "+fe.Param()+" karakter")
+		case "max":
+			msgs = append(msgs, field+" maksimal "+fe.Param()+" karakter")
+		case "email":
+			msgs = append(msgs, "Format email tidak valid")
+		case "eqfield":
+			msgs = append(msgs, "Konfirmasi password tidak cocok")
+		default:
+			msgs = append(msgs, field+" tidak valid")
+		}
+	}
+	return strings.Join(msgs, ". ") + "."
+}
 
 type AuthHandler struct {
 	auth    *service.AuthService
@@ -22,14 +72,14 @@ func NewAuthHandler(auth *service.AuthService, captcha *service.CaptchaService) 
 func (h *AuthHandler) Login(c *gin.Context) {
 	var req dto.LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, response.Err(err.Error()))
+		c.JSON(http.StatusBadRequest, response.Err(translateValidationErrors(err)))
 		return
 	}
 
 	// Verify captcha if token provided
 	if h.captcha != nil && req.CaptchaToken != "" {
 		if valid, err := h.captcha.Verify(c.Request.Context(), req.CaptchaToken); err != nil || !valid {
-			c.JSON(http.StatusBadRequest, response.Err("invalid captcha"))
+			c.JSON(http.StatusBadRequest, response.Err("Verifikasi captcha gagal. Silakan coba lagi."))
 			return
 		}
 	}
@@ -43,13 +93,13 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 	
-	c.JSON(http.StatusOK, response.OK(gin.H{"message": "OTP sent to email"}))
+	c.JSON(http.StatusOK, response.OK(gin.H{"message": "Kode OTP telah dikirim ke email Anda."}))
 }
 
 func (h *AuthHandler) LoginVerify(c *gin.Context) {
 	var req dto.LoginOTPRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, response.Err(err.Error()))
+		c.JSON(http.StatusBadRequest, response.Err(translateValidationErrors(err)))
 		return
 	}
 
@@ -70,13 +120,13 @@ func (h *AuthHandler) LoginVerify(c *gin.Context) {
 func (h *AuthHandler) Register(c *gin.Context) {
 	var req dto.RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, response.Err(err.Error()))
+		c.JSON(http.StatusBadRequest, response.Err(translateValidationErrors(err)))
 		return
 	}
 
 	if h.captcha != nil && req.CaptchaToken != "" {
 		if valid, err := h.captcha.Verify(c.Request.Context(), req.CaptchaToken); err != nil || !valid {
-			c.JSON(http.StatusBadRequest, response.Err("invalid captcha"))
+			c.JSON(http.StatusBadRequest, response.Err("Verifikasi captcha gagal. Silakan coba lagi."))
 			return
 		}
 	}
@@ -88,7 +138,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, response.OK(gin.H{
-		"message": "Registration successful. Please check email for OTP verification.",
+		"message": "Registrasi berhasil! Silakan cek email untuk kode verifikasi OTP.",
 		"email":   user.Email,
 	}))
 }
@@ -96,7 +146,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 func (h *AuthHandler) VerifyEmail(c *gin.Context) {
 	var req dto.VerifyEmailRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, response.Err(err.Error()))
+		c.JSON(http.StatusBadRequest, response.Err(translateValidationErrors(err)))
 		return
 	}
 
@@ -105,13 +155,13 @@ func (h *AuthHandler) VerifyEmail(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, response.OK(gin.H{"message": "Email verified successfully"}))
+	c.JSON(http.StatusOK, response.OK(gin.H{"message": "Email berhasil diverifikasi. Silakan login."}))
 }
 
 func (h *AuthHandler) ResendOTP(c *gin.Context) {
 	var req dto.ResendOTPRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, response.Err(err.Error()))
+		c.JSON(http.StatusBadRequest, response.Err(translateValidationErrors(err)))
 		return
 	}
 
@@ -128,13 +178,13 @@ func (h *AuthHandler) ResendOTP(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, response.Err(err.Error()))
 		return
 	}
-	c.JSON(http.StatusOK, response.OK(gin.H{"message": "OTP resent"}))
+	c.JSON(http.StatusOK, response.OK(gin.H{"message": "Kode OTP baru telah dikirim ke email Anda."}))
 }
 
 func (h *AuthHandler) Refresh(c *gin.Context) {
 	var req dto.RefreshRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, response.Err(err.Error()))
+		c.JSON(http.StatusBadRequest, response.Err(translateValidationErrors(err)))
 		return
 	}
 	tokens, err := h.auth.Refresh(c.Request.Context(), &service.RefreshRequest{
@@ -155,7 +205,7 @@ func (h *AuthHandler) Refresh(c *gin.Context) {
 func (h *AuthHandler) Logout(c *gin.Context) {
 	var req dto.RefreshRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, response.Err(err.Error()))
+		c.JSON(http.StatusBadRequest, response.Err(translateValidationErrors(err)))
 		return
 	}
 	if err := h.auth.Logout(c.Request.Context(), req.RefreshToken); err != nil {
@@ -168,7 +218,7 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 func (h *AuthHandler) ForgotPassword(c *gin.Context) {
 	var req dto.ForgotPasswordRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, response.Err(err.Error()))
+		c.JSON(http.StatusBadRequest, response.Err(translateValidationErrors(err)))
 		return
 	}
 
@@ -177,13 +227,13 @@ func (h *AuthHandler) ForgotPassword(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, response.OK(gin.H{"message": "If the email is registered, a reset OTP has been sent."}))
+	c.JSON(http.StatusOK, response.OK(gin.H{"message": "Jika email terdaftar, kode OTP reset password telah dikirim."}))
 }
 
 func (h *AuthHandler) ResetPassword(c *gin.Context) {
 	var req dto.ResetPasswordRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, response.Err(err.Error()))
+		c.JSON(http.StatusBadRequest, response.Err(translateValidationErrors(err)))
 		return
 	}
 
@@ -192,5 +242,5 @@ func (h *AuthHandler) ResetPassword(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, response.OK(gin.H{"message": "Password has been reset successfully. Please login with new password."}))
+	c.JSON(http.StatusOK, response.OK(gin.H{"message": "Password berhasil direset. Silakan login dengan password baru."}))
 }

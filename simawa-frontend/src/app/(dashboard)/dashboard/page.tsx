@@ -2,12 +2,17 @@
 
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Download, FileText, Clock, Building2, Users } from 'lucide-react'
+import { Download, FileText, Clock, Building2, Users, RotateCw } from 'lucide-react'
+import Link from 'next/link'
 
-import { Button, Container } from '@/components/ui'
+import { Button, Container, Spinner } from '@/components/ui'
 import { Page } from '@/components/commons'
 import { fetchDashboardSummary } from '@/lib/apis/dashboard'
 import { StatsGrid } from './_components/stats-grid'
+import { PendingChart } from './_components/pending-chart'
+import { NotificationsCard } from './_components/notifications-card'
+import { LatestActivityCard } from './_components/latest-activity'
+import { QuickActions } from './_components/quick-actions'
 
 export default function DashboardPage() {
   const { data, isLoading, isError, refetch, isFetching } = useQuery({
@@ -69,24 +74,52 @@ export default function DashboardPage() {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" className="hidden sm:flex">
-              Unduh Laporan
-            </Button>
             <Button
+              variant="outline"
               size="sm"
-              className="bg-brand-600 hover:bg-brand-700 text-white gap-2 shadow-sm shadow-brand-500/20"
+              className="gap-2"
+              onClick={() => refetch()}
+              disabled={isFetching}
             >
-              <Download className="h-4 w-4" />
-              Export Data
+              {isFetching ? <Spinner size="xs" /> : <RotateCw className="h-3.5 w-3.5" />}
+              Refresh
             </Button>
+            <Link href="/reports">
+              <Button
+                size="sm"
+                className="bg-brand-600 hover:bg-brand-700 text-white gap-2 shadow-sm shadow-brand-500/20"
+              >
+                <Download className="h-4 w-4" />
+                Export Data
+              </Button>
+            </Link>
           </div>
         </div>
       </Page.Header>
 
       <Page.Body>
         <Container>
-          <div className="flex flex-col gap-8">
+          <div className="flex flex-col gap-6">
+            {/* Stats Overview */}
             <StatsGrid items={stats} />
+
+            {/* Chart + Notifications */}
+            <div className="grid gap-6 lg:grid-cols-2">
+              <PendingChart data={data} isLoading={isLoading} />
+              <NotificationsCard />
+            </div>
+
+            {/* Latest Activity + Quick Actions */}
+            <div className="grid gap-6 lg:grid-cols-2">
+              <LatestActivityCard
+                items={data?.last_achievements}
+                isLoading={isLoading}
+                isError={isError}
+                isFetching={isFetching}
+                onRefresh={() => refetch()}
+              />
+              <QuickActions />
+            </div>
           </div>
         </Container>
       </Page.Body>
