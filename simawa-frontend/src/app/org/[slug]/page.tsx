@@ -1,5 +1,6 @@
 'use client'
 
+import { Fragment } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useParams } from 'next/navigation'
 import Image from 'next/image'
@@ -239,18 +240,15 @@ export default function OrganizationDetailPage() {
                   return (
                     <div className="flex flex-col items-center py-4">
                       {sortedLevels.map(({ level, members: lvlMembers }, idx) => (
-                        <div key={level} className="flex flex-col items-center w-full">
-                          {/* Vertical connector line between levels */}
+                        <Fragment key={level}>
                           {idx > 0 && (
-                            <div className="w-px h-8 bg-neutral-200" />
+                            <div className="w-px h-8 bg-neutral-200 shrink-0" />
                           )}
-
-                          {/* Members at this level */}
-                          <div className="flex flex-wrap justify-center gap-6">
+                          <div className="flex justify-center gap-8">
                             {lvlMembers.map((m, i) => {
                               const config = getRoleConfig(m.role)
                               return (
-                                <div key={i} className="flex flex-col items-center">
+                                <div key={i} className="flex flex-col items-center w-[130px] shrink-0">
                                   <div className={`w-16 h-16 rounded-full ${config.color} flex items-center justify-center text-white shadow-lg`}>
                                     <span className="text-lg font-bold">{getInitials(m.name)}</span>
                                   </div>
@@ -262,7 +260,7 @@ export default function OrganizationDetailPage() {
                               )
                             })}
                           </div>
-                        </div>
+                        </Fragment>
                       ))}
                     </div>
                   )

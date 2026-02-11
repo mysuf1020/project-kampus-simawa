@@ -1,5 +1,6 @@
 'use client'
 
+import { Fragment } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Users, Crown, User, Briefcase, Wallet, FileText } from 'lucide-react'
 
@@ -43,7 +44,7 @@ function MemberNode({ member }: { member: OrgMember }) {
   const Icon = config.icon
 
   return (
-    <div className="flex flex-col items-center">
+    <div className="flex flex-col items-center w-[130px] shrink-0">
       <div
         className={`w-16 h-16 rounded-full ${config.color} flex items-center justify-center text-white shadow-lg`}
       >
@@ -143,19 +144,16 @@ export function OrgChartCard({ orgId, orgName }: Props) {
         ) : (
           <div className="flex flex-col items-center py-4">
             {sortedLevels.map(({ level, members }, idx) => (
-              <div key={level} className="flex flex-col items-center w-full">
-                {/* Vertical connector line between levels */}
+              <Fragment key={level}>
                 {idx > 0 && (
-                  <div className="w-px h-8 bg-neutral-200" />
+                  <div className="w-px h-8 bg-neutral-200 shrink-0" />
                 )}
-
-                {/* Members at this level */}
-                <div className="flex flex-wrap justify-center gap-6">
+                <div className="flex justify-center gap-8">
                   {members.map((member) => (
                     <MemberNode key={member.user_id} member={member} />
                   ))}
                 </div>
-              </div>
+              </Fragment>
             ))}
 
             {/* Legend */}
