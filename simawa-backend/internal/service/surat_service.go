@@ -27,15 +27,16 @@ type CreateSuratInput struct {
 }
 
 type UploadSuratInput struct {
-	OrgID     uuid.UUID
-	Subject   string
-	Number    string
-	ToRole    string
-	ToName    string
-	Variant   string
-	File      interface{} // io.Reader
-	FileName  string
-	CreatedBy uuid.UUID
+	OrgID       uuid.UUID
+	TargetOrgID *uuid.UUID
+	Subject     string
+	Number      string
+	ToRole      string
+	ToName      string
+	Variant     string
+	File        interface{} // io.Reader
+	FileName    string
+	CreatedBy   uuid.UUID
 }
 
 type InboxFilter struct {
@@ -242,6 +243,7 @@ func (s *suratService) Upload(ctx context.Context, in *UploadSuratInput, mc *min
 
 	row := &model.Surat{
 		OrgID:       in.OrgID,
+		TargetOrgID: in.TargetOrgID,
 		Variant:     variant,
 		Status:      model.SuratStatusDraft,
 		Number:      in.Number,

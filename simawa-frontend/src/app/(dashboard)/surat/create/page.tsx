@@ -85,6 +85,7 @@ function buildPayload(form: SuratCreateForm): CreateSuratPayload | null {
 
   return {
     org_id: form.orgId,
+    target_org_id: form.targetOrgId || undefined,
     status: 'DRAFT',
     payload: {
       variant: form.variant || 'PEMINJAMAN',
@@ -194,6 +195,7 @@ function SuratCreatePageInner() {
   const [mode, setMode] = useState<CreateMode>('select')
   const [uploadForm, setUploadForm] = useState({
     orgId: '',
+    targetOrgId: '',
     variant: 'PEMINJAMAN' as SuratVariant,
     subject: '',
     number: '',
@@ -243,7 +245,7 @@ function SuratCreatePageInner() {
     },
     onSuccess: () => {
       toast.success('Surat berhasil diupload dan dikirim')
-      setUploadForm({ orgId: '', variant: 'PEMINJAMAN', subject: '', number: '', toRole: '', toName: '', file: null })
+      setUploadForm({ orgId: '', targetOrgId: '', variant: 'PEMINJAMAN', subject: '', number: '', toRole: '', toName: '', file: null })
       router.push(callback)
     },
     onError: () => {
@@ -310,6 +312,7 @@ function SuratCreatePageInner() {
     }
     await uploadMutation.mutateAsync({
       org_id: uploadForm.orgId,
+      target_org_id: uploadForm.targetOrgId || undefined,
       subject: uploadForm.subject,
       number: uploadForm.number || undefined,
       to_role: uploadForm.toRole || undefined,
@@ -382,21 +385,41 @@ function SuratCreatePageInner() {
           <div className="max-w-2xl mx-auto">
             <Card className="border-neutral-200 shadow-sm">
               <CardContent className="space-y-6 p-6">
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium text-neutral-700">
-                      Pilih Organisasi <span className="text-red-500">*</span>
-                    </Label>
-                    <select
-                      className="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all"
-                      value={uploadForm.orgId}
-                      onChange={(e) => setUploadForm({ ...uploadForm, orgId: e.target.value })}
-                    >
-                      {(orgs ?? []).map((org) => (
-                        <option key={org.id} value={org.id}>
-                          {org.name}
-                        </option>
-                      ))}
-                    </select>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-neutral-700">
+                        Organisasi Pengirim <span className="text-red-500">*</span>
+                      </Label>
+                      <select
+                        className="w-full h-10 rounded-lg border border-neutral-200 bg-white px-3 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all"
+                        value={uploadForm.orgId}
+                        onChange={(e) => setUploadForm({ ...uploadForm, orgId: e.target.value })}
+                      >
+                        {(orgs ?? []).map((org) => (
+                          <option key={org.id} value={org.id}>
+                            {org.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-neutral-700">
+                        Organisasi Tujuan
+                      </Label>
+                      <select
+                        className="w-full h-10 rounded-lg border border-neutral-200 bg-white px-3 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all"
+                        value={uploadForm.targetOrgId}
+                        onChange={(e) => setUploadForm({ ...uploadForm, targetOrgId: e.target.value })}
+                      >
+                        <option value="">— Tidak ditentukan —</option>
+                        {(orgs ?? []).filter((o) => o.id !== uploadForm.orgId).map((org) => (
+                          <option key={org.id} value={org.id}>
+                            {org.name}
+                          </option>
+                        ))}
+                      </select>
+                      <p className="text-[11px] text-neutral-400">Kosongkan jika surat bersifat umum</p>
+                    </div>
                   </div>
 
                   <div className="grid gap-4 md:grid-cols-2">
@@ -611,10 +634,10 @@ function SuratCreatePageInner() {
 
               {/* Form Fields */}
               <div className="space-y-6">
-                <div className="grid gap-4 sm:grid-cols-3">
+                <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
                     <Label className="text-sm font-medium text-neutral-700">
-                      Organisasi <span className="text-red-500">*</span>
+                      Organisasi Pengirim <span className="text-red-500">*</span>
                     </Label>
                     <select
                       className="w-full h-10 rounded-lg border border-neutral-200 bg-white px-3 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all"
@@ -631,6 +654,26 @@ function SuratCreatePageInner() {
                       <p className="text-xs text-red-600">{errors.orgId}</p>
                     )}
                   </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-neutral-700">
+                      Organisasi Tujuan
+                    </Label>
+                    <select
+                      className="w-full h-10 rounded-lg border border-neutral-200 bg-white px-3 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all"
+                      value={form.targetOrgId}
+                      onChange={(e) => setForm({ ...form, targetOrgId: e.target.value })}
+                    >
+                      <option value="">— Tidak ditentukan —</option>
+                      {(orgs ?? []).filter((o) => o.id !== form.orgId).map((org) => (
+                        <option key={org.id} value={org.id}>
+                          {org.name}
+                        </option>
+                      ))}
+                    </select>
+                    <p className="text-[11px] text-neutral-400">Kosongkan jika surat bersifat umum</p>
+                  </div>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-3">
                   <div className="space-y-2">
                     <Label className="text-sm font-medium text-neutral-700">
                       Jenis Surat <span className="text-red-500">*</span>

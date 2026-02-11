@@ -158,6 +158,7 @@ export const downloadSurat = async (id: number | string) => {
 
 export type UploadSuratPayload = {
   org_id: string
+  target_org_id?: string
   subject: string
   number?: string
   to_role?: string
@@ -169,6 +170,7 @@ export type UploadSuratPayload = {
 export const uploadSurat = async (payload: UploadSuratPayload) => {
   const formData = new FormData()
   formData.append('org_id', payload.org_id)
+  if (payload.target_org_id) formData.append('target_org_id', payload.target_org_id)
   formData.append('subject', payload.subject)
   if (payload.number) formData.append('number', payload.number)
   if (payload.to_role) formData.append('to_role', payload.to_role)

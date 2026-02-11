@@ -22,6 +22,7 @@ export type SuratVariant = typeof SURAT_VARIANTS[number]['value']
 
 export type SuratCreateForm = {
   orgId: string
+  targetOrgId: string
   variant: SuratVariant
 
   // Meta
@@ -61,6 +62,7 @@ export type SuratCreateForm = {
 
 const initialCreateForm: SuratCreateForm = {
   orgId: '',
+  targetOrgId: '',
   variant: 'PEMINJAMAN',
   number: '',
   subject: '',

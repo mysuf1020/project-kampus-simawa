@@ -72,6 +72,16 @@ func (h *SuratHandler) Upload(c *gin.Context) {
 		return
 	}
 
+	var targetOrgID *uuid.UUID
+	if tidStr := c.PostForm("target_org_id"); tidStr != "" {
+		tid, err := uuid.Parse(tidStr)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, response.Err("invalid target_org_id"))
+			return
+		}
+		targetOrgID = &tid
+	}
+
 	number := sanitize.String(c.PostForm("number"))
 	toRole := sanitize.String(c.PostForm("to_role"))
 	toName := sanitize.String(c.PostForm("to_name"))
@@ -100,15 +110,16 @@ func (h *SuratHandler) Upload(c *gin.Context) {
 	}
 
 	row, err := h.svc.Upload(c.Request.Context(), &service.UploadSuratInput{
-		OrgID:     orgID,
-		Subject:   subject,
-		Number:    number,
-		ToRole:    toRole,
-		ToName:    toName,
-		Variant:   variant,
-		File:      file,
-		FileName:  header.Filename,
-		CreatedBy: userID,
+		OrgID:       orgID,
+		TargetOrgID: targetOrgID,
+		Subject:     subject,
+		Number:      number,
+		ToRole:      toRole,
+		ToName:      toName,
+		Variant:     variant,
+		File:        file,
+		FileName:    header.Filename,
+		CreatedBy:   userID,
 	}, h.minio, h.bucket)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, response.Err(err.Error()))
