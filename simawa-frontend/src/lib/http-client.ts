@@ -40,6 +40,11 @@ api.interceptors.response.use(
     errorWithMeta.displayMessage = message
     errorWithMeta.statusCode = status
 
+    // Override default Axios message with backend message
+    if (backendMessage) {
+      error.message = backendMessage
+    }
+
     return Promise.reject(error)
   },
 )
