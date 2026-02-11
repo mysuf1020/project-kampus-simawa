@@ -9,7 +9,7 @@ import {
   Container,
   Spinner,
 } from '@/components/ui'
-import { Building2, Mail, Phone, Globe, Instagram, ArrowLeft, Calendar, MapPin, Users, ExternalLink, LogIn, Crown, Shield, UserCircle } from 'lucide-react'
+import { Building2, Mail, Phone, Globe, Instagram, ArrowLeft, Calendar, MapPin, Users, ExternalLink, LogIn } from 'lucide-react'
 import { getOrganizationBySlug, getPublicMembers, type PublicMember } from '@/lib/apis/org'
 import { fetchPublicActivities } from '@/lib/apis/activity'
 
@@ -185,124 +185,90 @@ export default function OrganizationDetailPage() {
             {members.length > 0 && (
               <section className="bg-white rounded-2xl p-8 shadow-sm">
                 <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 bg-brand-100 rounded-xl flex items-center justify-center">
-                    <Users className="w-5 h-5 text-brand-600" />
+                  <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center">
+                    <Users className="w-5 h-5 text-indigo-600" />
                   </div>
                   <div>
                     <h2 className="text-xl font-bold text-neutral-900">Struktur Organisasi</h2>
-                    <p className="text-sm text-neutral-500">{members.length} Anggota</p>
+                    <p className="text-sm text-neutral-500">Bagan struktur kepengurusan {org.name}.</p>
                   </div>
                 </div>
 
-                {/* Ketua / Pimpinan */}
                 {(() => {
-                  const leaders = members.filter((m) =>
-                    ['KETUA', 'KETUA UMUM', 'PRESIDEN', 'ADMIN'].includes(m.role.toUpperCase())
-                  )
-                  const wakil = members.filter((m) =>
-                    ['WAKIL KETUA', 'WAKIL', 'WAKIL PRESIDEN'].includes(m.role.toUpperCase())
-                  )
-                  const sekretaris = members.filter((m) =>
-                    ['SEKRETARIS', 'SEKRETARIS UMUM'].includes(m.role.toUpperCase())
-                  )
-                  const bendahara = members.filter((m) =>
-                    ['BENDAHARA', 'BENDAHARA UMUM'].includes(m.role.toUpperCase())
-                  )
-                  const others = members.filter((m) => {
-                    const r = m.role.toUpperCase()
-                    return ![
-                      'KETUA', 'KETUA UMUM', 'PRESIDEN', 'ADMIN',
-                      'WAKIL KETUA', 'WAKIL', 'WAKIL PRESIDEN',
-                      'SEKRETARIS', 'SEKRETARIS UMUM',
-                      'BENDAHARA', 'BENDAHARA UMUM',
-                    ].includes(r)
+                  // Same hierarchy as org-chart-card.tsx
+                  const ROLE_HIERARCHY: { role: string; label: string; color: string; level: number }[] = [
+                    { role: 'KETUA', label: 'Ketua', color: 'bg-amber-500', level: 1 },
+                    { role: 'WAKIL_KETUA', label: 'Wakil Ketua', color: 'bg-amber-400', level: 2 },
+                    { role: 'SEKRETARIS', label: 'Sekretaris', color: 'bg-blue-500', level: 3 },
+                    { role: 'BENDAHARA', label: 'Bendahara', color: 'bg-green-500', level: 3 },
+                    { role: 'ADMIN', label: 'Admin', color: 'bg-purple-500', level: 3 },
+                    { role: 'ANGGOTA', label: 'Anggota', color: 'bg-neutral-400', level: 4 },
+                  ]
+
+                  const getRoleConfig = (role: string) =>
+                    ROLE_HIERARCHY.find((r) => r.role === role.toUpperCase()) || {
+                      role, label: role, color: 'bg-neutral-400', level: 4,
+                    }
+
+                  // Group members by level
+                  const grouped: Record<number, PublicMember[]> = {}
+                  members.forEach((m) => {
+                    const config = getRoleConfig(m.role)
+                    if (!grouped[config.level]) grouped[config.level] = []
+                    grouped[config.level].push(m)
                   })
 
-                  const getRoleIcon = (role: string) => {
-                    const r = role.toUpperCase()
-                    if (['KETUA', 'KETUA UMUM', 'PRESIDEN', 'ADMIN'].includes(r))
-                      return <Crown className="w-4 h-4 text-amber-500" />
-                    if (['WAKIL KETUA', 'WAKIL', 'WAKIL PRESIDEN', 'SEKRETARIS', 'SEKRETARIS UMUM', 'BENDAHARA', 'BENDAHARA UMUM'].includes(r))
-                      return <Shield className="w-4 h-4 text-brand-500" />
-                    return <UserCircle className="w-4 h-4 text-neutral-400" />
+                  // Sort levels and members within each level
+                  const sortedLevels = Object.entries(grouped)
+                    .sort(([a], [b]) => Number(a) - Number(b))
+                    .map(([level, lvlMembers]) => ({
+                      level: Number(level),
+                      members: lvlMembers.sort((a, b) => {
+                        const aIdx = ROLE_HIERARCHY.findIndex((r) => r.role === a.role.toUpperCase())
+                        const bIdx = ROLE_HIERARCHY.findIndex((r) => r.role === b.role.toUpperCase())
+                        return aIdx - bIdx
+                      }),
+                    }))
+
+                  const getInitials = (name: string) => {
+                    const parts = name.trim().split(/\s+/)
+                    if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase()
+                    return name.charAt(0).toUpperCase()
                   }
 
-                  const MemberCard = ({ member, size = 'md' }: { member: PublicMember; size?: 'lg' | 'md' }) => (
-                    <div className={`flex flex-col items-center text-center p-4 rounded-xl bg-neutral-50 hover:bg-neutral-100 transition-colors ${
-                      size === 'lg' ? 'py-6' : ''
-                    }`}>
-                      <div className={`rounded-full bg-brand-100 flex items-center justify-center mb-3 ${
-                        size === 'lg' ? 'w-16 h-16' : 'w-12 h-12'
-                      }`}>
-                        <span className={`font-bold text-brand-600 ${
-                          size === 'lg' ? 'text-xl' : 'text-base'
-                        }`}>
-                          {member.name.charAt(0).toUpperCase()}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1.5 mb-1">
-                        {getRoleIcon(member.role)}
-                        <span className="text-xs font-semibold text-neutral-500 uppercase tracking-wide">
-                          {member.role}
-                        </span>
-                      </div>
-                      <p className={`font-semibold text-neutral-900 ${
-                        size === 'lg' ? 'text-base' : 'text-sm'
-                      }`}>
-                        {member.name}
-                      </p>
-                    </div>
-                  )
-
                   return (
-                    <div className="space-y-6">
-                      {/* Pimpinan Inti */}
-                      {leaders.length > 0 && (
-                        <div>
-                          <div className="flex justify-center gap-4 flex-wrap">
-                            {leaders.map((m, i) => (
-                              <div key={i} className="w-full max-w-[200px]">
-                                <MemberCard member={m} size="lg" />
-                              </div>
-                            ))}
+                    <div className="space-y-8 py-4">
+                      {sortedLevels.map(({ level, members: lvlMembers }, idx) => (
+                        <div key={level} className="relative">
+                          {/* Connector line from above */}
+                          {idx > 0 && (
+                            <div className="absolute left-1/2 -top-8 w-px h-8 bg-neutral-200" />
+                          )}
+
+                          {/* Members at this level */}
+                          <div className="flex flex-wrap justify-center gap-6">
+                            {lvlMembers.map((m, i) => {
+                              const config = getRoleConfig(m.role)
+                              return (
+                                <div key={i} className="flex flex-col items-center">
+                                  <div className={`w-16 h-16 rounded-full ${config.color} flex items-center justify-center text-white shadow-lg`}>
+                                    <span className="text-lg font-bold">{getInitials(m.name)}</span>
+                                  </div>
+                                  <div className="mt-2 text-center">
+                                    <p className="text-sm font-semibold text-neutral-900 max-w-[120px] truncate">{m.name}</p>
+                                    <p className="text-xs text-neutral-500">{config.label}</p>
+                                  </div>
+                                </div>
+                              )
+                            })}
                           </div>
-                          {(wakil.length > 0 || sekretaris.length > 0 || bendahara.length > 0) && (
-                            <div className="flex justify-center my-3">
-                              <div className="w-px h-6 bg-neutral-200" />
-                            </div>
+
+                          {/* Connector line to below */}
+                          {idx < sortedLevels.length - 1 && (
+                            <div className="absolute left-1/2 -bottom-8 w-px h-8 bg-neutral-200" />
                           )}
                         </div>
-                      )}
-
-                      {/* Wakil, Sekretaris, Bendahara */}
-                      {(wakil.length > 0 || sekretaris.length > 0 || bendahara.length > 0) && (
-                        <div>
-                          <div className="flex justify-center gap-4 flex-wrap">
-                            {[...wakil, ...sekretaris, ...bendahara].map((m, i) => (
-                              <div key={i} className="w-full max-w-[180px]">
-                                <MemberCard member={m} />
-                              </div>
-                            ))}
-                          </div>
-                          {others.length > 0 && (
-                            <div className="flex justify-center my-3">
-                              <div className="w-px h-6 bg-neutral-200" />
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      {/* Anggota Lainnya */}
-                      {others.length > 0 && (
-                        <div>
-                          <p className="text-xs font-semibold text-neutral-400 uppercase tracking-wider text-center mb-3">Anggota</p>
-                          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                            {others.map((m, i) => (
-                              <MemberCard key={i} member={m} />
-                            ))}
-                          </div>
-                        </div>
-                      )}
+                      ))}
                     </div>
                   )
                 })()}
