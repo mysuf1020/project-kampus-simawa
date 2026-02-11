@@ -202,7 +202,7 @@ func (s *Server) initHandlers() {
 		}
 		minioPublicBaseURL = fmt.Sprintf("%s://%s", scheme, strings.TrimRight(s.Config.Minio.Endpoint, "/"))
 	}
-	s.Handlers.Org = handler.NewOrganizationHandler(s.Services.Org, s.Minio, s.Config.Minio.Bucket, minioPublicBaseURL)
+	s.Handlers.Org = handler.NewOrganizationHandler(s.Services.Org, s.Services.Member, s.Minio, s.Config.Minio.Bucket, minioPublicBaseURL)
 	s.Handlers.Activity = handler.NewActivityHandler(s.Services.Activity, s.Minio, s.Config.Minio.Bucket)
 	s.Handlers.LPJ = handler.NewLPJHandlerWithRBAC(s.Services.LPJ, s.Minio, s.Config.Minio.Bucket, s.Services.RBAC)
 	s.Handlers.Member = handler.NewOrgMemberHandler(s.Services.Member, s.Services.Org, s.Services.RBAC)

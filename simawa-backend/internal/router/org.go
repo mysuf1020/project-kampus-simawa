@@ -17,6 +17,7 @@ func RegisterOrgRoutes(r *gin.Engine, cfg *config.Env, oh *handler.OrganizationH
 	pub.GET("", oh.List)
 	pub.GET("/:id", oh.Get)
 	pub.GET("/slug/:slug", oh.PublicProfile)
+	pub.GET("/slug/:slug/members", oh.PublicMembers)
 
 	auth := r.Group("/v1/orgs")
 	auth.Use(middleware.AuthJWT(cfg))

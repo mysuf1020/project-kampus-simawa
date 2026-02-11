@@ -18,6 +18,7 @@ import (
 
 type OrganizationHandler struct {
 	svc                *service.OrganizationService
+	memberSvc          *service.OrgMemberService
 	minio              *minio.Client
 	bucket             string
 	minioPublicBaseURL string
@@ -25,12 +26,14 @@ type OrganizationHandler struct {
 
 func NewOrganizationHandler(
 	svc *service.OrganizationService,
+	memberSvc *service.OrgMemberService,
 	minio *minio.Client,
 	bucket string,
 	minioPublicBaseURL string,
 ) *OrganizationHandler {
 	return &OrganizationHandler{
 		svc:                svc,
+		memberSvc:          memberSvc,
 		minio:              minio,
 		bucket:             bucket,
 		minioPublicBaseURL: minioPublicBaseURL,
@@ -252,6 +255,38 @@ func (h *OrganizationHandler) PublicProfile(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, response.OK(org))
+}
+
+// PublicMembers returns organization members (name & role only) by slug.
+func (h *OrganizationHandler) PublicMembers(c *gin.Context) {
+	slug := c.Param("slug")
+	org, err := h.svc.GetBySlug(c.Request.Context(), slug)
+	if err != nil {
+		c.JSON(http.StatusNotFound, response.Err("Organisasi tidak ditemukan."))
+		return
+	}
+	members, err := h.memberSvc.List(c.Request.Context(), org.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, response.Err("Gagal memuat anggota."))
+		return
+	}
+	// Return only name and role (no sensitive data)
+	type publicMember struct {
+		Name string `json:"name"`
+		Role string `json:"role"`
+	}
+	var result []publicMember
+	for _, m := range members {
+		name := ""
+		if m.User != nil {
+			name = m.User.FirstName
+			if m.User.SecondName != "" {
+				name += " " + m.User.SecondName
+			}
+		}
+		result = append(result, publicMember{Name: name, Role: m.Role})
+	}
+	c.JSON(http.StatusOK, response.OK(result))
 }
 
 type createOrgRequest struct {

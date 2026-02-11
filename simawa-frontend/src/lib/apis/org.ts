@@ -41,6 +41,16 @@ export const getOrganizationBySlug = async (slug: string) => {
   return data.data
 }
 
+export type PublicMember = {
+  name: string
+  role: string
+}
+
+export const getPublicMembers = async (slug: string): Promise<PublicMember[]> => {
+  const { data } = await api.get<ApiResponse<PublicMember[]>>(`/orgs/slug/${slug}/members`)
+  return data.data ?? []
+}
+
 export const updateOrganization = async (id: string, payload: Partial<Organization>) => {
   const { data } = await api.put<ApiResponse<Organization>>(`/v1/orgs/${id}`, payload)
   return data.data

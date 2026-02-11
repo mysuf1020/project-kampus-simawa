@@ -9,8 +9,8 @@ import {
   Container,
   Spinner,
 } from '@/components/ui'
-import { Building2, Mail, Phone, Globe, Instagram, ArrowLeft, Calendar, MapPin, Users, ExternalLink, LogIn } from 'lucide-react'
-import { getOrganizationBySlug } from '@/lib/apis/org'
+import { Building2, Mail, Phone, Globe, Instagram, ArrowLeft, Calendar, MapPin, Users, ExternalLink, LogIn, Crown, Shield, UserCircle } from 'lucide-react'
+import { getOrganizationBySlug, getPublicMembers, type PublicMember } from '@/lib/apis/org'
 import { fetchPublicActivities } from '@/lib/apis/activity'
 
 // Dummy images for demo
@@ -53,6 +53,12 @@ export default function OrganizationDetailPage() {
   const { data: activities } = useQuery({
     queryKey: ['public-activities'],
     queryFn: () => fetchPublicActivities(),
+  })
+
+  const { data: members = [] } = useQuery({
+    queryKey: ['public-members', slug],
+    queryFn: () => getPublicMembers(slug),
+    enabled: !!slug,
   })
 
   const orgActivities = activities?.filter((a) => a.org_id === org?.id) || []
@@ -174,6 +180,134 @@ export default function OrganizationDetailPage() {
                 {org.description || 'Organisasi mahasiswa yang aktif dalam berbagai kegiatan kampus dan pengembangan soft skill mahasiswa. Bergabunglah bersama kami untuk pengalaman yang tak terlupakan.'}
               </p>
             </section>
+
+            {/* Bagan Organisasi Section */}
+            {members.length > 0 && (
+              <section className="bg-white rounded-2xl p-8 shadow-sm">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-10 h-10 bg-brand-100 rounded-xl flex items-center justify-center">
+                    <Users className="w-5 h-5 text-brand-600" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-neutral-900">Struktur Organisasi</h2>
+                    <p className="text-sm text-neutral-500">{members.length} Anggota</p>
+                  </div>
+                </div>
+
+                {/* Ketua / Pimpinan */}
+                {(() => {
+                  const leaders = members.filter((m) =>
+                    ['KETUA', 'KETUA UMUM', 'PRESIDEN', 'ADMIN'].includes(m.role.toUpperCase())
+                  )
+                  const wakil = members.filter((m) =>
+                    ['WAKIL KETUA', 'WAKIL', 'WAKIL PRESIDEN'].includes(m.role.toUpperCase())
+                  )
+                  const sekretaris = members.filter((m) =>
+                    ['SEKRETARIS', 'SEKRETARIS UMUM'].includes(m.role.toUpperCase())
+                  )
+                  const bendahara = members.filter((m) =>
+                    ['BENDAHARA', 'BENDAHARA UMUM'].includes(m.role.toUpperCase())
+                  )
+                  const others = members.filter((m) => {
+                    const r = m.role.toUpperCase()
+                    return ![
+                      'KETUA', 'KETUA UMUM', 'PRESIDEN', 'ADMIN',
+                      'WAKIL KETUA', 'WAKIL', 'WAKIL PRESIDEN',
+                      'SEKRETARIS', 'SEKRETARIS UMUM',
+                      'BENDAHARA', 'BENDAHARA UMUM',
+                    ].includes(r)
+                  })
+
+                  const getRoleIcon = (role: string) => {
+                    const r = role.toUpperCase()
+                    if (['KETUA', 'KETUA UMUM', 'PRESIDEN', 'ADMIN'].includes(r))
+                      return <Crown className="w-4 h-4 text-amber-500" />
+                    if (['WAKIL KETUA', 'WAKIL', 'WAKIL PRESIDEN', 'SEKRETARIS', 'SEKRETARIS UMUM', 'BENDAHARA', 'BENDAHARA UMUM'].includes(r))
+                      return <Shield className="w-4 h-4 text-brand-500" />
+                    return <UserCircle className="w-4 h-4 text-neutral-400" />
+                  }
+
+                  const MemberCard = ({ member, size = 'md' }: { member: PublicMember; size?: 'lg' | 'md' }) => (
+                    <div className={`flex flex-col items-center text-center p-4 rounded-xl bg-neutral-50 hover:bg-neutral-100 transition-colors ${
+                      size === 'lg' ? 'py-6' : ''
+                    }`}>
+                      <div className={`rounded-full bg-brand-100 flex items-center justify-center mb-3 ${
+                        size === 'lg' ? 'w-16 h-16' : 'w-12 h-12'
+                      }`}>
+                        <span className={`font-bold text-brand-600 ${
+                          size === 'lg' ? 'text-xl' : 'text-base'
+                        }`}>
+                          {member.name.charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1.5 mb-1">
+                        {getRoleIcon(member.role)}
+                        <span className="text-xs font-semibold text-neutral-500 uppercase tracking-wide">
+                          {member.role}
+                        </span>
+                      </div>
+                      <p className={`font-semibold text-neutral-900 ${
+                        size === 'lg' ? 'text-base' : 'text-sm'
+                      }`}>
+                        {member.name}
+                      </p>
+                    </div>
+                  )
+
+                  return (
+                    <div className="space-y-6">
+                      {/* Pimpinan Inti */}
+                      {leaders.length > 0 && (
+                        <div>
+                          <div className="flex justify-center gap-4 flex-wrap">
+                            {leaders.map((m, i) => (
+                              <div key={i} className="w-full max-w-[200px]">
+                                <MemberCard member={m} size="lg" />
+                              </div>
+                            ))}
+                          </div>
+                          {(wakil.length > 0 || sekretaris.length > 0 || bendahara.length > 0) && (
+                            <div className="flex justify-center my-3">
+                              <div className="w-px h-6 bg-neutral-200" />
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Wakil, Sekretaris, Bendahara */}
+                      {(wakil.length > 0 || sekretaris.length > 0 || bendahara.length > 0) && (
+                        <div>
+                          <div className="flex justify-center gap-4 flex-wrap">
+                            {[...wakil, ...sekretaris, ...bendahara].map((m, i) => (
+                              <div key={i} className="w-full max-w-[180px]">
+                                <MemberCard member={m} />
+                              </div>
+                            ))}
+                          </div>
+                          {others.length > 0 && (
+                            <div className="flex justify-center my-3">
+                              <div className="w-px h-6 bg-neutral-200" />
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Anggota Lainnya */}
+                      {others.length > 0 && (
+                        <div>
+                          <p className="text-xs font-semibold text-neutral-400 uppercase tracking-wider text-center mb-3">Anggota</p>
+                          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                            {others.map((m, i) => (
+                              <MemberCard key={i} member={m} />
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )
+                })()}
+              </section>
+            )}
 
             {/* Gallery Section */}
             <section className="bg-white rounded-2xl p-8 shadow-sm">
