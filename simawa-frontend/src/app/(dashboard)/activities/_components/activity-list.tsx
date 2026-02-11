@@ -157,7 +157,9 @@ export function ActivityList({
                             ? 'bg-red-50 text-red-700 border-red-100'
                             : activity.status === 'PENDING'
                               ? 'bg-amber-50 text-amber-700 border-amber-100'
-                              : 'bg-neutral-100 text-neutral-600 border-neutral-200'
+                              : activity.status === 'REVISION_REQUESTED'
+                                ? 'bg-blue-50 text-blue-700 border-blue-100'
+                                : 'bg-neutral-100 text-neutral-600 border-neutral-200'
                       }
                     `}
                   >
@@ -167,7 +169,9 @@ export function ActivityList({
                         ? 'Ditolak'
                         : activity.status === 'PENDING'
                           ? 'Menunggu'
-                          : 'Draft'}
+                          : activity.status === 'REVISION_REQUESTED'
+                            ? 'Revisi'
+                            : 'Draft'}
                   </Badge>
                 </div>
 
@@ -199,20 +203,22 @@ export function ActivityList({
               </div>
 
               <div className="flex items-center gap-2 pt-3 border-t border-neutral-100 mt-auto">
-                <Button
-                  size="sm"
-                  variant="default"
-                  className="h-8 flex-1 text-xs bg-brand-600 hover:bg-brand-700 text-white"
-                  onClick={() => onSubmit?.(activity.id)}
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? (
-                    <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    <Send className="mr-1.5 h-3.5 w-3.5" />
-                  )}
-                  Submit
-                </Button>
+                {(activity.status === 'DRAFT' || activity.status === 'REVISION_REQUESTED') && (
+                  <Button
+                    size="sm"
+                    variant="default"
+                    className="h-8 flex-1 text-xs bg-brand-600 hover:bg-brand-700 text-white"
+                    onClick={() => onSubmit?.(activity.id)}
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? (
+                      <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Send className="mr-1.5 h-3.5 w-3.5" />
+                    )}
+                    {activity.status === 'REVISION_REQUESTED' ? 'Kirim Ulang' : 'Submit'}
+                  </Button>
+                )}
 
                 {activity.status === 'PENDING' && (
                   <>

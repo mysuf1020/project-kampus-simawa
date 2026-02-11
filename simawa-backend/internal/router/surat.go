@@ -19,7 +19,7 @@ func RegisterSuratRoutes(r *gin.Engine, cfg *config.Env, sh *handler.SuratHandle
 	// Roles that can manage surat (DEMA can create surat for their org)
 	manageRoles := []string{model.RoleAdmin, model.RoleOrgAdmin, model.RoleBEMAdmin, model.RoleDEMAAdmin}
 	// Roles that can approve surat (BEM only)
-	approveRoles := []string{model.RoleBEMAdmin}
+	approveRoles := []string{model.RoleAdmin, model.RoleBEMAdmin}
 
 	api.POST("", middleware.RequireRoles(rbac, manageRoles...), sh.Create) // DEMA can create
 	api.POST("/upload", middleware.RequireRoles(rbac, manageRoles...), sh.Upload)

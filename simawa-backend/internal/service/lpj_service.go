@@ -95,10 +95,10 @@ func (s *LPJService) Submit(ctx context.Context, in *SubmitLPJInput) (*model.LPJ
 		if err := s.repo.Update(ctx, existing); err != nil {
 			return nil, err
 		}
-		_ = s.notify.Push(ctx, in.UserID, "LPJ dikirim ulang", in.Summary, map[string]any{"activity_id": in.ActivityID})
+		_ = s.notify.Push(ctx, in.UserID, "LPJ dikirim ulang", in.Summary, map[string]any{"lpj_id": existing.ID})
 		s.appendHistory(ctx, existing, in.UserID, "RESUBMIT", in.Summary)
 		if s.audit != nil {
-			s.audit.Log(ctx, in.UserID, "lpj_resubmit", map[string]any{"activity_id": in.ActivityID})
+			s.audit.Log(ctx, in.UserID, "lpj_resubmit", map[string]any{"lpj_id": existing.ID, "activity_id": in.ActivityID})
 		}
 		return existing, nil
 	}
@@ -121,10 +121,10 @@ func (s *LPJService) Submit(ctx context.Context, in *SubmitLPJInput) (*model.LPJ
 	if err := s.repo.Create(ctx, l); err != nil {
 		return nil, err
 	}
-	_ = s.notify.Push(ctx, in.UserID, "LPJ dikirim", in.Summary, map[string]any{"activity_id": in.ActivityID})
+	_ = s.notify.Push(ctx, in.UserID, "LPJ dikirim", in.Summary, map[string]any{"lpj_id": l.ID})
 	s.appendHistory(ctx, l, in.UserID, "SUBMIT", in.Summary)
 	if s.audit != nil {
-		s.audit.Log(ctx, in.UserID, "lpj_submit", map[string]any{"activity_id": in.ActivityID})
+		s.audit.Log(ctx, in.UserID, "lpj_submit", map[string]any{"lpj_id": l.ID, "activity_id": in.ActivityID})
 	}
 	return l, nil
 }
@@ -159,10 +159,10 @@ func (s *LPJService) Approve(ctx context.Context, approver uuid.UUID, lpjID uuid
 	if err := s.repo.Update(ctx, l); err != nil {
 		return nil, err
 	}
-	_ = s.notify.Push(ctx, l.SubmittedBy, "LPJ diperbarui", l.Status, map[string]any{"activity_id": l.ActivityID})
+	_ = s.notify.Push(ctx, l.SubmittedBy, "LPJ diperbarui", l.Status, map[string]any{"lpj_id": l.ID})
 	s.appendHistory(ctx, l, approver, map[bool]string{true: "APPROVE", false: "REJECT"}[approve], note)
 	if s.audit != nil {
-		s.audit.Log(ctx, approver, "lpj_approve", map[string]any{"activity_id": l.ActivityID, "approve": approve})
+		s.audit.Log(ctx, approver, "lpj_approve", map[string]any{"lpj_id": l.ID, "approve": approve})
 	}
 	return l, nil
 }
@@ -195,10 +195,10 @@ func (s *LPJService) AddRevision(ctx context.Context, userID, lpjID uuid.UUID, n
 	if err := s.repo.Update(ctx, l); err != nil {
 		return nil, err
 	}
-	_ = s.notify.Push(ctx, l.SubmittedBy, "LPJ diminta revisi", note, map[string]any{"activity_id": l.ActivityID})
+	_ = s.notify.Push(ctx, l.SubmittedBy, "LPJ diminta revisi", note, map[string]any{"lpj_id": l.ID})
 	s.appendHistory(ctx, l, userID, "REVISION_REQUESTED", note)
 	if s.audit != nil {
-		s.audit.Log(ctx, userID, "lpj_revision_requested", map[string]any{"activity_id": l.ActivityID})
+		s.audit.Log(ctx, userID, "lpj_revision_requested", map[string]any{"lpj_id": l.ID})
 	}
 	return l, nil
 }

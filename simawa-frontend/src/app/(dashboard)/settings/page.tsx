@@ -111,23 +111,33 @@ export default function SettingsPage() {
                       </div>
                       <div className="grid gap-3 sm:grid-cols-3">
                         <ServiceStatus
-                          label="Database"
+                          label="PostgreSQL"
                           status={data.db_ok}
                           icon={Database}
                         />
                         <ServiceStatus
-                          label="Redis Cache"
+                          label="Redis"
                           status={data.redis_ok}
                           icon={Server}
                         />
                         <ServiceStatus
-                          label="Object Storage"
+                          label="Cloud Storage"
                           status={data.minio_ok}
                           icon={HardDrive}
                         />
                       </div>
                       <p className="text-[10px] text-neutral-400 text-center">
-                        Uptime: {Math.floor(data.uptime_seconds)} seconds
+                        Uptime: {(() => {
+                          const s = Math.floor(data.uptime_seconds)
+                          const d = Math.floor(s / 86400)
+                          const h = Math.floor((s % 86400) / 3600)
+                          const m = Math.floor((s % 3600) / 60)
+                          const parts: string[] = []
+                          if (d > 0) parts.push(`${d} hari`)
+                          if (h > 0) parts.push(`${h} jam`)
+                          if (m > 0) parts.push(`${m} menit`)
+                          return parts.length > 0 ? parts.join(' ') : 'Baru dimulai'
+                        })()}
                       </p>
                     </div>
                   )}
