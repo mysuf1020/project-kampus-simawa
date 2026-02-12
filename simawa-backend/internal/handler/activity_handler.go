@@ -29,16 +29,18 @@ func NewActivityHandler(svc *service.ActivityService, minio *minio.Client, bucke
 }
 
 type createActivityRequest struct {
-	OrgID       string         `json:"org_id" binding:"required,uuid"`
-	Title       string         `json:"title" binding:"required"`
-	Description string         `json:"description"`
-	Location    string         `json:"location"`
-	Type        string         `json:"type"`
-	Public      bool           `json:"public"`
-	StartAt     int64          `json:"start_at" binding:"required"` // epoch seconds
-	EndAt       int64          `json:"end_at" binding:"required"`
-	CoverKey    string         `json:"cover_key"`
-	Metadata    map[string]any `json:"metadata"`
+	OrgID              string         `json:"org_id" binding:"required,uuid"`
+	Title              string         `json:"title" binding:"required"`
+	Description        string         `json:"description"`
+	Location           string         `json:"location"`
+	Type               string         `json:"type"`
+	CollabType         string         `json:"collab_type"`          // INTERNAL, COLLAB, CAMPUS
+	CollaboratorOrgIDs []string       `json:"collaborator_org_ids"` // UUIDs of collaborating orgs
+	Public             bool           `json:"public"`
+	StartAt            int64          `json:"start_at" binding:"required"` // epoch seconds
+	EndAt              int64          `json:"end_at" binding:"required"`
+	CoverKey           string         `json:"cover_key"`
+	Metadata           map[string]any `json:"metadata"`
 }
 
 func (h *ActivityHandler) Create(c *gin.Context) {
@@ -63,17 +65,19 @@ func (h *ActivityHandler) Create(c *gin.Context) {
 		return
 	}
 	a, err := h.svc.Create(c.Request.Context(), &service.CreateActivityInput{
-		OrgID:       orgID,
-		Title:       req.Title,
-		Description: req.Description,
-		Location:    req.Location,
-		Type:        req.Type,
-		Public:      req.Public,
-		StartAt:     start,
-		EndAt:       end,
-		CoverKey:    req.CoverKey,
-		Metadata:    req.Metadata,
-		CreatedBy:   userID,
+		OrgID:              orgID,
+		Title:              req.Title,
+		Description:        req.Description,
+		Location:           req.Location,
+		Type:               req.Type,
+		CollabType:         req.CollabType,
+		CollaboratorOrgIDs: req.CollaboratorOrgIDs,
+		Public:             req.Public,
+		StartAt:            start,
+		EndAt:              end,
+		CoverKey:           req.CoverKey,
+		Metadata:           req.Metadata,
+		CreatedBy:          userID,
 	})
 	if err != nil {
 		c.JSON(http.StatusBadRequest, response.Err(err.Error()))

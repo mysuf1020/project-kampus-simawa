@@ -7,6 +7,8 @@ export type Activity = {
   description?: string
   location?: string
   type?: string
+  collab_type?: string // INTERNAL, COLLAB, CAMPUS
+  collaborator_org_ids?: string[]
   public?: boolean
   status?: string
   approval_note?: string
@@ -26,6 +28,8 @@ export type CreateActivityPayload = {
   description?: string
   location?: string
   type?: string
+  collab_type?: string
+  collaborator_org_ids?: string[]
   public?: boolean
   start_at?: string
   end_at?: string
@@ -122,6 +126,8 @@ export const createActivity = async (payload: CreateActivityPayload) => {
     description: payload.description,
     location: payload.location,
     type: payload.type,
+    collab_type: payload.collab_type || 'INTERNAL',
+    collaborator_org_ids: payload.collaborator_org_ids || [],
     public: payload.public ?? true,
     start_at: toEpochSeconds(payload.start_at),
     end_at: toEpochSeconds(payload.end_at),

@@ -237,6 +237,7 @@ function ActivitiesPageInner() {
               <div className="hidden sm:block">
                 <ActivityList
                   activities={filteredActivities}
+                  orgs={orgs}
                   isLoading={isLoading}
                   isFetching={isFetching}
                   isError={isError}
@@ -258,6 +259,7 @@ function ActivitiesPageInner() {
               <div className="sm:hidden">
                 <ActivityList
                   activities={filteredInfiniteActivities}
+                  orgs={orgs}
                   isLoading={isLoading}
                   isFetching={isFetching}
                   isError={isError}

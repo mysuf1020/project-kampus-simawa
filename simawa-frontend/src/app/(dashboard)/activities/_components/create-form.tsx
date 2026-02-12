@@ -1,11 +1,12 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Loader2, Sparkles } from 'lucide-react'
+import { Loader2, Sparkles, Building2, Users, GraduationCap } from 'lucide-react'
 import { toast } from 'sonner'
+import { useQuery } from '@tanstack/react-query'
 
 import {
   Button,
@@ -19,6 +20,7 @@ import {
   TextArea,
 } from '@/components/ui'
 import { VALIDATION_LIMITS, ERROR_MESSAGES } from '@/lib/validations/form-schemas'
+import { listOrganizations } from '@/lib/apis/org'
 
 const activitySchema = z.object({
   org_id: z.string().min(1, ERROR_MESSAGES.required('Organisasi')),
@@ -28,9 +30,17 @@ const activitySchema = z.object({
   description: z.string().max(VALIDATION_LIMITS.DESCRIPTION_MAX, ERROR_MESSAGES.descriptionMax).optional(),
   location: z.string().max(200, 'Lokasi maksimal 200 karakter').optional(),
   type: z.string().max(100, 'Tipe maksimal 100 karakter').optional(),
+  collab_type: z.string().optional(),
+  collaborator_org_ids: z.array(z.string()).optional(),
   start_at: z.string().optional(),
   end_at: z.string().optional(),
 })
+
+const COLLAB_OPTIONS = [
+  { value: 'INTERNAL', label: 'Internal', desc: 'Kegiatan internal organisasi', icon: Building2 },
+  { value: 'COLLAB', label: 'Kolaborasi', desc: 'Bersama organisasi lain', icon: Users },
+  { value: 'CAMPUS', label: 'Kampus', desc: 'Kegiatan tingkat kampus', icon: GraduationCap },
+] as const
 
 export type ActivityFormValues = z.infer<typeof activitySchema>
 
@@ -41,9 +51,14 @@ type Props = {
 }
 
 export function ActivityCreateForm({ orgId, onCreate, isLoading }: Props) {
+  const [collabType, setCollabType] = useState('INTERNAL')
+  const [selectedCollabOrgs, setSelectedCollabOrgs] = useState<string[]>([])
+
+  const { data: orgs } = useQuery({ queryKey: ['orgs'], queryFn: listOrganizations })
+
   const form = useForm<ActivityFormValues>({
     resolver: zodResolver(activitySchema),
-    defaultValues: { org_id: '', title: '', description: '', location: '', type: '' },
+    defaultValues: { org_id: '', title: '', description: '', location: '', type: '', collab_type: 'INTERNAL', collaborator_org_ids: [] },
     mode: 'onChange',
   })
 
@@ -51,11 +66,29 @@ export function ActivityCreateForm({ orgId, onCreate, isLoading }: Props) {
     if (orgId) form.setValue('org_id', orgId)
   }, [orgId, form])
 
+  useEffect(() => {
+    form.setValue('collab_type', collabType)
+    if (collabType !== 'COLLAB') {
+      setSelectedCollabOrgs([])
+      form.setValue('collaborator_org_ids', [])
+    }
+  }, [collabType, form])
+
+  const toggleCollabOrg = (id: string) => {
+    setSelectedCollabOrgs((prev) => {
+      const next = prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id]
+      form.setValue('collaborator_org_ids', next)
+      return next
+    })
+  }
+
   const handleSubmit = async (values: ActivityFormValues) => {
     try {
       await onCreate(values)
       toast.success('Aktivitas berhasil dibuat')
-      form.reset({ ...values, title: '', description: '', location: '', type: '' })
+      form.reset({ ...values, title: '', description: '', location: '', type: '', collab_type: 'INTERNAL', collaborator_org_ids: [] })
+      setCollabType('INTERNAL')
+      setSelectedCollabOrgs([])
     } catch {
       toast.error('Gagal membuat aktivitas')
     }
@@ -133,6 +166,64 @@ export function ActivityCreateForm({ orgId, onCreate, isLoading }: Props) {
               />
             </div>
           </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-xs font-medium text-neutral-700">
+              Lingkup Kegiatan
+            </Label>
+            <div className="grid grid-cols-3 gap-2">
+              {COLLAB_OPTIONS.map((opt) => {
+                const Icon = opt.icon
+                const active = collabType === opt.value
+                return (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setCollabType(opt.value)}
+                    className={`flex flex-col items-center gap-1.5 rounded-lg border-2 p-2.5 text-center transition-all ${
+                      active
+                        ? 'border-brand-500 bg-brand-50 text-brand-700'
+                        : 'border-neutral-200 bg-white text-neutral-500 hover:border-neutral-300'
+                    }`}
+                  >
+                    <Icon className={`h-4 w-4 ${active ? 'text-brand-600' : 'text-neutral-400'}`} />
+                    <span className="text-[11px] font-semibold leading-tight">{opt.label}</span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
+          {collabType === 'COLLAB' && (
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium text-neutral-700">
+                Organisasi Kolaborator
+              </Label>
+              <div className="flex flex-wrap gap-2">
+                {(orgs ?? []).filter((o) => o.id !== orgId).map((org) => {
+                  const selected = selectedCollabOrgs.includes(org.id)
+                  return (
+                    <button
+                      key={org.id}
+                      type="button"
+                      onClick={() => toggleCollabOrg(org.id)}
+                      className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-medium border transition-all ${
+                        selected
+                          ? 'border-brand-500 bg-brand-50 text-brand-700'
+                          : 'border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300'
+                      }`}
+                    >
+                      <Building2 className="h-3 w-3" />
+                      {org.name}
+                    </button>
+                  )
+                })}
+              </div>
+              {selectedCollabOrgs.length === 0 && (
+                <p className="text-[10px] text-neutral-400">Pilih minimal satu organisasi kolaborator</p>
+              )}
+            </div>
+          )}
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">

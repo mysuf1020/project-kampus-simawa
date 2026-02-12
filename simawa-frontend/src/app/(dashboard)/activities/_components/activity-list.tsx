@@ -13,10 +13,11 @@ import {
   InfiniteScrollLoader,
 } from '@/components/ui'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Calendar, Check, Loader2, MapPin, Send } from 'lucide-react'
+import { Building2, Calendar, Check, GraduationCap, Loader2, MapPin, Send, Users } from 'lucide-react'
 
 type Props = {
   activities?: Activity[]
+  orgs?: { id: string; name: string }[]
   isLoading?: boolean
   isFetching?: boolean
   isError?: boolean
@@ -35,8 +36,15 @@ type Props = {
   isFetchingNextPage?: boolean
 }
 
+const COLLAB_LABELS: Record<string, { label: string; icon: typeof Building2; cls: string }> = {
+  INTERNAL: { label: 'Internal', icon: Building2, cls: 'bg-neutral-50 text-neutral-600 border-neutral-200' },
+  COLLAB: { label: 'Kolaborasi', icon: Users, cls: 'bg-purple-50 text-purple-700 border-purple-200' },
+  CAMPUS: { label: 'Kampus', icon: GraduationCap, cls: 'bg-blue-50 text-blue-700 border-blue-200' },
+}
+
 export function ActivityList({
   activities,
+  orgs,
   isError,
   isFetching,
   isLoading,
@@ -180,6 +188,30 @@ export function ActivityList({
                     {activity.description}
                   </p>
                 )}
+
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {(() => {
+                    const orgName = orgs?.find((o) => o.id === activity.org_id)?.name
+                    return orgName ? (
+                      <div className="flex items-center gap-1.5 rounded-md bg-brand-50 px-2 py-1 text-[11px] font-medium text-brand-700 border border-brand-100">
+                        <Building2 className="h-3 w-3 text-brand-500" />
+                        <span className="truncate max-w-[140px]">{orgName}</span>
+                      </div>
+                    ) : null
+                  })()}
+                  {(() => {
+                    const ct = activity.collab_type || 'INTERNAL'
+                    if (ct === 'INTERNAL') return null
+                    const info = COLLAB_LABELS[ct] || COLLAB_LABELS.INTERNAL
+                    const Icon = info.icon
+                    return (
+                      <div className={`flex items-center gap-1.5 rounded-md px-2 py-1 text-[11px] font-medium border ${info.cls}`}>
+                        <Icon className="h-3 w-3" />
+                        <span>{info.label}</span>
+                      </div>
+                    )
+                  })()}
+                </div>
 
                 <div className="flex flex-wrap gap-2 mb-4">
                   {activity.start_at && (

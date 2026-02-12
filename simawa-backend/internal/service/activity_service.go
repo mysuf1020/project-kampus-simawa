@@ -26,17 +26,19 @@ func NewActivityService(repo repository.ActivityRepository, org repository.Organ
 }
 
 type CreateActivityInput struct {
-	OrgID       uuid.UUID
-	Title       string
-	Description string
-	Location    string
-	Type        string
-	Public      bool
-	StartAt     time.Time
-	EndAt       time.Time
-	CoverKey    string
-	Metadata    map[string]any
-	CreatedBy   uuid.UUID
+	OrgID              uuid.UUID
+	Title              string
+	Description        string
+	Location           string
+	Type               string
+	CollabType         string
+	CollaboratorOrgIDs []string
+	Public             bool
+	StartAt            time.Time
+	EndAt              time.Time
+	CoverKey           string
+	Metadata           map[string]any
+	CreatedBy          uuid.UUID
 }
 
 func (s *ActivityService) Create(ctx context.Context, in *CreateActivityInput) (*model.Activity, error) {
@@ -57,20 +59,33 @@ func (s *ActivityService) Create(ctx context.Context, in *CreateActivityInput) (
 		return nil, errors.New("forbidden: you don't have permission to create activity for this organization")
 	}
 	
+	collabType := in.CollabType
+	if collabType == "" {
+		collabType = "INTERNAL"
+	}
+
+	var collabJSON datatypes.JSON
+	if len(in.CollaboratorOrgIDs) > 0 {
+		b, _ := json.Marshal(in.CollaboratorOrgIDs)
+		collabJSON = b
+	}
+
 	a := &model.Activity{
-		OrgID:       in.OrgID,
-		Title:       in.Title,
-		Description: in.Description,
-		Location:    in.Location,
-		Type:        in.Type,
-		Public:      in.Public,
-		Status:      model.ActivityStatusDraft,
-		StartAt:     in.StartAt,
-		EndAt:       in.EndAt,
-		CoverKey:    in.CoverKey,
-		Metadata:    in.Metadata,
-		CreatedBy:   in.CreatedBy,
-		UpdatedBy:   in.CreatedBy,
+		OrgID:              in.OrgID,
+		Title:              in.Title,
+		Description:        in.Description,
+		Location:           in.Location,
+		Type:               in.Type,
+		CollabType:         collabType,
+		CollaboratorOrgIDs: collabJSON,
+		Public:             in.Public,
+		Status:             model.ActivityStatusDraft,
+		StartAt:            in.StartAt,
+		EndAt:              in.EndAt,
+		CoverKey:           in.CoverKey,
+		Metadata:           in.Metadata,
+		CreatedBy:          in.CreatedBy,
+		UpdatedBy:          in.CreatedBy,
 	}
 	if err := s.repo.Create(ctx, a); err != nil {
 		return nil, err
