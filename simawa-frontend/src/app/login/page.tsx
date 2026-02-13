@@ -87,7 +87,20 @@ function LoginContent() {
         err?.displayMessage ||
         err?.message ||
         'Gagal login'
-      toast.error(`Login gagal: ${message}`)
+
+      // Check if unverified email error
+      if (message.toLowerCase().includes('belum diverifikasi')) {
+        toast.warning('Email belum diverifikasi', {
+          description: 'Harap verifikasi email Anda terlebih dahulu sebelum login.',
+          duration: 8000,
+          action: {
+            label: 'Verifikasi',
+            onClick: () => router.push(`/verify-email?email=${encodeURIComponent(form.getValues('login'))}`),
+          },
+        })
+      } else {
+        toast.error(`Login gagal: ${message}`)
+      }
       console.error('[Login Error]', err?.response?.data || err)
     } finally {
       setIsSubmitting(false)
