@@ -143,7 +143,7 @@ function SuratCard({ surat, onView, onDownload }: { surat: Surat; onView?: () =>
 }
 
 function SuratDetailCard({ surat, orgs, onApprove }: { surat: Surat; orgs?: { id: string; name: string }[]; onApprove?: () => void }) {
-  const [showApproval, setShowApproval] = useState(false)
+  const [approvalAction, setApprovalAction] = useState<'approve' | 'reject' | 'revise' | null>(null)
   const orgName = orgs?.find((o) => o.id === surat.org_id)?.name || 'Organisasi'
   const targetOrgName = surat.target_org_id ? orgs?.find((o) => o.id === surat.target_org_id)?.name : null
 
@@ -237,34 +237,56 @@ function SuratDetailCard({ surat, orgs, onApprove }: { surat: Surat; orgs?: { id
               variant="outline"
               size="sm"
               onClick={handleDownload}
-              className="flex-1 gap-2"
+              className="gap-2"
             >
               <Download className="w-4 h-4" />
               Download
             </Button>
             {surat.status === 'PENDING' && (
-              <Button
-                size="sm"
-                onClick={() => setShowApproval(true)}
-                className="flex-1 bg-brand-600 hover:bg-brand-700 text-white gap-2"
-              >
-                <CheckCircle2 className="w-4 h-4" />
-                Tinjau
-              </Button>
+              <>
+                <Button
+                  size="sm"
+                  onClick={() => setApprovalAction('approve')}
+                  className="flex-1 bg-green-600 hover:bg-green-700 text-white gap-1.5 text-xs"
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  Setujui
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setApprovalAction('reject')}
+                  className="flex-1 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 gap-1.5 text-xs"
+                >
+                  <XCircle className="w-3.5 h-3.5" />
+                  Tolak
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setApprovalAction('revise')}
+                  className="flex-1 border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-700 gap-1.5 text-xs"
+                >
+                  <RefreshCcw className="w-3.5 h-3.5" />
+                  Revisi
+                </Button>
+              </>
             )}
           </div>
         </CardContent>
       </Card>
 
-      {showApproval && (
+      {approvalAction && (
         <SuratApprovalDialog
           suratId={surat.id}
-          open={showApproval}
+          open={!!approvalAction}
           onOpenChange={(open) => {
-            setShowApproval(open)
-            if (!open) onApprove?.()
+            if (!open) {
+              setApprovalAction(null)
+              onApprove?.()
+            }
           }}
-          action="approve"
+          action={approvalAction}
         />
       )}
     </>
