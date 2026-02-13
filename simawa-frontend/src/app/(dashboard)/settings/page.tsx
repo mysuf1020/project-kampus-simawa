@@ -19,7 +19,7 @@ import { Page } from '@/components/commons'
 import { AdminGuard } from '@/components/guards/role-guard'
 import { fetchHealth } from '@/lib/apis/health'
 import { RoleGuideCard } from './_components/role-guide-card'
-import { RoleManagementCard, UserCreateCard } from './_components/user-management-card'
+import { RoleManagementCard } from './_components/user-management-card'
 import { ChangePasswordCard } from './_components/change-password-card'
 
 export default function SettingsPage() {
@@ -63,7 +63,6 @@ export default function SettingsPage() {
               className="space-y-6 animate-in fade-in-50 duration-300"
             >
               <div className="grid gap-6 lg:grid-cols-2">
-                <UserCreateCard />
                 <ChangePasswordCard />
               </div>
               <div className="grid gap-6">

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { FileText, RotateCw, Search } from 'lucide-react'
 import { format } from 'date-fns'
@@ -24,6 +24,7 @@ import {
 } from '@/components/ui'
 import { Page } from '@/components/commons'
 import { listAuditLogs } from '@/lib/apis/audit'
+import { listOrganizations } from '@/lib/apis/org'
 import { SkeletonTable } from '@/components/ui/skeleton/skeleton-table'
 
 const actionLabels: Record<string, string> = {
@@ -63,6 +64,17 @@ export default function AuditLogPage() {
         entity_type: entityFilter || undefined,
       }),
   })
+
+  const { data: orgs } = useQuery({
+    queryKey: ['orgs'],
+    queryFn: listOrganizations,
+  })
+
+  const orgNameMap = useMemo(() => {
+    const map: Record<string, string> = {}
+    orgs?.forEach((o) => { map[o.id] = o.name })
+    return map
+  }, [orgs])
 
   const items = data?.items ?? []
   const total = data?.total ?? 0
@@ -219,15 +231,27 @@ export default function AuditLogPage() {
                             </td>
                             <td className="px-4 py-3 text-neutral-500 text-xs">
                               {log.entity_type ? (
-                                <>
-                                  {log.entity_type}{' '}
-                                  {log.entity_id && (
-                                    <>
-                                      <span className="text-neutral-300">#</span>
-                                      {log.entity_id.substring(0, 8)}
-                                    </>
-                                  )}
-                                </>
+                                <div className="space-y-0.5">
+                                  <div>
+                                    {log.entity_type}{' '}
+                                    {log.entity_id && (
+                                      <>
+                                        <span className="text-neutral-300">#</span>
+                                        {log.entity_id.substring(0, 8)}
+                                      </>
+                                    )}
+                                  </div>
+                                  {(() => {
+                                    const meta = log.metadata as Record<string, string> | undefined
+                                    const oid = meta?.org_id
+                                    const orgName = oid ? orgNameMap[oid] : undefined
+                                    return orgName ? (
+                                      <div className="text-[10px] text-brand-600 font-medium">
+                                        {orgName}
+                                      </div>
+                                    ) : null
+                                  })()}
+                                </div>
                               ) : (
                                 <span className="text-neutral-300">-</span>
                               )}

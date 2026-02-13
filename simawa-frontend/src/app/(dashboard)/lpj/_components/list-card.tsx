@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Check, Download, Info, Loader2, RefreshCw, X, FileText } from 'lucide-react'
+import { Check, Download, Info, Loader2, RefreshCw, X, FileText, Building2, User } from 'lucide-react'
 import { toast } from 'sonner'
 
 import {
@@ -32,6 +32,7 @@ dayjs.locale('id')
 
 type Props = {
   items?: LPJ[]
+  orgs?: { id: string; name: string }[]
   isLoading?: boolean
   isError?: boolean
   isFetching?: boolean
@@ -52,6 +53,7 @@ type NoteModalState = {
 
 export function LPJListCard({
   items,
+  orgs,
   isLoading,
   isError,
   isFetching,
@@ -291,6 +293,25 @@ export function LPJListCard({
                   >
                     {statusLabel[lpj.status] || lpj.status}
                   </Badge>
+                </div>
+
+                {/* Sender & Org info */}
+                <div className="flex flex-wrap items-center gap-2 mb-2">
+                  {(() => {
+                    const orgName = orgs?.find((o) => o.id === lpj.org_id)?.name
+                    return orgName ? (
+                      <div className="flex items-center gap-1 rounded-md bg-brand-50 px-2 py-0.5 text-[10px] font-medium text-brand-700 border border-brand-100">
+                        <Building2 className="h-3 w-3 text-brand-500" />
+                        <span className="truncate max-w-[120px]">{orgName}</span>
+                      </div>
+                    ) : null
+                  })()}
+                  {lpj.submitted_by && (
+                    <div className="flex items-center gap-1 rounded-md bg-neutral-50 px-2 py-0.5 text-[10px] font-medium text-neutral-600 border border-neutral-100">
+                      <User className="h-3 w-3 text-neutral-400" />
+                      <span className="truncate max-w-[120px]">{lpj.submitted_by}</span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="text-xs text-neutral-500 mb-4 space-y-1">

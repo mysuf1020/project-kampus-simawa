@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { FileText, FileUp, Archive, ArrowRight } from 'lucide-react'
+import { FileText, FileUp, Archive, ArrowRight, Package } from 'lucide-react'
 
 import {
   Badge,
@@ -40,7 +40,7 @@ export default function SuratPage() {
         <Container>
           <div className="max-w-4xl mx-auto py-8">
             {/* Main Action Cards */}
-            <div className="grid gap-6 md:grid-cols-2 mb-8">
+            <div className="grid gap-6 md:grid-cols-3 mb-8">
               {/* Buat Surat - Isi Form */}
               <button
                 onClick={() => router.push('/surat/create')}
@@ -52,7 +52,7 @@ export default function SuratPage() {
                 <div className="text-center space-y-2">
                   <h3 className="text-xl font-bold text-neutral-900">Buat Surat Baru</h3>
                   <p className="text-sm text-neutral-500 leading-relaxed">
-                    Buat surat dengan mengisi formulir atau upload file PDF yang sudah jadi.
+                    Buat surat pengajuan, permohonan, atau undangan.
                   </p>
                 </div>
                 <div className="flex items-center gap-2 text-brand-600 font-medium text-sm group-hover:gap-3 transition-all">
@@ -61,6 +61,30 @@ export default function SuratPage() {
                 <div className="absolute top-4 right-4">
                   <Badge variant="secondary" className="bg-brand-50 text-brand-700 text-[10px]">
                     Utama
+                  </Badge>
+                </div>
+              </button>
+
+              {/* Surat Peminjaman */}
+              <button
+                onClick={() => router.push('/surat/peminjaman')}
+                className="group relative flex flex-col items-center gap-4 p-8 rounded-2xl border-2 border-neutral-200 bg-white hover:border-amber-500 hover:shadow-xl hover:shadow-amber-500/10 transition-all duration-300 text-left"
+              >
+                <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-amber-50 to-amber-100 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <Package className="w-10 h-10 text-amber-600" />
+                </div>
+                <div className="text-center space-y-2">
+                  <h3 className="text-xl font-bold text-neutral-900">Surat Peminjaman</h3>
+                  <p className="text-sm text-neutral-500 leading-relaxed">
+                    Buat surat peminjaman aset organisasi dengan pilih barang dan jadwal.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 text-amber-600 font-medium text-sm group-hover:gap-3 transition-all">
+                  Buat Peminjaman <ArrowRight className="w-4 h-4" />
+                </div>
+                <div className="absolute top-4 right-4">
+                  <Badge variant="secondary" className="bg-amber-50 text-amber-700 text-[10px]">
+                    Baru
                   </Badge>
                 </div>
               </button>
@@ -76,7 +100,7 @@ export default function SuratPage() {
                 <div className="text-center space-y-2">
                   <h3 className="text-xl font-bold text-neutral-900">Arsip Surat</h3>
                   <p className="text-sm text-neutral-500 leading-relaxed">
-                    Lihat daftar surat masuk, riwayat surat keluar, dan kelola arsip surat.
+                    Lihat daftar surat masuk, keluar, dan kelola arsip surat.
                   </p>
                 </div>
                 <div className="flex items-center gap-2 text-green-600 font-medium text-sm group-hover:gap-3 transition-all">

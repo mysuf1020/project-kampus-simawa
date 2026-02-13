@@ -45,7 +45,7 @@ function ActivitiesPageInner() {
   const { orgId, setOrgId } = useActivityOrgState()
   const { queryParams, setQueryParams } =
     useQueryParamsState<ActivitiesPageQueryParamsState>()
-  const { page, pageSize, status, type, search } = queryParams
+  const { page, pageSize, status, type, search, timeFilter } = queryParams
 
   const { data: orgs, isLoading: orgLoading } = useQuery({
     queryKey: ['orgs'],
@@ -160,21 +160,29 @@ function ActivitiesPageInner() {
     [infiniteData?.pages],
   )
 
-  const filteredActivities = activities.filter((a) => {
-    if (!search) return true
-    const q = search.toLowerCase()
-    const inTitle = a.title?.toLowerCase().includes(q)
-    const inDesc = a.description?.toLowerCase().includes(q)
-    return Boolean(inTitle || inDesc)
-  })
+  const applyFilters = (list: typeof activities) => {
+    const now = new Date()
+    return list.filter((a) => {
+      // Search filter
+      if (search) {
+        const q = search.toLowerCase()
+        const inTitle = a.title?.toLowerCase().includes(q)
+        const inDesc = a.description?.toLowerCase().includes(q)
+        if (!inTitle && !inDesc) return false
+      }
+      // Time filter
+      if (timeFilter === 'upcoming' && a.start_at) {
+        if (new Date(a.start_at) < now) return false
+      }
+      if (timeFilter === 'past' && a.start_at) {
+        if (new Date(a.start_at) >= now) return false
+      }
+      return true
+    })
+  }
 
-  const filteredInfiniteActivities = allInfiniteActivities.filter((a) => {
-    if (!search) return true
-    const q = search.toLowerCase()
-    const inTitle = a.title?.toLowerCase().includes(q)
-    const inDesc = a.description?.toLowerCase().includes(q)
-    return Boolean(inTitle || inDesc)
-  })
+  const filteredActivities = applyFilters(activities)
+  const filteredInfiniteActivities = applyFilters(allInfiniteActivities)
 
   return (
     <Page>
@@ -298,7 +306,7 @@ function ActivitiesPageInner() {
 export default function ActivitiesPage() {
   return (
     <QueryParamsStateProvider<ActivitiesPageQueryParamsState>
-      defaultValues={{ page: '1', pageSize: '10', status: '', type: '', search: '' }}
+      defaultValues={{ page: '1', pageSize: '10', status: '', type: '', search: '', timeFilter: '' }}
     >
       <ActivitiesPageInner />
     </QueryParamsStateProvider>

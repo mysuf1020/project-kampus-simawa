@@ -62,19 +62,22 @@ export function FilterLPJ({
   return (
     <div className="flex flex-wrap items-center gap-2 p-2 px-4 bg-white rounded-lg border border-neutral-200 shadow-sm">
       <Select 
-        value={orgId} 
+        value={orgId || 'ALL'} 
         onValueChange={(value) => {
-          onChange(value)
+          onChange(value === 'ALL' ? '' : value)
           setQueryParams?.({ page: '1' }) // Reset page when org changes
         }} 
         disabled={isLoading}
       >
         <SelectTrigger className="h-7 w-auto min-w-[120px] bg-white border-neutral-200 text-xs px-2">
           <SelectValue placeholder="Organisasi">
-            {selectedOrg?.name || 'Organisasi'}
+            {selectedOrg?.name || 'Semua Organisasi'}
           </SelectValue>
         </SelectTrigger>
         <SelectContent>
+          <SelectItem value="ALL" className="text-xs">
+            Semua Organisasi
+          </SelectItem>
           {orgs?.map((org) => (
             <SelectItem key={org.id} value={org.id} className="text-xs">
               {org.name}

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Search, RotateCw, Users as UsersIcon, Plus, Eye, Pencil, Trash2, X, UserPlus, Mail, Phone, GraduationCap, Building2 } from 'lucide-react'
+import { Search, RotateCw, Users as UsersIcon, Plus, Eye, Pencil, Trash2, X, UserPlus, Mail, Phone, GraduationCap, Building2, Shield } from 'lucide-react'
 import { toast } from 'sonner'
 
 import {
@@ -26,6 +26,8 @@ import { AdminGuard } from '@/components/guards/role-guard'
 import {
   listUsers,
   listUserAssignments,
+  assignUserRoles,
+  removeUserRole,
   createUser,
   updateUser,
   deleteUser,
@@ -161,16 +163,12 @@ export default function UsersPage() {
               Kelola data pengguna, hak akses, dan peran dalam sistem.
             </p>
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" className="gap-2" onClick={() => refetch()}>
-              {isFetching ? <Spinner size="xs" /> : <RotateCw className="h-3.5 w-3.5" />}
-              Muat ulang
-            </Button>
-            <Button size="sm" className="gap-2 bg-brand-600 hover:bg-brand-700" onClick={() => setViewMode('create')}>
-              <UserPlus className="h-3.5 w-3.5" />
-              Tambah User
-            </Button>
-          </div>
+          <Badge
+            variant="secondary"
+            className="bg-brand-50 text-brand-700 hover:bg-brand-100 border-brand-100"
+          >
+            {total} pengguna
+          </Badge>
         </div>
       </Page.Header>
 
@@ -212,38 +210,21 @@ export default function UsersPage() {
                   </div>
 
                   <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center md:w-auto">
-                    <div className="w-full sm:w-64">
-                      <AutoComplete
-                        placeholder="Filter Organisasi"
-                        value={orgFilterId}
-                        options={orgOptions}
-                        disabled={orgsQuery.isLoading}
-                        isLoading={orgsQuery.isFetching}
-                        onSelect={(value) => {
-                          setOrgFilterId(value || '')
-                          setPage(1) // Reset page when filter changes
-                        }}
-                        closable
-                        onRemove={() => {
-                          setOrgFilterId('')
-                          setPage(1) // Reset page when filter is removed
-                        }}
-                        customRender={(opt) => {
-                          const org = (opt as { org?: Organization }).org
-                          if (!org) return opt.label
-                          return (
-                            <div className="flex flex-col py-1">
-                              <span className="text-sm font-medium text-neutral-900">
-                                {org.name}
-                              </span>
-                              <span className="text-xs text-neutral-500">
-                                {org.type || 'ORG'} • {org.slug ? `/${org.slug}` : '-'}
-                              </span>
-                            </div>
-                          )
-                        }}
-                      />
-                    </div>
+                    <select
+                      value={orgFilterId}
+                      onChange={(e) => {
+                        setOrgFilterId(e.target.value)
+                        setPage(1)
+                      }}
+                      className="px-3 py-2 rounded-lg border border-neutral-200 text-sm bg-white focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 outline-none"
+                    >
+                      <option value="">Semua Organisasi</option>
+                      {(orgsQuery.data ?? []).map((org) => (
+                        <option key={org.id} value={org.id}>
+                          {org.name}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 </div>
 
@@ -808,6 +789,13 @@ function ViewUserModal({
   )
 }
 
+const ALL_ROLES = [
+  { value: 'ADMIN', label: 'Admin' },
+  { value: 'BEM_ADMIN', label: 'BEM Admin' },
+  { value: 'DEMA_ADMIN', label: 'DEMA Admin' },
+  { value: 'ORG_ADMIN', label: 'Org Admin' },
+]
+
 // Edit User Modal
 function EditUserModal({ 
   userId, 
@@ -820,11 +808,23 @@ function EditUserModal({
   onClose: () => void
   onSuccess: () => void
 }) {
+  const queryClient = useQueryClient()
   const { data: user, isLoading } = useQuery({
     queryKey: ['user', userId],
     queryFn: () => getUser(userId!),
     enabled: !!userId && isOpen,
   })
+
+  const { data: roles, refetch: refetchRoles } = useQuery<UserRoleAssignment[]>({
+    queryKey: ['user-roles', userId],
+    queryFn: () => listUserAssignments(userId!),
+    enabled: !!userId && isOpen,
+  })
+
+  const currentRoleCodes = useMemo(
+    () => Array.from(new Set(roles?.map((r) => r.role_code) ?? [])),
+    [roles],
+  )
 
   const [form, setForm] = useState<UpdateUserPayload>({})
   
@@ -851,6 +851,27 @@ function EditUserModal({
     onError: (err: Error) => {
       toast.error(err.message || 'Gagal memperbarui pengguna')
     },
+  })
+
+  const addRoleMutation = useMutation({
+    mutationFn: (roleCode: string) =>
+      assignUserRoles(userId!, [...currentRoleCodes, roleCode]),
+    onSuccess: () => {
+      toast.success('Role berhasil ditambahkan')
+      refetchRoles()
+      queryClient.invalidateQueries({ queryKey: ['user-roles', userId] })
+    },
+    onError: () => toast.error('Gagal menambahkan role'),
+  })
+
+  const removeRoleMutation = useMutation({
+    mutationFn: (roleCode: string) => removeUserRole(userId!, roleCode),
+    onSuccess: () => {
+      toast.success('Role berhasil dihapus')
+      refetchRoles()
+      queryClient.invalidateQueries({ queryKey: ['user-roles', userId] })
+    },
+    onError: () => toast.error('Gagal menghapus role'),
   })
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -950,6 +971,47 @@ function EditUserModal({
                 value={form.password || ''}
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
               />
+            </div>
+
+            {/* Role Management Section */}
+            <div className="space-y-3 p-4 rounded-lg bg-neutral-50 border border-neutral-200">
+              <div className="flex items-center gap-2">
+                <Shield className="h-4 w-4 text-amber-600" />
+                <Label className="text-sm font-semibold text-neutral-800">Kelola Role</Label>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {currentRoleCodes.length === 0 && (
+                  <span className="text-xs text-neutral-400 italic">Belum ada role (USER default)</span>
+                )}
+                {currentRoleCodes.map((code) => (
+                  <Badge
+                    key={code}
+                    variant="secondary"
+                    className="cursor-pointer hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors pr-1.5 text-xs"
+                    onClick={() => removeRoleMutation.mutate(code)}
+                    title="Klik untuk hapus role"
+                  >
+                    {code} <X className="h-3 w-3 ml-1 opacity-50" />
+                  </Badge>
+                ))}
+              </div>
+              {ALL_ROLES.filter((r) => !currentRoleCodes.includes(r.value)).length > 0 && (
+                <select
+                  className="w-full h-9 rounded-lg border border-neutral-200 bg-white px-3 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
+                  value=""
+                  onChange={(e) => {
+                    if (e.target.value) addRoleMutation.mutate(e.target.value)
+                  }}
+                  disabled={addRoleMutation.isPending}
+                >
+                  <option value="">+ Tambah role...</option>
+                  {ALL_ROLES.filter((r) => !currentRoleCodes.includes(r.value)).map((r) => (
+                    <option key={r.value} value={r.value}>
+                      {r.label}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
 
             <div className="flex justify-end gap-3 pt-4 border-t">

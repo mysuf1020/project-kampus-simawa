@@ -46,6 +46,8 @@ type Server struct {
 		ActHistory   repository.ActivityHistoryRepository
 		Audit        repository.AuditLogRepository
 		LPJHistory   repository.LPJHistoryRepository
+		Asset        repository.AssetRepository
+		AssetBorrow  repository.AssetBorrowingRepository
 	}
 
 	Services struct {
@@ -63,6 +65,7 @@ type Server struct {
 		Audit     *service.AuditService
 		Captcha   *service.CaptchaService
 		Report    *service.ReportService
+		Asset     *service.AssetService
 	}
 
 	Handlers struct {
@@ -79,6 +82,7 @@ type Server struct {
 		Health    *handler.HealthHandler
 		Audit     *handler.AuditLogHandler
 		Report    *handler.ReportHandler
+		Asset     *handler.AssetHandler
 	}
 }
 
@@ -127,6 +131,8 @@ func (s *Server) autoMigrate() error {
 		&model.LPJHistory{},
 		&model.AuditLog{},
 		&model.OTP{},
+		&model.Asset{},
+		&model.AssetBorrowing{},
 	); err != nil {
 		return err
 	}
@@ -164,6 +170,8 @@ func (s *Server) initRepositories() {
 	s.Repositories.Audit = repository.NewAuditLogRepository(s.DB)
 	s.Repositories.LPJHistory = repository.NewLPJHistoryRepository(s.DB)
 	s.Repositories.OTP = repository.NewOTPRepository(s.DB)
+	s.Repositories.Asset = repository.NewAssetRepository(s.DB)
+	s.Repositories.AssetBorrow = repository.NewAssetBorrowingRepository(s.DB)
 }
 
 func (s *Server) initServices() {
@@ -182,6 +190,7 @@ func (s *Server) initServices() {
 	s.Services.JoinReq = service.NewOrgJoinRequestService(s.Repositories.OrgJoinReq, s.Repositories.Org, s.Repositories.User, s.Repositories.OrgMember, s.Services.RBAC, s.Services.Audit)
 	s.Services.Dashboard = service.NewDashboardService(s.DB)
 	s.Services.Report = service.NewReportService(s.Repositories.Activity, s.Repositories.Surat, s.Repositories.LPJ)
+	s.Services.Asset = service.NewAssetService(s.Repositories.Asset, s.Repositories.AssetBorrow, s.Services.Audit)
 
 	// Ensure base roles exist
 	_ = s.Repositories.UserRole.EnsureBaseRoles(context.Background())
@@ -189,10 +198,10 @@ func (s *Server) initServices() {
 	go s.reminderLoop()
 }
 
-
 func (s *Server) initHandlers() {
 	s.Handlers.User = handler.NewUserHandler(s.Services.User, s.Services.Auth, s.Services.RBAC)
 	s.Handlers.Auth = handler.NewAuthHandler(s.Services.Auth, s.Services.Captcha)
+	s.Handlers.Asset = handler.NewAssetHandler(s.Services.Asset, s.Services.RBAC)
 	s.Handlers.Surat = handler.NewSuratHandler(s.Services.Surat, s.Minio, s.Config.Minio.Bucket, s.Services.RBAC)
 	minioPublicBaseURL := ""
 	if !s.Config.Minio.Disabled && s.Config.Minio.Endpoint != "" {
@@ -209,6 +218,7 @@ func (s *Server) initHandlers() {
 	s.Handlers.JoinReq = handler.NewOrgJoinRequestHandler(s.Services.JoinReq)
 	s.Handlers.Notify = handler.NewNotificationHandler(s.Services.Notify)
 	s.Handlers.Dashboard = handler.NewDashboardHandler(s.Services.Dashboard)
+	s.Handlers.Report = handler.NewReportHandler(s.Services.Report)
 	s.Handlers.Audit = handler.NewAuditLogHandler(s.DB)
 	s.Handlers.Health = handler.NewHealthHandler(s.StartTime, s.DB, s.Redis, s.Minio, func() map[string]int64 {
 		counts := map[string]int64{}
@@ -227,6 +237,7 @@ func (s *Server) initRouter() {
 	engine := gin.New()
 	engine.Use(gin.Recovery())
 	engine.Use(middleware.RequestLogger())
+	engine.Use(middleware.AuditContext())
 	engine.Use(middleware.SecurityMiddleware(s.Redis))
 	router.Register(engine, s.Config, s.Handlers.Auth, s.Handlers.User, s.Handlers.Surat, s.Handlers.Org, s.Services.RBAC)
 	router.RegisterActivityRoutes(engine, s.Config, s.Handlers.Activity, s.Services.RBAC)
@@ -237,6 +248,7 @@ func (s *Server) initRouter() {
 	router.RegisterDashboardRoutes(engine, s.Config, s.Handlers.Dashboard, s.Services.RBAC)
 	router.RegisterReportRoutes(engine, s.Config, s.Handlers.Report, s.Services.RBAC)
 	router.RegisterAuditLogRoutes(engine, s.Config, s.Handlers.Audit, s.Services.RBAC)
+	router.RegisterAssetRoutes(engine, s.Config, s.Handlers.Asset, s.Services.RBAC)
 	router.RegisterHealthRoutes(engine, s.Handlers.Health)
 	s.Engine = engine
 }

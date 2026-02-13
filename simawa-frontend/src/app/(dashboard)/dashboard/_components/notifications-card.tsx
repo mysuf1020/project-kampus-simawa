@@ -42,23 +42,14 @@ export function NotificationsCard() {
             Notifikasi
           </CardTitle>
           <CardDescription className="text-xs text-neutral-500">
-            Pemberitahuan terbaru untuk Anda.
+            Update status surat, aktivitas, dan LPJ Anda.
           </CardDescription>
         </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-8 text-xs font-medium text-neutral-600 hover:text-brand-600 hover:bg-brand-50"
-          onClick={() => refetch()}
-          disabled={isFetching || isLoading}
-        >
-          {isFetching ? (
-            <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-          ) : (
-            <Check className="mr-1.5 h-3.5 w-3.5" />
-          )}
-          Refresh
-        </Button>
+        {unread.length > 0 && (
+          <Badge className="bg-brand-100 text-brand-700 border-none text-[10px]">
+            {unread.length} baru
+          </Badge>
+        )}
       </CardHeader>
       <CardContent className="p-0 flex-1 overflow-y-auto max-h-[400px]">
         {isLoading && (

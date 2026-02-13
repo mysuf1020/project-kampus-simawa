@@ -509,16 +509,25 @@ export function RoleManagementCard() {
 
             <div className="space-y-2">
               <Label>Role yang Diberikan</Label>
-              <AutoComplete
-                placeholder="Pilih role..."
+              <Select
                 value=""
-                options={ROLE_OPTIONS.filter((r) => !selectedRoles.includes(r.value))}
-                disabled={!canManageRoles}
-                onSelect={(value) => {
-                  if (!value) return
+                onValueChange={(value) => {
+                  if (!value || selectedRoles.includes(value)) return
                   setSelectedRoles((prev) => [...prev, value])
                 }}
-              />
+                disabled={!canManageRoles}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Pilih role..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {ROLE_OPTIONS.filter((r) => !selectedRoles.includes(r.value)).map((r) => (
+                    <SelectItem key={r.value} value={r.value}>
+                      {r.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
               <div className="min-h-[32px] flex flex-wrap gap-2 pt-1">
                 {selectedRoles.length === 0 && (

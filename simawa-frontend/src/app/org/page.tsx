@@ -69,6 +69,7 @@ const fetchPublicActivities = async (): Promise<Activity[]> => {
 
 export default function PublicOrganizationsPage() {
   const [selectedOrg, setSelectedOrg] = useState<Organization | null>(null)
+  const [calendarTab, setCalendarTab] = useState<'upcoming' | 'past' | 'all'>('upcoming')
 
   const { data: organizations, isLoading: orgsLoading } = useQuery({
     queryKey: ['public-organizations'],
@@ -83,6 +84,24 @@ export default function PublicOrganizationsPage() {
   const orgActivities = selectedOrg
     ? activities?.filter((a) => a.org_id === selectedOrg.id) || []
     : activities || []
+
+  const now = new Date()
+  const upcomingActivities = orgActivities
+    .filter((a) => a.start_at && new Date(a.start_at) >= now)
+    .sort((a, b) => new Date(a.start_at!).getTime() - new Date(b.start_at!).getTime())
+  const pastActivities = orgActivities
+    .filter((a) => a.start_at && new Date(a.start_at) < now)
+    .sort((a, b) => new Date(b.start_at!).getTime() - new Date(a.start_at!).getTime())
+  const allActivitiesSorted = [...orgActivities].sort((a, b) => {
+    const da = a.start_at ? new Date(a.start_at).getTime() : 0
+    const db = b.start_at ? new Date(b.start_at).getTime() : 0
+    return db - da
+  })
+
+  const displayedActivities =
+    calendarTab === 'upcoming' ? upcomingActivities
+    : calendarTab === 'past' ? pastActivities
+    : allActivitiesSorted
 
   return (
     <div className="min-h-screen bg-neutral-50">
@@ -103,18 +122,15 @@ export default function PublicOrganizationsPage() {
       </header>
 
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-brand-600 to-brand-800 text-white py-16">
+      <section className="relative bg-gradient-to-br from-brand-600 to-brand-800 text-white py-16 overflow-hidden">
         <Container>
-          <div className="flex flex-row gap-8 items-center justify-center text-center max-w-3xl mx-auto">
-            {/* Logos - Left and Right */}
-
-
+          <div className="relative z-10 flex flex-row gap-8 items-center justify-center text-center max-w-3xl mx-auto">
             <Image
               src="/images/logos/partnership-logo.png"
               alt="Partnership Logo"
               width={80}
               height={80}
-              className="object-contain"
+              className="object-contain drop-shadow-lg"
             />
             <div>
               <h1 className="text-4xl lg:text-5xl font-bold tracking-tight mb-4">
@@ -129,8 +145,13 @@ export default function PublicOrganizationsPage() {
               alt="Logo Universitas Raharja"
               width={80}
               height={80}
-              className="object-contain"
+              className="object-contain drop-shadow-lg"
             />
+          </div>
+          {/* Background decorative elements */}
+          <div className="absolute inset-0 z-0">
+            <div className="absolute top-0 right-0 -mr-20 -mt-20 h-96 w-96 bg-brand-500 rounded-full blur-[100px] opacity-20" />
+            <div className="absolute bottom-0 left-0 -ml-20 -mb-20 h-96 w-96 bg-blue-600 rounded-full blur-[100px] opacity-20" />
           </div>
         </Container>
       </section>
@@ -164,62 +185,51 @@ export default function PublicOrganizationsPage() {
 
               <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {organizations?.map((org) => (
-                  <Card
-                    key={org.id}
-                    className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer group"
-                    onClick={() => setSelectedOrg(org)}
-                  >
-                    <div className="relative aspect-video bg-neutral-100">
-                      {isValidImageUrl(org.hero_image) ? (
-                        <Image
-                          src={org.hero_image!}
-                          alt={org.name}
-                          fill
-                          className="object-cover group-hover:scale-105 transition-transform"
-                        />
-                      ) : isValidImageUrl(org.logo_url) ? (
-                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-brand-50 to-brand-100">
+                  <Link key={org.id} href={org.slug ? `/org/${org.slug}` : '#'}>
+                    <Card className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer group h-full">
+                      <div className="relative aspect-video bg-neutral-100">
+                        {isValidImageUrl(org.hero_image) ? (
                           <Image
-                            src={org.logo_url!}
+                            src={org.hero_image!}
                             alt={org.name}
-                            width={80}
-                            height={80}
-                            className="object-contain"
+                            fill
+                            className="object-cover group-hover:scale-105 transition-transform"
                           />
-                        </div>
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-neutral-100 to-neutral-200">
-                          <Building2 className="h-12 w-12 text-neutral-400" />
-                        </div>
-                      )}
-                    </div>
-                    <CardHeader>
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <CardTitle className="line-clamp-1">{org.name.toUpperCase()}</CardTitle>
-                          {org.type && (
-                            <span className="inline-block mt-1 px-2 py-0.5 text-xs font-medium bg-brand-50 text-brand-700 rounded-full">
-                              {org.type}
-                            </span>
-                          )}
-                        </div>
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-neutral-100 to-neutral-200">
+                            <Building2 className="h-12 w-12 text-neutral-400" />
+                          </div>
+                        )}
+                        {isValidImageUrl(org.logo_url) && (
+                          <div className="absolute bottom-3 left-3 z-10 h-14 w-14 rounded-xl bg-white shadow-lg border border-neutral-200 flex items-center justify-center overflow-hidden">
+                            <Image
+                              src={org.logo_url!}
+                              alt={org.name}
+                              width={48}
+                              height={48}
+                              className="object-contain"
+                            />
+                          </div>
+                        )}
                       </div>
-                      <CardDescription className="line-clamp-2 mt-2">
-                        {org.description || 'Organisasi mahasiswa Universitas Raharja'}
-                      </CardDescription>
-                    </CardHeader>
-                    {org.slug && (
-                      <CardContent className="pt-0">
-                        <Link
-                          href={`/org/${org.slug}`}
-                          className="text-sm text-brand-600 hover:underline inline-flex items-center gap-1"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          Lihat Profil <ExternalLink className="h-3 w-3" />
-                        </Link>
-                      </CardContent>
-                    )}
-                  </Card>
+                      <CardHeader>
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <CardTitle className="line-clamp-1">{org.name.toUpperCase()}</CardTitle>
+                            {org.type && (
+                              <span className="inline-block mt-1 px-2 py-0.5 text-xs font-medium bg-brand-50 text-brand-700 rounded-full">
+                                {org.type}
+                              </span>
+                            )}
+                          </div>
+                          <ExternalLink className="h-4 w-4 text-neutral-400 group-hover:text-brand-600 transition-colors flex-shrink-0 mt-1" />
+                        </div>
+                        <CardDescription className="line-clamp-2 mt-2">
+                          {org.description || 'Organisasi mahasiswa Universitas Raharja'}
+                        </CardDescription>
+                      </CardHeader>
+                    </Card>
+                  </Link>
                 ))}
               </div>
 
@@ -263,15 +273,42 @@ export default function PublicOrganizationsPage() {
                 ))}
               </div>
 
+              {/* Calendar sub-tabs: Akan Datang / Terlewat / Semua */}
+              <div className="flex gap-2 border-b border-neutral-200 pb-0">
+                {(['upcoming', 'past', 'all'] as const).map((tab) => {
+                  const labels = { upcoming: 'Akan Datang', past: 'Terlewat', all: 'Semua Kegiatan' }
+                  const counts = { upcoming: upcomingActivities.length, past: pastActivities.length, all: orgActivities.length }
+                  return (
+                    <button
+                      key={tab}
+                      onClick={() => setCalendarTab(tab)}
+                      className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px ${
+                        calendarTab === tab
+                          ? 'border-brand-600 text-brand-700'
+                          : 'border-transparent text-neutral-500 hover:text-neutral-700'
+                      }`}
+                    >
+                      {labels[tab]}
+                      <span className={`ml-1.5 text-xs px-1.5 py-0.5 rounded-full ${
+                        calendarTab === tab ? 'bg-brand-100 text-brand-700' : 'bg-neutral-100 text-neutral-500'
+                      }`}>
+                        {counts[tab]}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+
               {/* Activities List */}
               <div className="space-y-4">
-                {orgActivities.map((activity) => {
+                {displayedActivities.map((activity) => {
                   const org = organizations?.find((o) => o.id === activity.org_id)
+                  const isPast = activity.start_at && new Date(activity.start_at) < now
                   return (
-                    <Card key={activity.id} className="hover:shadow-md transition-shadow">
+                    <Card key={activity.id} className={`hover:shadow-md transition-shadow ${isPast ? 'opacity-70' : ''}`}>
                       <CardHeader>
                         <div className="flex items-start gap-4">
-                          <div className="flex-shrink-0 w-16 h-16 bg-brand-50 rounded-lg flex flex-col items-center justify-center text-brand-700">
+                          <div className={`flex-shrink-0 w-16 h-16 rounded-lg flex flex-col items-center justify-center ${isPast ? 'bg-neutral-100 text-neutral-500' : 'bg-brand-50 text-brand-700'}`}>
                             {activity.start_at && (
                               <>
                                 <span className="text-xs font-medium">
@@ -287,7 +324,12 @@ export default function PublicOrganizationsPage() {
                             )}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <CardTitle className="text-lg">{activity.title}</CardTitle>
+                            <div className="flex items-center gap-2">
+                              <CardTitle className="text-lg">{activity.title}</CardTitle>
+                              {isPast && (
+                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-neutral-100 text-neutral-500 font-medium">Selesai</span>
+                              )}
+                            </div>
                             {org && (
                               <span className="text-sm text-brand-600 font-medium">
                                 {org.name.toUpperCase()}
@@ -309,9 +351,9 @@ export default function PublicOrganizationsPage() {
                 })}
               </div>
 
-              {!activitiesLoading && orgActivities.length === 0 && (
+              {!activitiesLoading && displayedActivities.length === 0 && (
                 <div className="rounded-xl border border-dashed border-neutral-200 bg-neutral-50/50 p-12 text-center text-neutral-500">
-                  Belum ada kegiatan yang dijadwalkan.
+                  {calendarTab === 'upcoming' ? 'Tidak ada kegiatan yang akan datang.' : calendarTab === 'past' ? 'Tidak ada kegiatan yang sudah terlewat.' : 'Belum ada kegiatan yang dijadwalkan.'}
                 </div>
               )}
             </TabsContent>

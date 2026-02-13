@@ -4,4 +4,5 @@ export type ActivitiesPageQueryParamsState = {
   status: string
   type: string
   search: string
+  timeFilter: string
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useQuery, useInfiniteQuery } from '@tanstack/react-query'
 import {
   RefreshCcw,
@@ -15,7 +15,7 @@ import {
   Filter,
   Calendar,
   Building2,
-  User,
+  User as UserIcon,
   Eye,
   Download,
   MoreHorizontal,
@@ -109,7 +109,7 @@ function SuratCard({ surat, onView, onDownload }: { surat: Surat; onView?: () =>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-xs text-neutral-500">
             {surat.to_role && (
               <span className="flex items-center gap-1">
-                <User className="w-3 h-3" />
+                <UserIcon className="w-3 h-3" />
                 {surat.to_role}
               </span>
             )}
@@ -211,6 +211,15 @@ function SuratDetailCard({ surat, orgs, onApprove }: { surat: Surat; orgs?: { id
                 </span>
               </div>
             )}
+            {(surat.submitted_by || surat.created_by) && (
+              <div className="flex items-center gap-3">
+                <span className="text-neutral-400 w-20 flex-shrink-0">Pengirim</span>
+                <span className="font-medium text-neutral-700 flex items-center gap-1.5">
+                  <UserIcon className="w-3.5 h-3.5 text-neutral-400" />
+                  {surat.submitted_by || surat.created_by}
+                </span>
+              </div>
+            )}
             {(surat.to_role || surat.to_name) && (
               <div className="flex items-center gap-3">
                 <span className="text-neutral-400 w-20 flex-shrink-0">Kepada</span>
@@ -298,12 +307,9 @@ export default function ArsipPage() {
   const [activeTab, setActiveTab] = useState('inbox')
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
+  const [variantFilter, setVariantFilter] = useState('')
 
   const { data: orgs } = useQuery({ queryKey: ['orgs'], queryFn: listOrganizations })
-
-  useEffect(() => {
-    if (!orgId && orgs?.length) setOrgId(orgs[0].id)
-  }, [orgId, orgs])
 
   const inboxQuery = useQuery({
     queryKey: ['surat-inbox'],
@@ -330,7 +336,9 @@ export default function ArsipPage() {
         item.number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.to_role?.toLowerCase().includes(searchQuery.toLowerCase())
       const matchesStatus = !statusFilter || item.status === statusFilter
-      return matchesSearch && matchesStatus
+      const matchesVariant = !variantFilter || item.variant === variantFilter
+      const matchesOrg = !orgId || item.org_id === orgId || item.target_org_id === orgId
+      return matchesSearch && matchesStatus && matchesVariant && matchesOrg
     })
   }
 
@@ -370,9 +378,6 @@ export default function ArsipPage() {
                 <FileText className="h-4 w-4" /> Buat Surat
               </Button>
             </Link>
-            <Button variant="outline" size="sm" onClick={refetchAll} className="gap-2">
-              <RefreshCcw className="h-3.5 w-3.5" />
-            </Button>
           </div>
         </div>
       </Page.Header>
@@ -440,17 +445,29 @@ export default function ArsipPage() {
                     className="pl-10"
                   />
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   <select
                     value={orgId}
                     onChange={(e) => setOrgId(e.target.value)}
                     className="px-3 py-2 rounded-lg border border-neutral-200 text-sm bg-white focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 outline-none"
                   >
+                    <option value="">Semua Organisasi</option>
                     {(orgs || []).map((org) => (
                       <option key={org.id} value={org.id}>
                         {org.name}
                       </option>
                     ))}
+                  </select>
+                  <select
+                    value={variantFilter}
+                    onChange={(e) => setVariantFilter(e.target.value)}
+                    className="px-3 py-2 rounded-lg border border-neutral-200 text-sm bg-white focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 outline-none"
+                  >
+                    <option value="">Semua Jenis</option>
+                    <option value="PEMINJAMAN">Peminjaman</option>
+                    <option value="PENGAJUAN">Pengajuan</option>
+                    <option value="PERMOHONAN">Permohonan</option>
+                    <option value="UNDANGAN">Undangan</option>
                   </select>
                   <select
                     value={statusFilter}

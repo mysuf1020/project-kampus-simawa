@@ -134,16 +134,12 @@ function LPJPageInner() {
               Kelola pengajuan, revisi, dan arsip laporan kegiatan organisasi.
             </p>
           </div>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="gap-2" 
-            onClick={() => refetch()}
-            disabled={isFetching}
+          <Badge
+            variant="secondary"
+            className="bg-brand-50 text-brand-700 hover:bg-brand-100 border-brand-100"
           >
-            {isFetching ? <Spinner size="xs" /> : <RotateCw className="h-3.5 w-3.5" />}
-            Muat ulang
-          </Button>
+            Data Terbaru
+          </Badge>
         </div>
       </Page.Header>
 
@@ -251,6 +247,7 @@ function LPJPageInner() {
               <div className="hidden sm:block">
                 <LPJListCard
                   items={filteredItems}
+                  orgs={orgs}
                   isLoading={isLoading}
                   isError={isError}
                   isFetching={isFetching}
@@ -265,6 +262,7 @@ function LPJPageInner() {
               <div className="sm:hidden">
                 <LPJListCard
                   items={filteredInfiniteItems}
+                  orgs={orgs}
                   isLoading={lpjInfiniteQuery.isLoading}
                   isError={lpjInfiniteQuery.isError}
                   isFetching={lpjInfiniteQuery.isFetching}

@@ -14,7 +14,7 @@ import {
 } from '@/components/ui'
 import type { Organization } from '@/lib/apis/org'
 import type { ActivitiesPageQueryParamsState } from '@/features/activities/query-params'
-import { Sparkles, Search, Users } from 'lucide-react'
+import { Sparkles, Search, Users, Clock } from 'lucide-react'
 import useDebounce from '@/lib/hooks/use-debounce'
 
 type Props = {
@@ -67,24 +67,49 @@ export function FilterActivities({
   return (
     <div className="flex flex-wrap items-center gap-2 p-2 px-4 bg-white rounded-lg border border-neutral-200 shadow-sm">
       <Select 
-        value={orgId} 
+        value={orgId || 'ALL'} 
         onValueChange={(value) => {
-          onChange(value)
+          onChange(value === 'ALL' ? '' : value)
           setQueryParams?.({ page: '1' }) // Reset page when org changes
         }} 
         disabled={isLoading}
       >
         <SelectTrigger className="h-7 w-auto min-w-[120px] bg-white border-neutral-200 text-xs px-2">
           <SelectValue placeholder="Organisasi">
-            {selectedName || 'Organisasi'}
+            {selectedName && orgId ? selectedName : 'Semua Organisasi'}
           </SelectValue>
         </SelectTrigger>
         <SelectContent>
+          <SelectItem value="ALL" className="text-xs">
+            Semua Organisasi
+          </SelectItem>
           {orgs?.map((org) => (
             <SelectItem key={org.id} value={org.id} className="text-xs">
               {org.name}
             </SelectItem>
           ))}
+        </SelectContent>
+      </Select>
+
+      <Select
+        value={queryParams?.timeFilter || 'ALL'}
+        onValueChange={(value) =>
+          setQueryParams?.({ timeFilter: value === 'ALL' ? '' : value, page: '1' })
+        }
+      >
+        <SelectTrigger className="h-7 w-auto min-w-[110px] bg-white border-neutral-200 text-xs px-2">
+          <SelectValue placeholder="Waktu">
+            {queryParams?.timeFilter === 'upcoming'
+              ? 'Akan Datang'
+              : queryParams?.timeFilter === 'past'
+                ? 'Terlewat'
+                : 'Semua Waktu'}
+          </SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="ALL" className="text-xs">Semua Waktu</SelectItem>
+          <SelectItem value="upcoming" className="text-xs">Akan Datang</SelectItem>
+          <SelectItem value="past" className="text-xs">Terlewat</SelectItem>
         </SelectContent>
       </Select>
 

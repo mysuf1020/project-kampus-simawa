@@ -2,10 +2,9 @@
 
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Download, FileText, Clock, Building2, Users, RotateCw } from 'lucide-react'
-import Link from 'next/link'
+import { FileText, Clock, Building2, Users } from 'lucide-react'
 
-import { Button, Container, Spinner } from '@/components/ui'
+import { Badge, Container } from '@/components/ui'
 import { Page } from '@/components/commons'
 import { fetchDashboardSummary } from '@/lib/apis/dashboard'
 import { StatsGrid } from './_components/stats-grid'
@@ -74,25 +73,12 @@ export default function DashboardPage() {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-2"
-              onClick={() => refetch()}
-              disabled={isFetching}
+            <Badge
+              variant="secondary"
+              className="bg-brand-50 text-brand-700 hover:bg-brand-100 border-brand-100"
             >
-              {isFetching ? <Spinner size="xs" /> : <RotateCw className="h-3.5 w-3.5" />}
-              Refresh
-            </Button>
-            <Link href="/reports">
-              <Button
-                size="sm"
-                className="bg-brand-600 hover:bg-brand-700 text-white gap-2 shadow-sm shadow-brand-500/20"
-              >
-                <Download className="h-4 w-4" />
-                Export Data
-              </Button>
-            </Link>
+              Data Terbaru
+            </Badge>
           </div>
         </div>
       </Page.Header>

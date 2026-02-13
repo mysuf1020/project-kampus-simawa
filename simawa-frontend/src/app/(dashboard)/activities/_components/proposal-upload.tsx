@@ -47,7 +47,7 @@ export function ActivityProposalUploadCard({ orgId }: Props) {
               Upload Proposal
             </CardTitle>
             <CardDescription className="text-xs text-neutral-500">
-              Unggah proposal kegiatan dalam format PDF.
+              Unggah proposal untuk kegiatan besar (seminar, workshop, lomba).
             </CardDescription>
           </div>
         </div>
@@ -67,6 +67,13 @@ export function ActivityProposalUploadCard({ orgId }: Props) {
                 setFile(f)
               }}
             />
+          </div>
+
+          <div className="rounded-lg bg-blue-50 p-3 border border-blue-100">
+            <p className="text-xs text-blue-700 leading-relaxed">
+              <strong>Keterangan:</strong> File proposal yang diunggah akan masuk ke BEM untuk ditinjau. 
+              Proposal diperlukan untuk kegiatan besar seperti seminar, workshop, atau lomba.
+            </p>
           </div>
 
           {orgId ? null : (

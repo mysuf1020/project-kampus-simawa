@@ -28,15 +28,34 @@ type AuditLogInput struct {
 	Metadata    map[string]any
 }
 
+// contextKey type for audit context keys
+type contextKey string
+
+const (
+	CtxKeyIP        contextKey = "audit_ip"
+	CtxKeyUserAgent contextKey = "audit_ua"
+)
+
+// WithAuditInfo returns a context enriched with IP and UserAgent for audit logging.
+func WithAuditInfo(ctx context.Context, ip, ua string) context.Context {
+	ctx = context.WithValue(ctx, CtxKeyIP, ip)
+	ctx = context.WithValue(ctx, CtxKeyUserAgent, ua)
+	return ctx
+}
+
 // Log creates an audit log entry (legacy method for backward compatibility)
 func (s *AuditService) Log(ctx context.Context, userID uuid.UUID, action string, meta map[string]any) {
 	if s == nil || s.repo == nil {
 		return
 	}
+	ip, _ := ctx.Value(CtxKeyIP).(string)
+	ua, _ := ctx.Value(CtxKeyUserAgent).(string)
 	_ = s.repo.Create(ctx, &model.AuditLog{
-		UserID:   userID,
-		Action:   action,
-		Metadata: meta,
+		UserID:    userID,
+		Action:    action,
+		IPAddress: ip,
+		UserAgent: ua,
+		Metadata:  meta,
 	})
 }
 

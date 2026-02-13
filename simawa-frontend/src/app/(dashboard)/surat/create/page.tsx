@@ -88,7 +88,7 @@ function buildPayload(form: SuratCreateForm): CreateSuratPayload | null {
     target_org_id: form.targetOrgId || undefined,
     status: 'DRAFT',
     payload: {
-      variant: form.variant || 'PEMINJAMAN',
+      variant: form.variant || 'PENGAJUAN',
       created_at: new Date().toISOString(),
       ...(header ? { header } : {}),
       meta: {
@@ -196,7 +196,7 @@ function SuratCreatePageInner() {
   const [uploadForm, setUploadForm] = useState({
     orgId: '',
     targetOrgId: '',
-    variant: 'PEMINJAMAN' as SuratVariant,
+    variant: 'PENGAJUAN' as SuratVariant,
     subject: '',
     number: '',
     toRole: '',
@@ -245,7 +245,7 @@ function SuratCreatePageInner() {
     },
     onSuccess: () => {
       toast.success('Surat berhasil diupload dan dikirim')
-      setUploadForm({ orgId: '', targetOrgId: '', variant: 'PEMINJAMAN', subject: '', number: '', toRole: '', toName: '', file: null })
+      setUploadForm({ orgId: '', targetOrgId: '', variant: 'PENGAJUAN', subject: '', number: '', toRole: '', toName: '', file: null })
       router.push(callback)
     },
     onError: () => {

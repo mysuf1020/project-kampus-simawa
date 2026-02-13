@@ -109,14 +109,6 @@ export default function OrganizationsPage() {
           </div>
           <div className="flex items-center gap-2">
             <CreateOrgDialog />
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => orgsQuery.refetch()}
-              className="gap-2"
-            >
-              <RefreshCcw className="h-3.5 w-3.5" /> Muat ulang
-            </Button>
           </div>
         </div>
       </Page.Header>
@@ -269,6 +261,7 @@ function OrgScopePicker({
           value={orgId}
           onChange={(e) => onChange(e.target.value)}
         >
+          <option value="">Semua Organisasi</option>
           {(orgs ?? []).map((o) => (
             <option key={o.id} value={o.id}>
               {o.name}

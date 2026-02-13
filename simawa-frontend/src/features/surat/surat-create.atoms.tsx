@@ -12,7 +12,6 @@ export type SuratSigner = {
 }
 
 export const SURAT_VARIANTS = [
-  { value: 'PEMINJAMAN', label: 'Surat Peminjaman' },
   { value: 'PENGAJUAN', label: 'Surat Pengajuan' },
   { value: 'PERMOHONAN', label: 'Surat Permohonan' },
   { value: 'UNDANGAN', label: 'Surat Undangan' },
@@ -63,7 +62,7 @@ export type SuratCreateForm = {
 const initialCreateForm: SuratCreateForm = {
   orgId: '',
   targetOrgId: '',
-  variant: 'PEMINJAMAN',
+  variant: 'PENGAJUAN',
   number: '',
   subject: '',
   lampiran: '',
