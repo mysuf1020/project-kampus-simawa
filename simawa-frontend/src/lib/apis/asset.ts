@@ -1,4 +1,4 @@
-import { api } from '../http-client'
+import { api, type ApiResponse } from '../http-client'
 
 export type Asset = {
   id: number
@@ -31,13 +31,13 @@ export type AssetBorrowing = {
 // --- Asset CRUD ---
 
 export const listAssets = async (orgId: string): Promise<Asset[]> => {
-  const { data } = await api.get<Asset[]>('/v1/assets', { params: { org_id: orgId } })
-  return data ?? []
+  const { data } = await api.get<ApiResponse<Asset[]>>('/v1/assets', { params: { org_id: orgId } })
+  return data.data ?? []
 }
 
 export const getAsset = async (id: number): Promise<Asset> => {
-  const { data } = await api.get<Asset>(`/v1/assets/${id}`)
-  return data
+  const { data } = await api.get<ApiResponse<Asset>>(`/v1/assets/${id}`)
+  return data.data!
 }
 
 export const createAsset = async (payload: {
@@ -46,16 +46,16 @@ export const createAsset = async (payload: {
   description?: string
   quantity?: number
 }): Promise<Asset> => {
-  const { data } = await api.post<Asset>('/v1/assets', payload)
-  return data
+  const { data } = await api.post<ApiResponse<Asset>>('/v1/assets', payload)
+  return data.data!
 }
 
 export const updateAsset = async (
   id: number,
   payload: { name?: string; description?: string; quantity?: number },
 ): Promise<Asset> => {
-  const { data } = await api.put<Asset>(`/v1/assets/${id}`, payload)
-  return data
+  const { data } = await api.put<ApiResponse<Asset>>(`/v1/assets/${id}`, payload)
+  return data.data!
 }
 
 export const deleteAsset = async (id: number): Promise<void> => {
@@ -73,18 +73,18 @@ export const borrowAsset = async (payload: {
   return_date: string
   note?: string
 }): Promise<AssetBorrowing> => {
-  const { data } = await api.post<AssetBorrowing>('/v1/assets/borrow', payload)
-  return data
+  const { data } = await api.post<ApiResponse<AssetBorrowing>>('/v1/assets/borrow', payload)
+  return data.data!
 }
 
 export const returnAsset = async (borrowingId: number): Promise<AssetBorrowing> => {
-  const { data } = await api.post<AssetBorrowing>(`/v1/assets/borrow/${borrowingId}/return`)
-  return data
+  const { data } = await api.post<ApiResponse<AssetBorrowing>>(`/v1/assets/borrow/${borrowingId}/return`)
+  return data.data!
 }
 
 export const listBorrowings = async (orgId: string): Promise<AssetBorrowing[]> => {
-  const { data } = await api.get<AssetBorrowing[]>('/v1/assets/borrowings', {
+  const { data } = await api.get<ApiResponse<AssetBorrowing[]>>('/v1/assets/borrowings', {
     params: { org_id: orgId },
   })
-  return data ?? []
+  return data.data ?? []
 }
