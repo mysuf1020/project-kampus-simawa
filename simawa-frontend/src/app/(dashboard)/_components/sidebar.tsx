@@ -18,6 +18,7 @@ import {
   Bell,
   Archive,
   Package,
+  Boxes,
 } from 'lucide-react'
 import {
   Avatar,
@@ -64,7 +65,7 @@ const NAV_ITEMS: NavItem[] = [
     group: 'Administrasi',
   },
   {
-    label: 'Peminjaman Aset',
+    label: 'Surat Peminjaman',
     href: '/surat/peminjaman',
     icon: Package,
     group: 'Administrasi',
@@ -75,6 +76,7 @@ const NAV_ITEMS: NavItem[] = [
     icon: ScrollText,
     group: 'Administrasi',
   },
+  { label: 'Manajemen Aset', href: '/assets', icon: Boxes, group: 'Management' },
   { label: 'Organisasi', href: '/organizations', icon: Building2, group: 'Management' },
   {
     label: 'Pengguna',
