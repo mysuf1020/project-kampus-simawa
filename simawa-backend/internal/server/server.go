@@ -213,7 +213,7 @@ func (s *Server) initHandlers() {
 	}
 	s.Handlers.Org = handler.NewOrganizationHandler(s.Services.Org, s.Services.Member, s.Minio, s.Config.Minio.Bucket, minioPublicBaseURL)
 	s.Handlers.Activity = handler.NewActivityHandler(s.Services.Activity, s.Minio, s.Config.Minio.Bucket)
-	s.Handlers.LPJ = handler.NewLPJHandlerWithRBAC(s.Services.LPJ, s.Minio, s.Config.Minio.Bucket, s.Services.RBAC)
+	s.Handlers.LPJ = handler.NewLPJHandlerWithRBAC(s.Services.LPJ, s.Minio, s.Config.Minio.Bucket, s.Services.RBAC, s.DB)
 	s.Handlers.Member = handler.NewOrgMemberHandler(s.Services.Member, s.Services.Org, s.Services.RBAC)
 	s.Handlers.JoinReq = handler.NewOrgJoinRequestHandler(s.Services.JoinReq)
 	s.Handlers.Notify = handler.NewNotificationHandler(s.Services.Notify)

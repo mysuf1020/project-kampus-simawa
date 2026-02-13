@@ -16,7 +16,9 @@ import {
 } from '@/components/ui'
 import { Page } from '@/components/commons'
 import { listOrganizations } from '@/lib/apis/org'
-import { listLPJByOrg } from '@/lib/apis/lpj'
+import { listLPJByOrg, listAllLPJ } from '@/lib/apis/lpj'
+import { useRBAC } from '@/lib/providers/rbac-provider'
+import { ADMIN_ROLES } from '@/components/guards/role-guard'
 import {
   QueryParamsStateProvider,
   useQueryParamsState,
@@ -31,17 +33,20 @@ function LPJPageInner() {
   const { orgId, setOrgId } = useLPJOrgState()
   const { queryParams, setQueryParams } = useQueryParamsState<LPJPageQueryParamsState>()
   const { page, pageSize, status, search } = queryParams
+  const { hasAnyRole } = useRBAC()
+  const isAdmin = hasAnyRole(ADMIN_ROLES)
 
   const { data: orgs, isLoading: orgLoading } = useQuery({
     queryKey: ['orgs'],
     queryFn: listOrganizations,
   })
 
+  // Don't auto-select first org — allow "Semua Organisasi" by default for admins
   useEffect(() => {
-    if (!orgId && orgs?.length) {
+    if (!orgId && orgs?.length && !isAdmin) {
       setOrgId(orgs[0].id)
     }
-  }, [orgId, orgs, setOrgId])
+  }, [orgId, orgs, setOrgId, isAdmin])
 
   // Desktop: useQuery with pagination
   const {
@@ -53,21 +58,29 @@ function LPJPageInner() {
   } = useQuery({
     queryKey: ['lpj', orgId, page, pageSize, status],
     queryFn: () =>
-      listLPJByOrg(
-        orgId,
-        status || undefined,
-        Number(page || '1') || 1,
-        Number(pageSize || '10') || 10,
-      ),
-    enabled: Boolean(orgId),
+      orgId
+        ? listLPJByOrg(
+            orgId,
+            status || undefined,
+            Number(page || '1') || 1,
+            Number(pageSize || '10') || 10,
+          )
+        : listAllLPJ(
+            status || undefined,
+            Number(page || '1') || 1,
+            Number(pageSize || '10') || 10,
+          ),
+    enabled: isAdmin || Boolean(orgId),
   })
 
   // Mobile: useInfiniteQuery for infinite scroll
   const lpjInfiniteQuery = useInfiniteQuery({
     queryKey: ['lpj-infinite', orgId, status],
     queryFn: ({ pageParam = 1 }) =>
-      listLPJByOrg(orgId, status || undefined, pageParam, 10),
-    enabled: Boolean(orgId),
+      orgId
+        ? listLPJByOrg(orgId, status || undefined, pageParam, 10)
+        : listAllLPJ(status || undefined, pageParam, 10),
+    enabled: isAdmin || Boolean(orgId),
     initialPageParam: 1,
     getNextPageParam: (lastPage, allPages) => {
       if (lastPage && lastPage.length >= 10) {

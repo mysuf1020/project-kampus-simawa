@@ -306,10 +306,10 @@ export function LPJListCard({
                       </div>
                     ) : null
                   })()}
-                  {lpj.submitted_by && (
+                  {(lpj.submitted_by_name || lpj.submitted_by) && (
                     <div className="flex items-center gap-1 rounded-md bg-neutral-50 px-2 py-0.5 text-[10px] font-medium text-neutral-600 border border-neutral-100">
                       <User className="h-3 w-3 text-neutral-400" />
-                      <span className="truncate max-w-[120px]">{lpj.submitted_by}</span>
+                      <span className="truncate max-w-[120px]">{lpj.submitted_by_name || lpj.submitted_by}</span>
                     </div>
                   )}
                 </div>

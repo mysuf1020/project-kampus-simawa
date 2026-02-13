@@ -28,11 +28,15 @@ import {
 } from '@/components/ui'
 import { Page } from '@/components/commons'
 import { listOrganizations } from '@/lib/apis/org'
+import { useRBAC } from '@/lib/providers/rbac-provider'
+import { ADMIN_ROLES } from '@/components/guards/role-guard'
 import { listAssets } from '@/lib/apis/asset'
 import { createSurat, submitSurat, type CreateSuratPayload } from '@/lib/apis/surat'
 
 export default function SuratPeminjamanPage() {
   const router = useRouter()
+  const { hasAnyRole } = useRBAC()
+  const isAdmin = hasAnyRole(ADMIN_ROLES)
 
   const [orgId, setOrgId] = useState('')
   const [selectedAssets, setSelectedAssets] = useState<
@@ -56,11 +60,16 @@ export default function SuratPeminjamanPage() {
     enabled: !!orgId,
   })
 
+  const filteredOrgs = useMemo(
+    () => (!orgs ? [] : isAdmin ? orgs : orgs.filter((o) => o.can_manage)),
+    [orgs, isAdmin],
+  )
+
   useEffect(() => {
-    if (!orgId && orgs?.length) {
-      setOrgId(orgs[0].id)
+    if (!orgId && filteredOrgs.length) {
+      setOrgId(filteredOrgs[0].id)
     }
-  }, [orgId, orgs])
+  }, [orgId, filteredOrgs])
 
   const availableAssets = useMemo(
     () => assets?.filter((a) => a.status === 'AVAILABLE') ?? [],
@@ -202,7 +211,7 @@ export default function SuratPeminjamanPage() {
                   setSelectedAssets([])
                 }}
               >
-                {(orgs ?? []).map((org) => (
+                {filteredOrgs.map((org) => (
                   <option key={org.id} value={org.id}>
                     {org.name}
                   </option>

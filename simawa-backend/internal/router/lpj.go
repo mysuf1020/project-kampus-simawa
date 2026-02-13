@@ -18,5 +18,6 @@ func RegisterLPJRoutes(r *gin.Engine, cfg *config.Env, h *handler.LPJHandler, rb
 	api.POST("/:lpj_id/revision", middleware.RequireRoles(rbac, model.RoleAdmin, model.RoleBEMAdmin), h.Revision) // BEM only (not DEMA)
 	api.GET("/:lpj_id", middleware.RequireRoles(rbac, model.RoleAdmin, model.RoleOrgAdmin, model.RoleBEMAdmin, model.RoleDEMAAdmin), h.Detail)
 	api.GET("/:lpj_id/download", middleware.RequireRoles(rbac, model.RoleAdmin, model.RoleOrgAdmin, model.RoleBEMAdmin, model.RoleDEMAAdmin), h.Download)
+	api.GET("/all", middleware.RequireRoles(rbac, model.RoleAdmin, model.RoleBEMAdmin, model.RoleDEMAAdmin), h.ListAll)
 	api.GET("/org/:org_id", middleware.RequireRoles(rbac, model.RoleAdmin, model.RoleOrgAdmin, model.RoleBEMAdmin, model.RoleDEMAAdmin), h.ListByOrg)
 }

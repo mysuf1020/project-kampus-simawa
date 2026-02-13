@@ -10,6 +10,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/minio/minio-go/v7"
+	"gorm.io/gorm"
+	"simawa-backend/internal/model"
 	"simawa-backend/internal/service"
 	"simawa-backend/pkg/response"
 )
@@ -19,14 +21,15 @@ type LPJHandler struct {
 	minio  *minio.Client
 	bucket string
 	rbac   *service.RBACService
+	db     *gorm.DB
 }
 
 func NewLPJHandler(svc *service.LPJService, minio *minio.Client, bucket string) *LPJHandler {
 	return &LPJHandler{svc: svc, minio: minio, bucket: bucket}
 }
 
-func NewLPJHandlerWithRBAC(svc *service.LPJService, minio *minio.Client, bucket string, rbac *service.RBACService) *LPJHandler {
-	return &LPJHandler{svc: svc, minio: minio, bucket: bucket, rbac: rbac}
+func NewLPJHandlerWithRBAC(svc *service.LPJService, minio *minio.Client, bucket string, rbac *service.RBACService, db *gorm.DB) *LPJHandler {
+	return &LPJHandler{svc: svc, minio: minio, bucket: bucket, rbac: rbac, db: db}
 }
 
 type submitLPJRequest struct {
@@ -163,7 +166,70 @@ func (h *LPJHandler) ListByOrg(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, response.Err(err.Error()))
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"items": rows})
+	c.JSON(http.StatusOK, gin.H{"items": h.enrichWithUsernames(rows)})
+}
+
+func (h *LPJHandler) ListAll(c *gin.Context) {
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	size, _ := strconv.Atoi(c.DefaultQuery("size", "10"))
+	status := c.Query("status")
+	rows, err := h.svc.ListAll(c.Request.Context(), status, page, size)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, response.Err(err.Error()))
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"items": h.enrichWithUsernames(rows)})
+}
+
+// enrichWithUsernames resolves submitted_by UUIDs to usernames.
+func (h *LPJHandler) enrichWithUsernames(rows []model.LPJ) []gin.H {
+	if h.db == nil || len(rows) == 0 {
+		items := make([]gin.H, len(rows))
+		for i, r := range rows {
+			items[i] = gin.H{
+				"id": r.ID, "activity_id": r.ActivityID, "org_id": r.OrgID,
+				"summary": r.Summary, "budget_plan": r.BudgetPlan, "budget_real": r.BudgetReal,
+				"report_key": r.ReportKey, "file_size": r.FileSize, "photos": r.Photos,
+				"status": r.Status, "note": r.Note, "submitted_by": r.SubmittedBy,
+				"revision_no": r.RevisionNo, "reviewed_by": r.ReviewedBy,
+				"reviewed_at": r.ReviewedAt, "created_at": r.CreatedAt, "updated_at": r.UpdatedAt,
+			}
+		}
+		return items
+	}
+	// Collect unique user IDs
+	userIDs := make(map[uuid.UUID]struct{})
+	for _, r := range rows {
+		userIDs[r.SubmittedBy] = struct{}{}
+	}
+	ids := make([]uuid.UUID, 0, len(userIDs))
+	for id := range userIDs {
+		ids = append(ids, id)
+	}
+	// Batch lookup usernames
+	var users []model.User
+	h.db.Where("id IN ?", ids).Select("id", "username").Find(&users)
+	userMap := make(map[uuid.UUID]string, len(users))
+	for _, u := range users {
+		userMap[u.ID] = u.Username
+	}
+	items := make([]gin.H, len(rows))
+	for i, r := range rows {
+		name := userMap[r.SubmittedBy]
+		if name == "" {
+			name = r.SubmittedBy.String()
+		}
+		items[i] = gin.H{
+			"id": r.ID, "activity_id": r.ActivityID, "org_id": r.OrgID,
+			"summary": r.Summary, "budget_plan": r.BudgetPlan, "budget_real": r.BudgetReal,
+			"report_key": r.ReportKey, "file_size": r.FileSize, "photos": r.Photos,
+			"status": r.Status, "note": r.Note, "submitted_by": r.SubmittedBy,
+			"submitted_by_name": name,
+			"revision_no": r.RevisionNo, "reviewed_by": r.ReviewedBy,
+			"reviewed_at": r.ReviewedAt, "created_at": r.CreatedAt, "updated_at": r.UpdatedAt,
+		}
+	}
+	return items
 }
 
 // Revision adds a note to LPJ history.

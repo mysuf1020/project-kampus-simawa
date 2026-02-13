@@ -175,6 +175,10 @@ func (s *LPJService) ListByOrgWithFilter(ctx context.Context, orgID uuid.UUID, s
 	return s.repo.ListByOrg(ctx, orgID, status, page, size)
 }
 
+func (s *LPJService) ListAll(ctx context.Context, status string, page, size int) ([]model.LPJ, error) {
+	return s.repo.ListAll(ctx, status, page, size)
+}
+
 func (s *LPJService) AddRevision(ctx context.Context, userID, lpjID uuid.UUID, note string) (*model.LPJ, error) {
 	l, err := s.repo.Get(ctx, lpjID)
 	if err != nil {

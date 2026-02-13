@@ -13,6 +13,7 @@ export type LPJ = {
   status: string
   note?: string
   submitted_by: string
+  submitted_by_name?: string
   revision_no?: number
   reviewed_by?: string | null
   reviewed_at?: string | null
@@ -75,6 +76,17 @@ export const listLPJByOrg = async (
   size = 10,
 ) => {
   const { data } = await api.get<LPJListResponse>(`/v1/lpj/org/${orgId}`, {
+    params: { status, page, size },
+  })
+  return data.items
+}
+
+export const listAllLPJ = async (
+  status?: string,
+  page = 1,
+  size = 10,
+) => {
+  const { data } = await api.get<LPJListResponse>('/v1/lpj/all', {
     params: { status, page, size },
   })
   return data.items

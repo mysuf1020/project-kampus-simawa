@@ -33,6 +33,8 @@ import {
 } from '@/components/ui'
 import { Page } from '@/components/commons'
 import { listOrganizations } from '@/lib/apis/org'
+import { useRBAC } from '@/lib/providers/rbac-provider'
+import { ADMIN_ROLES } from '@/components/guards/role-guard'
 import {
   listAssets,
   createAsset,
@@ -64,6 +66,8 @@ const emptyBorrowForm: BorrowFormData = {
 
 export default function AssetManagementPage() {
   const queryClient = useQueryClient()
+  const { hasAnyRole } = useRBAC()
+  const isAdmin = hasAnyRole(ADMIN_ROLES)
 
   const [orgId, setOrgId] = useState('')
   const [tab, setTab] = useState<'inventory' | 'borrow' | 'history'>('inventory')
@@ -94,9 +98,16 @@ export default function AssetManagementPage() {
     enabled: !!orgId,
   })
 
+  // Admin roles see all orgs, regular users only see orgs they can manage
+  const filteredOrgs = useMemo(() => {
+    if (!orgs) return []
+    if (isAdmin) return orgs
+    return orgs.filter((o) => o.can_manage)
+  }, [orgs, isAdmin])
+
   useEffect(() => {
-    if (!orgId && orgs?.length) setOrgId(orgs[0].id)
-  }, [orgId, orgs])
+    if (!orgId && filteredOrgs.length) setOrgId(filteredOrgs[0].id)
+  }, [orgId, filteredOrgs])
 
   const invalidateAll = () => {
     queryClient.invalidateQueries({ queryKey: ['assets', orgId] })
@@ -252,7 +263,7 @@ export default function AssetManagementPage() {
                   setBorrowForm(emptyBorrowForm)
                 }}
               >
-                {(orgs ?? []).map((org) => (
+                {filteredOrgs.map((org) => (
                   <option key={org.id} value={org.id}>
                     {org.name}
                   </option>
