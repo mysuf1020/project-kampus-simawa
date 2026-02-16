@@ -99,15 +99,12 @@ export const ERROR_MESSAGES = {
 // HELPER FUNCTIONS
 // ============================================
 
-// Validasi email dengan domain tertentu (untuk registrasi)
+// Validasi email (untuk registrasi - semua domain diperbolehkan)
 export const emailWithDomainSchema = z
   .string()
   .min(1, ERROR_MESSAGES.required('Email'))
   .max(VALIDATION_LIMITS.EMAIL_MAX, ERROR_MESSAGES.emailMax)
   .email(ERROR_MESSAGES.emailInvalid)
-  .refine((val) => val.toLowerCase().endsWith(EMAIL_DOMAIN.toLowerCase()), {
-    message: getEmailDomainError(),
-  })
 
 // Validasi email umum (untuk login)
 export const emailSchema = z

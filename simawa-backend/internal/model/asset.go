@@ -18,6 +18,7 @@ type Asset struct {
 	Description string    `gorm:"size:512" json:"description"`
 	Quantity    int       `gorm:"default:1" json:"quantity"`
 	Status      string    `gorm:"size:20;default:AVAILABLE;index" json:"status"`
+	ImageURL    string    `gorm:"size:512" json:"image_url"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
 }

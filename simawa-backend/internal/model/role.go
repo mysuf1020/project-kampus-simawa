@@ -15,9 +15,10 @@ type Role struct {
 }
 
 const (
-	RoleAdmin     = "ADMIN"      // ketua/pengelola organisasi (scoped ke org)
-	RoleOrgAdmin  = "ORG_ADMIN"  // admin organisasi (alias tambahan)
-	RoleBEMAdmin  = "BEM_ADMIN"  // admin BEM
-	RoleDEMAAdmin = "DEMA_ADMIN" // admin DEMA
-	RoleUser      = "USER"       // default
+	RoleSuperAdmin = "SUPER_ADMIN" // super admin (king)
+	RoleAdmin      = "ADMIN"       // ketua/pengelola organisasi (scoped ke org)
+	RoleOrgAdmin   = "ORG_ADMIN"   // admin organisasi (alias tambahan)
+	RoleBEMAdmin   = "BEM_ADMIN"   // admin BEM
+	RoleDEMAAdmin  = "DEMA_ADMIN"  // admin DEMA
+	RoleUser       = "USER"        // default
 )

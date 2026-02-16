@@ -1,22 +1,21 @@
 /**
- * Email domain configuration from environment variable
- * Default: @raharja.info
+ * Email domain configuration (no longer restricted)
  */
-export const EMAIL_DOMAIN = process.env.NEXT_PUBLIC_EMAIL_DOMAIN || '@raharja.info'
+export const EMAIL_DOMAIN = ''
 
 /**
- * Get email placeholder (e.g., "nama@raharja.info")
+ * Get email placeholder
  */
-export const getEmailPlaceholder = () => `nama${EMAIL_DOMAIN}`
+export const getEmailPlaceholder = () => 'nama@email.com'
 
 /**
- * Validate if email ends with the configured domain
+ * Validate email format (any domain allowed)
  */
 export const isValidEmailDomain = (email: string): boolean => {
-  return email.toLowerCase().trim().endsWith(EMAIL_DOMAIN.toLowerCase())
+  return email.toLowerCase().trim().includes('@')
 }
 
 /**
  * Get email domain validation message
  */
-export const getEmailDomainError = () => `Wajib menggunakan email ${EMAIL_DOMAIN}`
+export const getEmailDomainError = () => 'Format email tidak valid'

@@ -102,6 +102,7 @@ func NewServer(cfg *config.Env) (*Server, error) {
 	s.initHandlers()
 	s.initRouter()
 	s.initRedis()
+	s.seedKingUser()
 
 	return s, nil
 }
@@ -201,7 +202,6 @@ func (s *Server) initServices() {
 func (s *Server) initHandlers() {
 	s.Handlers.User = handler.NewUserHandler(s.Services.User, s.Services.Auth, s.Services.RBAC)
 	s.Handlers.Auth = handler.NewAuthHandler(s.Services.Auth, s.Services.Captcha)
-	s.Handlers.Asset = handler.NewAssetHandler(s.Services.Asset, s.Services.RBAC)
 	s.Handlers.Surat = handler.NewSuratHandler(s.Services.Surat, s.Minio, s.Config.Minio.Bucket, s.Services.RBAC)
 	minioPublicBaseURL := ""
 	if !s.Config.Minio.Disabled && s.Config.Minio.Endpoint != "" {
@@ -211,6 +211,7 @@ func (s *Server) initHandlers() {
 		}
 		minioPublicBaseURL = fmt.Sprintf("%s://%s", scheme, strings.TrimRight(s.Config.Minio.Endpoint, "/"))
 	}
+	s.Handlers.Asset = handler.NewAssetHandler(s.Services.Asset, s.Services.RBAC, s.Minio, s.Config.Minio.Bucket, minioPublicBaseURL)
 	s.Handlers.Org = handler.NewOrganizationHandler(s.Services.Org, s.Services.Member, s.Minio, s.Config.Minio.Bucket, minioPublicBaseURL)
 	s.Handlers.Activity = handler.NewActivityHandler(s.Services.Activity, s.Minio, s.Config.Minio.Bucket)
 	s.Handlers.LPJ = handler.NewLPJHandlerWithRBAC(s.Services.LPJ, s.Minio, s.Config.Minio.Bucket, s.Services.RBAC, s.DB)
@@ -285,3 +286,36 @@ func (s *Server) reminderLoop() {
 	}
 }
 
+func (s *Server) seedKingUser() {
+	if s.DB == nil {
+		return
+	}
+	email := "king@raharja.info"
+	var count int64
+	s.DB.Model(&model.User{}).Where("email = ?", email).Count(&count)
+	if count > 0 {
+		return // already exists
+	}
+	hash, err := repository.BcryptHash("king123")
+	if err != nil {
+		fmt.Printf("[SEED] Failed to hash king password: %v\n", err)
+		return
+	}
+	now := time.Now()
+	king := &model.User{
+		Username:        "king",
+		FirstName:       "King",
+		SecondName:      "Admin",
+		Email:           email,
+		PasswordHash:    hash,
+		EmailVerifiedAt: &now,
+	}
+	if err := s.DB.Create(king).Error; err != nil {
+		fmt.Printf("[SEED] Failed to create king user: %v\n", err)
+		return
+	}
+	for _, role := range []string{model.RoleSuperAdmin, model.RoleAdmin, model.RoleBEMAdmin, model.RoleDEMAAdmin} {
+		s.DB.Create(&model.UserRole{UserID: king.ID, RoleCode: role})
+	}
+	fmt.Printf("[SEED] King super admin created: %s\n", email)
+}

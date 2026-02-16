@@ -102,7 +102,7 @@ export function UserCreateCard() {
     }
     const emailLower = email.toLowerCase().trim()
     if (!isValidEmailDomain(emailLower)) {
-      toast.error(`Email wajib menggunakan domain ${EMAIL_DOMAIN}`)
+      toast.error('Format email tidak valid')
       return
     }
     if (!/^\d{8}$/.test(tanggal_lahir)) {

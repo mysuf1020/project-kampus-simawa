@@ -4,21 +4,27 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/minio/minio-go/v7"
 	"simawa-backend/internal/service"
+	"simawa-backend/internal/util/storage"
 	"simawa-backend/pkg/response"
 )
 
 type AssetHandler struct {
-	svc  *service.AssetService
-	rbac *service.RBACService
+	svc                *service.AssetService
+	rbac               *service.RBACService
+	minio              *minio.Client
+	bucket             string
+	minioPublicBaseURL string
 }
 
-func NewAssetHandler(svc *service.AssetService, rbac *service.RBACService) *AssetHandler {
-	return &AssetHandler{svc: svc, rbac: rbac}
+func NewAssetHandler(svc *service.AssetService, rbac *service.RBACService, mc *minio.Client, bucket, minioPublicBaseURL string) *AssetHandler {
+	return &AssetHandler{svc: svc, rbac: rbac, minio: mc, bucket: bucket, minioPublicBaseURL: minioPublicBaseURL}
 }
 
 func (h *AssetHandler) currentUser(c *gin.Context) (uuid.UUID, error) {
@@ -36,6 +42,7 @@ type createAssetRequest struct {
 	Name        string `json:"name" binding:"required"`
 	Description string `json:"description"`
 	Quantity    int    `json:"quantity"`
+	ImageURL    string `json:"image_url"`
 }
 
 func (h *AssetHandler) Create(c *gin.Context) {
@@ -54,7 +61,7 @@ func (h *AssetHandler) Create(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, response.Err("invalid org_id"))
 		return
 	}
-	a, err := h.svc.CreateAsset(c.Request.Context(), userID, orgID, req.Name, req.Description, req.Quantity)
+	a, err := h.svc.CreateAsset(c.Request.Context(), userID, orgID, req.Name, req.Description, req.Quantity, req.ImageURL)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, response.Err(err.Error()))
 		return
@@ -66,6 +73,7 @@ type updateAssetRequest struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
 	Quantity    int    `json:"quantity"`
+	ImageURL    string `json:"image_url"`
 }
 
 func (h *AssetHandler) Update(c *gin.Context) {
@@ -80,7 +88,7 @@ func (h *AssetHandler) Update(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, response.Err(err.Error()))
 		return
 	}
-	a, err := h.svc.UpdateAsset(c.Request.Context(), userID, uint(id), req.Name, req.Description, req.Quantity)
+	a, err := h.svc.UpdateAsset(c.Request.Context(), userID, uint(id), req.Name, req.Description, req.Quantity, req.ImageURL)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, response.Err(err.Error()))
 		return
@@ -113,9 +121,20 @@ func (h *AssetHandler) Get(c *gin.Context) {
 }
 
 func (h *AssetHandler) List(c *gin.Context) {
-	orgID, err := uuid.Parse(c.Query("org_id"))
+	orgIDStr := c.Query("org_id")
+	if orgIDStr == "" {
+		// No org_id: return all assets
+		list, err := h.svc.ListAllAssets(c.Request.Context())
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, response.Err(err.Error()))
+			return
+		}
+		c.JSON(http.StatusOK, response.OK(list))
+		return
+	}
+	orgID, err := uuid.Parse(orgIDStr)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, response.Err("org_id required"))
+		c.JSON(http.StatusBadRequest, response.Err("invalid org_id"))
 		return
 	}
 	list, err := h.svc.ListAssets(c.Request.Context(), orgID)
@@ -208,4 +227,53 @@ func (h *AssetHandler) ListBorrowings(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, response.OK(list))
+}
+
+func (h *AssetHandler) UploadImage(c *gin.Context) {
+	if h.minio == nil || h.bucket == "" || h.minioPublicBaseURL == "" {
+		c.JSON(http.StatusBadRequest, response.Err("storage not configured"))
+		return
+	}
+	file, err := c.FormFile("file")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.Err("file required"))
+		return
+	}
+	const maxSize = 5 * 1024 * 1024
+	if file.Size <= 0 || file.Size > maxSize {
+		c.JSON(http.StatusBadRequest, response.Err("file too large (max 5MB)"))
+		return
+	}
+	src, err := file.Open()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, response.Err(err.Error()))
+		return
+	}
+	defer src.Close()
+
+	buf := make([]byte, 512)
+	n, _ := src.Read(buf)
+	_, _ = src.Seek(0, 0)
+	mime := http.DetectContentType(buf[:n])
+	if !strings.HasPrefix(mime, "image/") {
+		c.JSON(http.StatusBadRequest, response.Err("only image allowed"))
+		return
+	}
+	ext := ".jpg"
+	switch mime {
+	case "image/png":
+		ext = ".png"
+	case "image/webp":
+		ext = ".webp"
+	case "image/gif":
+		ext = ".gif"
+	}
+	key := fmt.Sprintf("assets/%s%s", uuid.New().String(), ext)
+	if _, err := storage.UploadToMinio(c.Request.Context(), h.minio, h.bucket, key, src, file.Size, mime); err != nil {
+		c.JSON(http.StatusInternalServerError, response.Err(err.Error()))
+		return
+	}
+	base := strings.TrimRight(h.minioPublicBaseURL, "/")
+	url := fmt.Sprintf("%s/%s/%s", base, h.bucket, key)
+	c.JSON(http.StatusOK, gin.H{"file_key": key, "url": url})
 }

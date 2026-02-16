@@ -7,6 +7,7 @@ export type Asset = {
   description: string
   quantity: number
   status: string // AVAILABLE | BORROWED
+  image_url?: string
   created_at: string
   updated_at: string
 }
@@ -35,9 +36,23 @@ export const listAssets = async (orgId: string): Promise<Asset[]> => {
   return data.data ?? []
 }
 
+export const listAllAssets = async (): Promise<Asset[]> => {
+  const { data } = await api.get<ApiResponse<Asset[]>>('/v1/assets')
+  return data.data ?? []
+}
+
 export const getAsset = async (id: number): Promise<Asset> => {
   const { data } = await api.get<ApiResponse<Asset>>(`/v1/assets/${id}`)
   return data.data!
+}
+
+export const uploadAssetImage = async (file: File): Promise<{ file_key: string; url: string }> => {
+  const form = new FormData()
+  form.append('file', file)
+  const { data } = await api.post<{ file_key: string; url: string }>('/v1/assets/upload-image', form, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+  return data
 }
 
 export const createAsset = async (payload: {
@@ -45,6 +60,7 @@ export const createAsset = async (payload: {
   name: string
   description?: string
   quantity?: number
+  image_url?: string
 }): Promise<Asset> => {
   const { data } = await api.post<ApiResponse<Asset>>('/v1/assets', payload)
   return data.data!
@@ -52,7 +68,7 @@ export const createAsset = async (payload: {
 
 export const updateAsset = async (
   id: number,
-  payload: { name?: string; description?: string; quantity?: number },
+  payload: { name?: string; description?: string; quantity?: number; image_url?: string },
 ): Promise<Asset> => {
   const { data } = await api.put<ApiResponse<Asset>>(`/v1/assets/${id}`, payload)
   return data.data!

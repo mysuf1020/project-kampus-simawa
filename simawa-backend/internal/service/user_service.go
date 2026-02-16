@@ -76,9 +76,9 @@ type UserFilter struct {
 
 // --------- Business rules ---------
 func (s *UserService) Create(ctx context.Context, in *CreateUserInput) (*model.User, error) {
-	// Validate email domain
-	if !strings.HasSuffix(strings.ToLower(in.Email), strings.ToLower(s.emailDomain)) {
-		return nil, fmt.Errorf("email must end with %s", s.emailDomain)
+	// Validate email format
+	if !strings.Contains(in.Email, "@") {
+		return nil, fmt.Errorf("invalid email format")
 	}
 	
 	// Check if email already exists

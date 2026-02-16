@@ -14,6 +14,7 @@ import {
   X,
   ArrowRightLeft,
   Search,
+  ImagePlus,
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -37,17 +38,19 @@ import { useRBAC } from '@/lib/providers/rbac-provider'
 import { ADMIN_ROLES } from '@/components/guards/role-guard'
 import {
   listAssets,
+  listAllAssets,
   createAsset,
   updateAsset,
   deleteAsset,
   borrowAsset,
   returnAsset,
   listBorrowings,
+  uploadAssetImage,
   type Asset,
 } from '@/lib/apis/asset'
 
-type AssetFormData = { name: string; description: string; quantity: number }
-const emptyForm: AssetFormData = { name: '', description: '', quantity: 1 }
+type AssetFormData = { name: string; description: string; quantity: number; imageUrl: string }
+const emptyForm: AssetFormData = { name: '', description: '', quantity: 1, imageUrl: '' }
 
 type BorrowFormData = {
   assetId: number | null
@@ -77,6 +80,11 @@ export default function AssetManagementPage() {
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<number | null>(null)
   const [form, setForm] = useState<AssetFormData>(emptyForm)
+
+  // Image upload state
+  const [imageFile, setImageFile] = useState<File | null>(null)
+  const [imagePreview, setImagePreview] = useState<string>('')
+  const [uploading, setUploading] = useState(false)
 
   // Borrow form state
   const [borrowForm, setBorrowForm] = useState<BorrowFormData>(emptyBorrowForm)
@@ -130,6 +138,17 @@ export default function AssetManagementPage() {
     [assets],
   )
 
+  // Fetch ALL assets across all orgs for borrow tab
+  const { data: allAssets } = useQuery({
+    queryKey: ['all-assets'],
+    queryFn: listAllAssets,
+  })
+
+  const allAvailableAssets = useMemo(
+    () => allAssets?.filter((a) => a.status === 'AVAILABLE') ?? [],
+    [allAssets],
+  )
+
   const activeBorrowings = useMemo(
     () => borrowings?.filter((b) => b.status === 'BORROWED') ?? [],
     [borrowings],
@@ -137,11 +156,24 @@ export default function AssetManagementPage() {
 
   // --- CRUD Mutations ---
   const createMut = useMutation({
-    mutationFn: () =>
-      createAsset({ org_id: orgId, name: form.name, description: form.description, quantity: form.quantity }),
+    mutationFn: async () => {
+      let imageUrl = form.imageUrl
+      if (imageFile) {
+        setUploading(true)
+        try {
+          const res = await uploadAssetImage(imageFile)
+          imageUrl = res.url
+        } finally {
+          setUploading(false)
+        }
+      }
+      return createAsset({ org_id: orgId, name: form.name, description: form.description, quantity: form.quantity, image_url: imageUrl || undefined })
+    },
     onSuccess: () => {
       toast.success('Aset berhasil ditambahkan')
       setForm(emptyForm)
+      setImageFile(null)
+      setImagePreview('')
       setShowForm(false)
       invalidateAll()
     },
@@ -149,11 +181,24 @@ export default function AssetManagementPage() {
   })
 
   const updateMut = useMutation({
-    mutationFn: () =>
-      updateAsset(editingId!, { name: form.name, description: form.description, quantity: form.quantity }),
+    mutationFn: async () => {
+      let imageUrl = form.imageUrl
+      if (imageFile) {
+        setUploading(true)
+        try {
+          const res = await uploadAssetImage(imageFile)
+          imageUrl = res.url
+        } finally {
+          setUploading(false)
+        }
+      }
+      return updateAsset(editingId!, { name: form.name, description: form.description, quantity: form.quantity, image_url: imageUrl || undefined })
+    },
     onSuccess: () => {
       toast.success('Aset berhasil diperbarui')
       setForm(emptyForm)
+      setImageFile(null)
+      setImagePreview('')
       setEditingId(null)
       setShowForm(false)
       invalidateAll()
@@ -180,14 +225,29 @@ export default function AssetManagementPage() {
 
   const startEdit = (asset: Asset) => {
     setEditingId(asset.id)
-    setForm({ name: asset.name, description: asset.description, quantity: asset.quantity })
+    setForm({ name: asset.name, description: asset.description, quantity: asset.quantity, imageUrl: asset.image_url || '' })
+    setImageFile(null)
+    setImagePreview(asset.image_url || '')
     setShowForm(true)
   }
 
   const cancelForm = () => {
     setForm(emptyForm)
     setEditingId(null)
+    setImageFile(null)
+    setImagePreview('')
     setShowForm(false)
+  }
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Ukuran gambar maksimal 5MB')
+      return
+    }
+    setImageFile(file)
+    setImagePreview(URL.createObjectURL(file))
   }
 
   // --- Borrow / Return Mutations ---
@@ -196,9 +256,10 @@ export default function AssetManagementPage() {
       if (!borrowForm.assetId || !borrowForm.borrowDate || !borrowForm.returnDate) {
         throw new Error('Lengkapi semua field')
       }
+      const selectedAsset = allAssets?.find((a) => a.id === borrowForm.assetId)
       return borrowAsset({
         asset_id: borrowForm.assetId,
-        org_id: orgId,
+        org_id: selectedAsset?.org_id ?? orgId,
         quantity: borrowForm.quantity,
         borrow_date: borrowForm.borrowDate,
         return_date: borrowForm.returnDate,
@@ -209,6 +270,7 @@ export default function AssetManagementPage() {
       toast.success('Aset berhasil dipinjam')
       setBorrowForm(emptyBorrowForm)
       invalidateAll()
+      queryClient.invalidateQueries({ queryKey: ['all-assets'] })
     },
     onError: (err: Error) => toast.error(err.message || 'Gagal meminjam aset'),
   })
@@ -365,6 +427,30 @@ export default function AssetManagementPage() {
                           />
                         </div>
                       </div>
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium">Gambar Aset</Label>
+                        <div className="flex items-center gap-4">
+                          {imagePreview ? (
+                            <div className="relative h-20 w-20 rounded-lg border border-neutral-200 overflow-hidden flex-shrink-0">
+                              <img src={imagePreview} alt="Preview" className="h-full w-full object-cover" />
+                              <button
+                                type="button"
+                                className="absolute top-0.5 right-0.5 rounded-full bg-black/50 p-0.5 text-white hover:bg-black/70"
+                                onClick={() => { setImageFile(null); setImagePreview(''); setForm({ ...form, imageUrl: '' }) }}
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                            </div>
+                          ) : (
+                            <label className="flex h-20 w-20 cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-neutral-300 hover:border-brand-400 hover:bg-brand-50/50 transition-colors flex-shrink-0">
+                              <ImagePlus className="h-5 w-5 text-neutral-400" />
+                              <span className="text-[10px] text-neutral-400 mt-1">Upload</span>
+                              <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
+                            </label>
+                          )}
+                          <p className="text-[11px] text-neutral-400">JPG, PNG, WebP. Maks 5MB.</p>
+                        </div>
+                      </div>
                       <div className="flex justify-end gap-2 pt-2">
                         <Button variant="outline" size="sm" onClick={cancelForm}>
                           Batal
@@ -372,13 +458,13 @@ export default function AssetManagementPage() {
                         <Button
                           size="sm"
                           onClick={handleSubmit}
-                          disabled={createMut.isPending || updateMut.isPending}
+                          disabled={createMut.isPending || updateMut.isPending || uploading}
                           className="bg-brand-600 hover:bg-brand-700 text-white"
                         >
-                          {(createMut.isPending || updateMut.isPending) && (
+                          {(createMut.isPending || updateMut.isPending || uploading) && (
                             <Spinner className="mr-2 h-3.5 w-3.5 text-white" />
                           )}
-                          {editingId ? 'Simpan Perubahan' : 'Tambah'}
+                          {uploading ? 'Mengupload...' : editingId ? 'Simpan Perubahan' : 'Tambah'}
                         </Button>
                       </div>
                     </CardContent>
@@ -424,9 +510,15 @@ export default function AssetManagementPage() {
                             className="flex items-center justify-between p-4 hover:bg-neutral-50/50 transition-colors"
                           >
                             <div className="flex items-center gap-3 flex-1 min-w-0">
-                              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-neutral-100 flex-shrink-0">
-                                <Package className="h-5 w-5 text-neutral-500" />
-                              </div>
+                              {asset.image_url ? (
+                                <div className="h-10 w-10 rounded-lg overflow-hidden flex-shrink-0 border border-neutral-200">
+                                  <img src={asset.image_url} alt={asset.name} className="h-full w-full object-cover" />
+                                </div>
+                              ) : (
+                                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-neutral-100 flex-shrink-0">
+                                  <Package className="h-5 w-5 text-neutral-500" />
+                                </div>
+                              )}
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2">
                                   <p className="text-sm font-medium text-neutral-900 truncate">
@@ -507,13 +599,16 @@ export default function AssetManagementPage() {
                         }
                       >
                         <option value="">-- Pilih aset --</option>
-                        {availableAssets.map((a) => (
-                          <option key={a.id} value={a.id}>
-                            {a.name} (Qty: {a.quantity})
-                          </option>
-                        ))}
+                        {allAvailableAssets.map((a) => {
+                          const orgName = orgs?.find((o) => o.id === a.org_id)?.name
+                          return (
+                            <option key={a.id} value={a.id}>
+                              {a.name} (Qty: {a.quantity}){orgName ? ` — ${orgName}` : ''}
+                            </option>
+                          )
+                        })}
                       </select>
-                      {availableAssets.length === 0 && !assetsLoading && (
+                      {allAvailableAssets.length === 0 && (
                         <p className="text-xs text-amber-600">
                           Tidak ada aset tersedia. Tambahkan aset di tab Inventaris.
                         </p>

@@ -17,6 +17,7 @@ func RegisterAssetRoutes(r *gin.Engine, cfg *config.Env, h *handler.AssetHandler
 	api.POST("", h.Create)
 	api.PUT("/:id", h.Update)
 	api.DELETE("/:id", h.Delete)
+	api.POST("/upload-image", h.UploadImage)
 
 	// Borrowing
 	api.POST("/borrow", h.Borrow)

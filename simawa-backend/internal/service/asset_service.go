@@ -22,7 +22,7 @@ func NewAssetService(ar repository.AssetRepository, br repository.AssetBorrowing
 
 // --- Asset CRUD ---
 
-func (s *AssetService) CreateAsset(ctx context.Context, userID uuid.UUID, orgID uuid.UUID, name, description string, quantity int) (*model.Asset, error) {
+func (s *AssetService) CreateAsset(ctx context.Context, userID uuid.UUID, orgID uuid.UUID, name, description string, quantity int, imageURL string) (*model.Asset, error) {
 	if name == "" {
 		return nil, errors.New("nama asset wajib diisi")
 	}
@@ -35,6 +35,7 @@ func (s *AssetService) CreateAsset(ctx context.Context, userID uuid.UUID, orgID 
 		Description: description,
 		Quantity:    quantity,
 		Status:      model.AssetStatusAvailable,
+		ImageURL:    imageURL,
 	}
 	if err := s.assetRepo.Create(ctx, a); err != nil {
 		return nil, err
@@ -45,7 +46,7 @@ func (s *AssetService) CreateAsset(ctx context.Context, userID uuid.UUID, orgID 
 	return a, nil
 }
 
-func (s *AssetService) UpdateAsset(ctx context.Context, userID uuid.UUID, id uint, name, description string, quantity int) (*model.Asset, error) {
+func (s *AssetService) UpdateAsset(ctx context.Context, userID uuid.UUID, id uint, name, description string, quantity int, imageURL string) (*model.Asset, error) {
 	a, err := s.assetRepo.Get(ctx, id)
 	if err != nil {
 		return nil, err
@@ -56,6 +57,9 @@ func (s *AssetService) UpdateAsset(ctx context.Context, userID uuid.UUID, id uin
 	a.Description = description
 	if quantity > 0 {
 		a.Quantity = quantity
+	}
+	if imageURL != "" {
+		a.ImageURL = imageURL
 	}
 	if err := s.assetRepo.Update(ctx, a); err != nil {
 		return nil, err
@@ -86,6 +90,10 @@ func (s *AssetService) GetAsset(ctx context.Context, id uint) (*model.Asset, err
 
 func (s *AssetService) ListAssets(ctx context.Context, orgID uuid.UUID) ([]model.Asset, error) {
 	return s.assetRepo.ListByOrg(ctx, orgID)
+}
+
+func (s *AssetService) ListAllAssets(ctx context.Context) ([]model.Asset, error) {
+	return s.assetRepo.ListAll(ctx)
 }
 
 // --- Borrowing ---
