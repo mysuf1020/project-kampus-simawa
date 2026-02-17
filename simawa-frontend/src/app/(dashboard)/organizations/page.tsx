@@ -16,6 +16,7 @@ import {
   TabsTrigger,
 } from '@/components/ui'
 import { Page } from '@/components/commons'
+import { AdminGuard } from '@/components/guards/admin-guard'
 import { Organization, listOrganizations, updateOrganization, deleteOrganization } from '@/lib/apis/org'
 import { OrgCard } from './_components/org-card'
 import { CreateOrgDialog } from './_components/create-org-dialog'
@@ -24,6 +25,14 @@ import { OrgJoinRequestsCard } from './_components/org-join-requests-card'
 import { OrgChartCard } from './_components/org-chart-card'
 
 export default function OrganizationsPage() {
+  return (
+    <AdminGuard>
+      <OrganizationsPageContent />
+    </AdminGuard>
+  )
+}
+
+function OrganizationsPageContent() {
   const queryClient = useQueryClient()
   const orgsQuery = useQuery({ queryKey: ['orgs'], queryFn: listOrganizations })
   const [activeOrgId, setActiveOrgId] = useState<string>('')

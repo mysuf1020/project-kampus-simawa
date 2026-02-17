@@ -22,7 +22,7 @@ import {
   TextArea,
 } from '@/components/ui'
 import { Page } from '@/components/commons'
-import { AdminGuard } from '@/components/guards/role-guard'
+import { AdminGuard } from '@/components/guards/admin-guard'
 import {
   listUsers,
   listUserAssignments,
@@ -43,6 +43,14 @@ import { listOrganizations, type Organization } from '@/lib/apis/org'
 type ViewMode = 'list' | 'create' | 'view' | 'edit'
 
 export default function UsersPage() {
+  return (
+    <AdminGuard>
+      <UsersPageContent />
+    </AdminGuard>
+  )
+}
+
+function UsersPageContent() {
   const queryClient = useQueryClient()
   const [search, setSearch] = useState('')
   const [orgFilterId, setOrgFilterId] = useState('')

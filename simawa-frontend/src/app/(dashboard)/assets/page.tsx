@@ -36,6 +36,7 @@ import { Page } from '@/components/commons'
 import { listOrganizations } from '@/lib/apis/org'
 import { useRBAC } from '@/lib/providers/rbac-provider'
 import { ADMIN_ROLES } from '@/components/guards/role-guard'
+import { AdminGuard } from '@/components/guards/admin-guard'
 import {
   listAssets,
   listAllAssets,
@@ -68,6 +69,14 @@ const emptyBorrowForm: BorrowFormData = {
 }
 
 export default function AssetManagementPage() {
+  return (
+    <AdminGuard>
+      <AssetManagementPageContent />
+    </AdminGuard>
+  )
+}
+
+function AssetManagementPageContent() {
   const queryClient = useQueryClient()
   const { hasAnyRole } = useRBAC()
   const isAdmin = hasAnyRole(ADMIN_ROLES)

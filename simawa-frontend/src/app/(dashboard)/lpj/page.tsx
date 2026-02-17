@@ -15,6 +15,7 @@ import {
   Spinner,
 } from '@/components/ui'
 import { Page } from '@/components/commons'
+import { AdminGuard } from '@/components/guards/admin-guard'
 import { listOrganizations } from '@/lib/apis/org'
 import { listLPJByOrg, listAllLPJ } from '@/lib/apis/lpj'
 import { useRBAC } from '@/lib/providers/rbac-provider'
@@ -299,6 +300,14 @@ function LPJPageInner() {
 }
 
 export default function LPJPage() {
+  return (
+    <AdminGuard>
+      <LPJPageContent />
+    </AdminGuard>
+  )
+}
+
+function LPJPageContent() {
   return (
     <QueryParamsStateProvider<LPJPageQueryParamsState>
       defaultValues={{ page: '1', pageSize: '10', status: '', search: '' }}

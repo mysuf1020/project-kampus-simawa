@@ -19,6 +19,7 @@ import {
   Label,
 } from '@/components/ui'
 import { Page } from '@/components/commons'
+import { AdminGuard } from '@/components/guards/admin-guard'
 import { BarChart2, PieChart, Download, FileText } from 'lucide-react'
 import { fetchDashboardSummary } from '@/lib/apis/dashboard'
 import {
@@ -28,6 +29,14 @@ import {
 } from '@/lib/apis/report'
 
 export default function ReportsPage() {
+  return (
+    <AdminGuard>
+      <ReportsPageContent />
+    </AdminGuard>
+  )
+}
+
+function ReportsPageContent() {
   const { data, isLoading, isError } = useQuery({
     queryKey: ['dashboard-summary', 'reports'],
     queryFn: fetchDashboardSummary,

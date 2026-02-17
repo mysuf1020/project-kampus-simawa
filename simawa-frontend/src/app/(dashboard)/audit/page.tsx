@@ -23,6 +23,7 @@ import {
   Spinner,
 } from '@/components/ui'
 import { Page } from '@/components/commons'
+import { AdminGuard } from '@/components/guards/admin-guard'
 import { listAuditLogs } from '@/lib/apis/audit'
 import { listOrganizations } from '@/lib/apis/org'
 import { SkeletonTable } from '@/components/ui/skeleton/skeleton-table'
@@ -49,6 +50,14 @@ const entityLabels: Record<string, string> = {
 }
 
 export default function AuditLogPage() {
+  return (
+    <AdminGuard>
+      <AuditPageContent />
+    </AdminGuard>
+  )
+}
+
+function AuditPageContent() {
   const [page, setPage] = useState(1)
   const [pageSize] = useState(20)
   const [actionFilter, setActionFilter] = useState('')

@@ -19,6 +19,7 @@ import {
   TabsTrigger,
 } from '@/components/ui'
 import { Page } from '@/components/commons'
+import { AdminGuard } from '@/components/guards/admin-guard'
 import {
   approveActivity,
   createActivity,
@@ -304,6 +305,14 @@ function ActivitiesPageInner() {
 }
 
 export default function ActivitiesPage() {
+  return (
+    <AdminGuard>
+      <ActivitiesPageContent />
+    </AdminGuard>
+  )
+}
+
+function ActivitiesPageContent() {
   return (
     <QueryParamsStateProvider<ActivitiesPageQueryParamsState>
       defaultValues={{ page: '1', pageSize: '10', status: '', type: '', search: '', timeFilter: '' }}

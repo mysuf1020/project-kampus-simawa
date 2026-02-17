@@ -1,0 +1,23 @@
+DB_HOST: /cloudsql/simawa-app:asia-southeast1:simawa-db
+DB_USER: simawa_user
+DB_PASS: SimawaUser2026
+DB_NAME: simawa
+DB_PORT: "5432"
+DB_SSLMODE: disable
+JWT_SECRET: K7xB2mN9pQ3rS5tV8wY1zA4cE6fH0jL2nM5oP8qR
+ACCESS_TOKEN_EXP: 4h
+GIN_MODE: release
+MINIO_DISABLED: "false"
+MINIO_ENDPOINT: storage.googleapis.com
+MINIO_ACCESS_KEY: GOOG1ETRUP2KCE4G5JWTQ7BEKXVOXXVZI6XJE3YIF4ZXD6JMUPJQJUYUEVENV
+MINIO_SECRET_KEY: 892pfUuPw95wHKPzwzh5BDxOzlzPiZughMEWO7go
+MINIO_USE_SSL: "true"
+MINIO_BUCKET: simawa-app-storage
+SMTP_HOST: smtp.gmail.com
+SMTP_PORT: "587"
+SMTP_USER: ummuhabibah174@gmail.com
+SMTP_PASSWORD: nftyabofkpkcjris
+SMTP_FROM: ummuhabibah174@gmail.com
+SMTP_FROM_NAME: SIMAWA Raharja
+EMAIL_DOMAIN: ""
+CORS_ORIGINS: https://simawa.info,https://www.simawa.info,https://simawa-frontend-518944987986.asia-southeast1.run.app
