@@ -369,8 +369,8 @@ export function UserCreateCard() {
 
 export function RoleManagementCard() {
   const { user, hasAnyRole } = useRBAC()
-  const isAdmin = user?.roles?.includes('ADMIN')
-  const canManageRoles = hasAnyRole(['ADMIN', 'BEM_ADMIN'])
+  const isAdmin = hasAnyRole(['ADMIN', 'SUPER_ADMIN'])
+  const canManageRoles = hasAnyRole(['ADMIN', 'SUPER_ADMIN'])
 
   const [rolesUserId, setRolesUserId] = useState('')
   const [selectedUser, setSelectedUser] = useState<UserSearchItem | null>(null)
@@ -420,10 +420,11 @@ export function RoleManagementCard() {
   ]
 
   const ROLE_OPTIONS = [
-    { value: 'USER', label: 'USER' },
-    { value: 'ADMIN', label: 'ADMIN' },
-    { value: 'BEM_ADMIN', label: 'BEM_ADMIN' },
-    { value: 'DEMA_ADMIN', label: 'DEMA_ADMIN' },
+    { value: 'SUPER_ADMIN', label: 'SUPER ADMIN', requiresRole: 'SUPER_ADMIN' },
+    { value: 'ADMIN', label: 'ADMIN', requiresRole: 'SUPER_ADMIN' },
+    { value: 'BEM_ADMIN', label: 'BEM ADMIN', requiresRole: 'SUPER_ADMIN' },
+    { value: 'DEMA_ADMIN', label: 'DEMA ADMIN', requiresRole: 'SUPER_ADMIN' },
+    { value: 'USER', label: 'USER', requiresRole: 'ADMIN' },
   ] as const
 
   const handleAssignRoles = async (e: FormEvent) => {
@@ -521,7 +522,7 @@ export function RoleManagementCard() {
                   <SelectValue placeholder="Pilih role..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {ROLE_OPTIONS.filter((r) => !selectedRoles.includes(r.value)).map((r) => (
+                  {ROLE_OPTIONS.filter((r) => !selectedRoles.includes(r.value) && (r.requiresRole === 'ADMIN' ? hasAnyRole(['ADMIN', 'SUPER_ADMIN']) : hasAnyRole([r.requiresRole]))).map((r) => (
                     <SelectItem key={r.value} value={r.value}>
                       {r.label}
                     </SelectItem>
