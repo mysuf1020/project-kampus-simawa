@@ -25,13 +25,12 @@ function Spinner({ size = 'md', screenOverlay, className }: SpinnerProps) {
   return (
     <div className={cn(classNames.overlay, className)}>
       {screenOverlay && (
-        <Image
-          priority
-          src={'/assets/logo-full-brand.svg'}
-          height={40}
-          width={100}
-          alt="Quickbill"
-        />
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-12 w-12 bg-white rounded-xl flex items-center justify-center text-brand-600 font-bold text-2xl shadow-lg border border-brand-100/50">
+            S
+          </div>
+          <div className="text-brand-900 font-bold tracking-tight">SIMAWA</div>
+        </div>
       )}
       {screenOverlay ? <AnimationSpinner size={36} /> : spinners[size]}
     </div>

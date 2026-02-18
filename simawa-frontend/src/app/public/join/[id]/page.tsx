@@ -107,8 +107,8 @@ export default function PublicJoinPage() {
     return (
       <div className="min-h-screen bg-neutral-50 flex items-center justify-center p-6">
         <div className="text-center space-y-4">
-          <div className="w-20 h-20 mx-auto bg-red-100 rounded-full flex items-center justify-center">
-            <Building2 className="w-10 h-10 text-red-500" />
+          <div className="h-10 w-10 bg-white rounded-xl flex items-center justify-center shadow-lg shadow-black/10 border border-brand-100/50">
+            <span className="text-brand-600 font-bold text-xl">S</span>
           </div>
           <h1 className="text-2xl font-bold text-neutral-900">Organisasi Tidak Ditemukan</h1>
           <p className="text-neutral-500">Halaman yang Anda cari tidak tersedia.</p>
