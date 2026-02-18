@@ -23,7 +23,7 @@ export default function PublicPage() {
         <Container>
           <div className="flex items-center justify-between h-16">
             <Link href="/" className="flex items-center gap-2 group">
-              <div className="h-8 w-8 bg-brand-600 rounded-lg flex items-center justify-center text-white font-bold shadow-lg shadow-brand-500/20 group-hover:bg-brand-700 transition-colors">
+              <div className="h-8 w-8 bg-white rounded-lg flex items-center justify-center text-brand-600 font-bold shadow-lg shadow-brand-500/10 border border-brand-100/50 group-hover:bg-neutral-50 transition-colors">
                 S
               </div>
               <span className="font-bold text-xl tracking-tight text-neutral-900">

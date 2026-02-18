@@ -170,7 +170,7 @@ const Sidebar = () => {
             {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </Button>
           <Link href="/dashboard" className="flex items-center gap-2.5">
-            <div className="grid h-8 w-8 place-items-center rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 text-white text-sm font-bold shadow-lg shadow-brand-500/25">
+            <div className="grid h-8 w-8 place-items-center rounded-xl bg-white text-brand-600 text-lg font-bold shadow-md border border-brand-100/50">
               S
             </div>
             <div className="hidden sm:block">
@@ -304,7 +304,7 @@ const Sidebar = () => {
         {/* Sidebar Header */}
         <div className="flex h-16 items-center justify-between border-b border-neutral-100 px-4">
           <div className="flex items-center gap-3">
-            <div className="grid h-9 w-9 place-items-center rounded-xl bg-brand-600 text-white text-lg font-bold shadow-lg shadow-brand-500/30">
+            <div className="grid h-9 w-9 place-items-center rounded-xl bg-white text-brand-600 text-xl font-bold shadow-md border border-brand-100/50">
               S
             </div>
             <div>

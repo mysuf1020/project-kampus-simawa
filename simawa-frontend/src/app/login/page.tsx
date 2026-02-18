@@ -157,8 +157,8 @@ function LoginContent() {
 
         <div className="relative z-10">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 bg-white rounded-xl flex items-center justify-center shadow-lg shadow-black/10">
-              <span className="text-brand-700 font-bold text-lg">S</span>
+            <div className="h-10 w-10 bg-white rounded-xl flex items-center justify-center shadow-lg shadow-black/10 border border-brand-100/50">
+              <span className="text-brand-600 font-bold text-xl">S</span>
             </div>
             <span className="font-bold text-xl tracking-tight">SIMAWA</span>
           </div>

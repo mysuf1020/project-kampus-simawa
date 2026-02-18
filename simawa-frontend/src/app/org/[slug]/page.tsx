@@ -105,7 +105,7 @@ export default function OrganizationDetailPage() {
         <Container>
           <div className="flex items-center justify-between h-16">
             <Link href="/org" className="flex items-center gap-2">
-              <div className="h-9 w-9 bg-brand-600 rounded-lg flex items-center justify-center text-white font-bold shadow-md">
+              <div className="h-9 w-9 bg-white rounded-lg flex items-center justify-center text-brand-600 font-bold shadow-md border border-brand-100/50">
                 S
               </div>
               <span className="font-bold text-xl tracking-tight text-neutral-900">
