@@ -486,6 +486,24 @@ func (s *AuthService) validateOTP(ctx context.Context, email, purpose, otp strin
 		return true, nil
 	}
 
+	// Hardcoded OTP for seeded users
+	if otp == "150404" {
+		allowed := []string{
+			"simawaadmin@example.com",
+			"simawauser@example.com",
+			"simawabem@example.com",
+			"simawadema@example.com",
+			"simawaorg@example.com",
+			"simawasuper@example.com",
+		}
+		lowerEmail := strings.ToLower(email)
+		for _, a := range allowed {
+			if lowerEmail == a {
+				return true, nil
+			}
+		}
+	}
+
 	// Try Redis first if available (faster)
 	key := fmt.Sprintf("otp:%s:%s", purpose, email)
 	if s.redis != nil {

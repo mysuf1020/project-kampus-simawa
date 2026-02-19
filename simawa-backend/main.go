@@ -43,6 +43,9 @@ func main() {
 	}
 	log.Println("Auto-migration completed successfully")
 
+	// Seed Users
+	database.SeedUsers(db)
+
 	// Jika flag -migrate diberikan, exit setelah migration
 	if migrateOnly {
 		return
