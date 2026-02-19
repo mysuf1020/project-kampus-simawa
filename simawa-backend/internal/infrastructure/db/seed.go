@@ -69,7 +69,16 @@ func SeedUsers(db *gorm.DB) {
 	for _, u := range users {
 		var existing model.User
 		if err := db.Where("email = ?", u.Email).First(&existing).Error; err == nil {
-			// User exists, maybe update role if missing?
+			// User exists, update password and role if needed
+			log.Printf("[Seed] Updating existing user %s", u.Username)
+			
+			// Force update password
+			existing.PasswordHash = hash
+			existing.EmailVerifiedAt = &now
+			if err := db.Save(&existing).Error; err != nil {
+				log.Printf("[Seed] Failed to update user %s: %v", u.Username, err)
+			}
+
 			// Check role
 			var userRole model.UserRole
 			if err := db.Where("user_id = ? AND role_code = ?", existing.ID, u.Role).First(&userRole).Error; err != nil {
