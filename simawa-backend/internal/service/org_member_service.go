@@ -5,9 +5,10 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/google/uuid"
 	"simawa-backend/internal/model"
 	"simawa-backend/internal/repository"
+
+	"github.com/google/uuid"
 )
 
 type OrgMemberService struct {
@@ -57,7 +58,7 @@ func (s *OrgMemberService) Add(ctx context.Context, requester uuid.UUID, orgID u
 				return err
 			}
 			orgName = org.Name
-			code := OrgRoleCodeFromSlug(org.Slug)
+			code := model.RoleOrgAdmin
 			if err := s.rbac.AssignOrgRole(ctx, userID, code, orgID); err != nil {
 				return err
 			}
@@ -110,7 +111,7 @@ func (s *OrgMemberService) UpdateRole(ctx context.Context, requester uuid.UUID, 
 				return err
 			}
 			orgName = org.Name
-			code := OrgRoleCodeFromSlug(org.Slug)
+			code := model.RoleOrgAdmin
 			if err := s.rbac.AssignOrgRole(ctx, userID, code, orgID); err != nil {
 				return err
 			}

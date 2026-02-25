@@ -226,7 +226,11 @@ function AssetManagementPageContent() {
       toast.error('Nama aset wajib diisi')
       return
     }
-    editingId ? updateMut.mutate() : createMut.mutate()
+    if (editingId) {
+      updateMut.mutate()
+    } else {
+      createMut.mutate()
+    }
   }
 
   const startEdit = (asset: Asset) => {

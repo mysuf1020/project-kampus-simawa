@@ -5,10 +5,11 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/google/uuid"
-	"gorm.io/gorm"
 	"simawa-backend/internal/model"
 	"simawa-backend/internal/repository"
+
+	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type RBACService struct {
@@ -81,14 +82,10 @@ func (s *RBACService) UserHasAnyRole(ctx context.Context, userID uuid.UUID, allo
 // - ADMIN / BEM_ADMIN / DEMA_ADMIN allowed
 // - Any org-scoped role (ORG_*) allowed
 func (s *RBACService) CanSearchUsers(ctx context.Context, userID uuid.UUID) (bool, error) {
-	if err := s.RequireAny(ctx, userID, model.RoleAdmin, model.RoleBEMAdmin, model.RoleDEMAAdmin); err == nil {
+	if err := s.RequireAny(ctx, userID, model.RoleAdmin, model.RoleBEMAdmin, model.RoleDEMAAdmin, model.RoleOrgAdmin); err == nil {
 		return true, nil
 	}
-	ok, err := s.userRoles.HasAnyRolePrefix(ctx, userID, "ORG_")
-	if err != nil {
-		return false, err
-	}
-	return ok, nil
+	return false, nil
 }
 
 // AssignRolesByCodes ensures roles exist then assigns to user.
@@ -184,18 +181,8 @@ func (s *RBACService) CanManageOrg(ctx context.Context, userID uuid.UUID, org *m
 			return true, nil
 		}
 	}
-	// Backward-compatible: ORG_ADMIN scoped (via user_roles.org_id).
+	// ORG_ADMIN scoped (via user_roles.org_id).
 	ok, err := s.userRoles.HasRoleForOrg(ctx, userID, model.RoleOrgAdmin, org.ID)
-	if err != nil {
-		return false, err
-	}
-	if ok {
-		return true, nil
-	}
-
-	// Org-specific roles (example: ORG_ABSTER, ORG_HIMTIF) are stored scoped by org_id.
-	// Any role_code with prefix "ORG_" for the same org_id grants manage access.
-	ok, err = s.userRoles.HasAnyRoleForOrgPrefix(ctx, userID, org.ID, "ORG_")
 	if err != nil {
 		return false, err
 	}
