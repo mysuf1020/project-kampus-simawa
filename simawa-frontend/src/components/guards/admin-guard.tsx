@@ -3,7 +3,7 @@
 import { useRBAC } from '@/lib/providers/rbac-provider'
 import { AccessDenied } from '@/components/access-denied'
 
-const ADMIN_ROLES = ['ADMIN', 'SUPER_ADMIN', 'BEM_ADMIN', 'DEMA_ADMIN', 'ORG_ADMIN', 'ORG_*']
+const ADMIN_ROLES = ['ADMIN', 'SUPER_ADMIN', 'BEM_ADMIN', 'DEMA_ADMIN', 'ORG_ADMIN']
 
 interface AdminGuardProps {
   children: React.ReactNode
