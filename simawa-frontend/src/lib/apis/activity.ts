@@ -162,6 +162,20 @@ export const reviseActivity = async (id: string, note?: string) => {
 }
 
 
+export const listAllActivities = async (
+  params?: ListActivitiesParams,
+) => {
+  const { data } = await api.get<ListActivitiesResponse>('/v1/activities', {
+    params: {
+      status: params?.status || undefined,
+      type: params?.type || undefined,
+      page: params?.page,
+      size: params?.size,
+    },
+  })
+  return data
+}
+
 export const listActivitiesByOrg = async (
   orgId: string,
   params?: ListActivitiesParams,

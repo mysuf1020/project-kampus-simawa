@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -17,6 +17,11 @@ import {
   CardTitle,
   Input,
   Label,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
   TextArea,
 } from '@/components/ui'
 import { VALIDATION_LIMITS, ERROR_MESSAGES } from '@/lib/validations/form-schemas'
@@ -45,12 +50,11 @@ const COLLAB_OPTIONS = [
 export type ActivityFormValues = z.infer<typeof activitySchema>
 
 type Props = {
-  orgId: string
   onCreate: (values: ActivityFormValues) => Promise<void>
   isLoading?: boolean
 }
 
-export function ActivityCreateForm({ orgId, onCreate, isLoading }: Props) {
+export function ActivityCreateForm({ onCreate, isLoading }: Props) {
   const [collabType, setCollabType] = useState('INTERNAL')
   const [selectedCollabOrgs, setSelectedCollabOrgs] = useState<string[]>([])
 
@@ -62,17 +66,23 @@ export function ActivityCreateForm({ orgId, onCreate, isLoading }: Props) {
     mode: 'onChange',
   })
 
-  useEffect(() => {
-    if (orgId) form.setValue('org_id', orgId)
-  }, [orgId, form])
+  const selectedOrgId = form.watch('org_id')
 
-  useEffect(() => {
-    form.setValue('collab_type', collabType)
-    if (collabType !== 'COLLAB') {
+  const handleOrgChange = (value: string) => {
+    form.setValue('org_id', value, { shouldValidate: true })
+    // Reset collab orgs when org changes
+    setSelectedCollabOrgs([])
+    form.setValue('collaborator_org_ids', [])
+  }
+
+  const handleCollabTypeChange = (value: string) => {
+    setCollabType(value)
+    form.setValue('collab_type', value)
+    if (value !== 'COLLAB') {
       setSelectedCollabOrgs([])
       form.setValue('collaborator_org_ids', [])
     }
-  }, [collabType, form])
+  }
 
   const toggleCollabOrg = (id: string) => {
     setSelectedCollabOrgs((prev) => {
@@ -86,7 +96,7 @@ export function ActivityCreateForm({ orgId, onCreate, isLoading }: Props) {
     try {
       await onCreate(values)
       toast.success('Aktivitas berhasil dibuat')
-      form.reset({ ...values, title: '', description: '', location: '', type: '', collab_type: 'INTERNAL', collaborator_org_ids: [] })
+      form.reset({ org_id: values.org_id, title: '', description: '', location: '', type: '', collab_type: 'INTERNAL', collaborator_org_ids: [] })
       setCollabType('INTERNAL')
       setSelectedCollabOrgs([])
     } catch {
@@ -106,7 +116,29 @@ export function ActivityCreateForm({ orgId, onCreate, isLoading }: Props) {
       </CardHeader>
       <CardContent className="pt-4 space-y-4">
         <form className="space-y-4" onSubmit={form.handleSubmit(handleSubmit)}>
-          <input type="hidden" {...form.register('org_id')} />
+          <div className="space-y-1.5">
+            <Label className="text-xs font-medium text-neutral-700">
+              <Building2 className="inline h-3.5 w-3.5 mr-1 -mt-0.5" />
+              Organisasi Pembuat
+            </Label>
+            <Select value={selectedOrgId || undefined} onValueChange={handleOrgChange}>
+              <SelectTrigger className="h-9 text-sm">
+                <SelectValue placeholder="— Pilih organisasi —" />
+              </SelectTrigger>
+              <SelectContent>
+                {(orgs ?? []).map((org) => (
+                  <SelectItem key={org.id} value={org.id} className="text-sm">
+                    {org.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {form.formState.errors.org_id && (
+              <p className="text-[10px] text-red-600 font-medium">
+                {form.formState.errors.org_id.message}
+              </p>
+            )}
+          </div>
 
           <div className="space-y-1.5">
             <Label htmlFor="title" className="text-xs font-medium text-neutral-700">
@@ -179,12 +211,11 @@ export function ActivityCreateForm({ orgId, onCreate, isLoading }: Props) {
                   <button
                     key={opt.value}
                     type="button"
-                    onClick={() => setCollabType(opt.value)}
-                    className={`flex flex-col items-center gap-1.5 rounded-lg border-2 p-2.5 text-center transition-all ${
-                      active
+                    onClick={() => handleCollabTypeChange(opt.value)}
+                    className={`flex flex-col items-center gap-1.5 rounded-lg border-2 p-2.5 text-center transition-all ${active
                         ? 'border-brand-500 bg-brand-50 text-brand-700'
                         : 'border-neutral-200 bg-white text-neutral-500 hover:border-neutral-300'
-                    }`}
+                      }`}
                   >
                     <Icon className={`h-4 w-4 ${active ? 'text-brand-600' : 'text-neutral-400'}`} />
                     <span className="text-[11px] font-semibold leading-tight">{opt.label}</span>
@@ -200,18 +231,17 @@ export function ActivityCreateForm({ orgId, onCreate, isLoading }: Props) {
                 Organisasi Kolaborator
               </Label>
               <div className="flex flex-wrap gap-2">
-                {(orgs ?? []).filter((o) => o.id !== orgId).map((org) => {
+                {(orgs ?? []).filter((o) => o.id !== selectedOrgId).map((org) => {
                   const selected = selectedCollabOrgs.includes(org.id)
                   return (
                     <button
                       key={org.id}
                       type="button"
                       onClick={() => toggleCollabOrg(org.id)}
-                      className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-medium border transition-all ${
-                        selected
+                      className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-medium border transition-all ${selected
                           ? 'border-brand-500 bg-brand-50 text-brand-700'
                           : 'border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300'
-                      }`}
+                        }`}
                     >
                       <Building2 className="h-3 w-3" />
                       {org.name}
@@ -253,7 +283,7 @@ export function ActivityCreateForm({ orgId, onCreate, isLoading }: Props) {
           <Button
             type="submit"
             className="w-full bg-brand-600 hover:bg-brand-700 text-white"
-            disabled={isLoading}
+            disabled={isLoading || !selectedOrgId}
           >
             {isLoading ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />

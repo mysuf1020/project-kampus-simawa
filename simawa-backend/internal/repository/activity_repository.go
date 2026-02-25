@@ -4,9 +4,10 @@ import (
 	"context"
 	"time"
 
+	"simawa-backend/internal/model"
+
 	"github.com/google/uuid"
 	"gorm.io/gorm"
-	"simawa-backend/internal/model"
 )
 
 type ActivityRepository interface {
@@ -14,6 +15,7 @@ type ActivityRepository interface {
 	Update(ctx context.Context, a *model.Activity) error
 	Get(ctx context.Context, id uuid.UUID) (*model.Activity, error)
 	List(ctx context.Context, orgID uuid.UUID, status, actType string, publicOnly bool, page, size int, start, end time.Time) ([]model.Activity, error)
+	ListAll(ctx context.Context, status, actType string, page, size int) ([]model.Activity, int64, error)
 	ListPublic(ctx context.Context, from time.Time) ([]model.Activity, error)
 }
 
@@ -72,6 +74,32 @@ func (r *activityRepository) List(ctx context.Context, orgID uuid.UUID, status, 
 	return rows, nil
 }
 
+func (r *activityRepository) ListAll(ctx context.Context, status, actType string, page, size int) ([]model.Activity, int64, error) {
+	var rows []model.Activity
+	var total int64
+	q := r.db.WithContext(ctx).Model(&model.Activity{})
+	if status != "" {
+		q = q.Where("status = ?", status)
+	}
+	if actType != "" {
+		q = q.Where("type = ?", actType)
+	}
+	if err := q.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	if page <= 0 {
+		page = 1
+	}
+	if size <= 0 || size > 100 {
+		size = 10
+	}
+	offset := (page - 1) * size
+	if err := q.Order("created_at DESC").Limit(size).Offset(offset).Find(&rows).Error; err != nil {
+		return nil, 0, err
+	}
+	return rows, total, nil
+}
+
 func (r *activityRepository) ListPublic(ctx context.Context, from time.Time) ([]model.Activity, error) {
 	var rows []model.Activity
 	if err := r.db.WithContext(ctx).
@@ -84,4 +112,3 @@ func (r *activityRepository) ListPublic(ctx context.Context, from time.Time) ([]
 	}
 	return rows, nil
 }
-

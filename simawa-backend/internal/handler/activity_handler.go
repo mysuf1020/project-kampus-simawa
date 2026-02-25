@@ -49,7 +49,7 @@ func (h *ActivityHandler) Create(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, response.Err(err.Error()))
 		return
 	}
-	
+
 	// Sanitize inputs
 	req.Title = sanitize.String(req.Title)
 	req.Description = sanitize.String(req.Description)
@@ -148,6 +148,19 @@ func (h *ActivityHandler) Revision(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, response.OK(a))
+}
+
+func (h *ActivityHandler) ListAll(c *gin.Context) {
+	status := c.Query("status")
+	actType := c.Query("type")
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	size, _ := strconv.Atoi(c.DefaultQuery("size", "10"))
+	rows, total, err := h.svc.ListAll(c.Request.Context(), status, actType, page, size)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, response.Err(err.Error()))
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"items": rows, "total": total})
 }
 
 func (h *ActivityHandler) ListByOrg(c *gin.Context) {
@@ -350,18 +363,18 @@ func (h *ActivityHandler) RemoveGalleryPhoto(c *gin.Context) {
 func (h *ActivityHandler) ListPublicGallery(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	size, _ := strconv.Atoi(c.DefaultQuery("size", "20"))
-	
+
 	// Reuse ListPublic but filter for items with GalleryURLs in frontend or here?
-	// The requirement is "Public Gallery". 
-	// For now, let's fetch recent public activities and frontend can display their cover images 
+	// The requirement is "Public Gallery".
+	// For now, let's fetch recent public activities and frontend can display their cover images
 	// or specific gallery photos.
 	// Or we can create a dedicated service method later.
 	// For MVP: Return public activities that have cover images or gallery urls.
-	
+
 	// Actually, the user asked for:
 	// GET /public/activities/gallery | List semua foto dokumentasi kegiatan | ❌ (getPublicGallery)
 	// GET /public/activities/:id/photos | List foto spesifik per kegiatan | ❌ (getActivityPhotos)
-	
+
 	// Re-using ListPublic from service for now, but in real app ideally filter by having photos.
 	from := time.Now().Add(-365 * 24 * time.Hour) // Last 1 year
 	rows, err := h.svc.ListPublic(c.Request.Context(), from)
@@ -369,7 +382,7 @@ func (h *ActivityHandler) ListPublicGallery(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, response.Err(err.Error()))
 		return
 	}
-	
+
 	// Simple pagination on memory (not efficient for large data, but okay for MVP)
 	// Filter items that have Cover or Gallery
 	var withPhotos []model.Activity
@@ -380,7 +393,7 @@ func (h *ActivityHandler) ListPublicGallery(c *gin.Context) {
 			withPhotos = append(withPhotos, a)
 		}
 	}
-	
+
 	// Slice for pagination
 	start := (page - 1) * size
 	end := start + size
@@ -390,7 +403,7 @@ func (h *ActivityHandler) ListPublicGallery(c *gin.Context) {
 	if end > len(withPhotos) {
 		end = len(withPhotos)
 	}
-	
+
 	c.JSON(http.StatusOK, gin.H{
 		"items": withPhotos[start:end],
 		"total": len(withPhotos),
@@ -408,16 +421,16 @@ func (h *ActivityHandler) GetActivityPhotos(c *gin.Context) {
 	// Fetch public or check permission? Public endpoint implies public access.
 	// Should check if activity is public or user has access.
 	// Assuming public for now as per route /public/...
-	
+
 	a, err := h.svc.Get(c.Request.Context(), id)
 	if err != nil {
 		c.JSON(http.StatusNotFound, response.Err(err.Error()))
 		return
 	}
-	
-	// If internal and not logged in? 
+
+	// If internal and not logged in?
 	// For now, allow viewing photos if you have the ID (like unlisted link)
-	
+
 	c.JSON(http.StatusOK, response.OK(gin.H{
 		"cover":   a.CoverKey, // or URL
 		"gallery": a.GalleryURLs,

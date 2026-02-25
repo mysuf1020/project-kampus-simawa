@@ -1,17 +1,15 @@
 'use client'
 
-import { useEffect, useMemo } from 'react'
+import { useMemo } from 'react'
 import {
   useMutation,
   useQuery,
   useQueryClient,
   useInfiniteQuery,
 } from '@tanstack/react-query'
-import { Plus } from 'lucide-react'
 
 import {
   Badge,
-  Button,
   Container,
   Tabs,
   TabsContent,
@@ -24,6 +22,7 @@ import {
   approveActivity,
   createActivity,
   listActivitiesByOrg,
+  listAllActivities,
   reviseActivity,
   submitActivity,
   type ListActivitiesParams,
@@ -53,10 +52,6 @@ function ActivitiesPageInner() {
     queryFn: listOrganizations,
   })
 
-  useEffect(() => {
-    if (!orgId && orgs?.length) setOrgId(orgs[0].id)
-  }, [orgId, orgs, setOrgId])
-
   // Desktop: useQuery with pagination
   const {
     data: activitiesResp,
@@ -65,15 +60,21 @@ function ActivitiesPageInner() {
     isError,
     refetch,
   } = useQuery({
-    queryKey: ['activities', orgId, page, pageSize, status, type],
+    queryKey: ['activities', orgId || 'all', page, pageSize, status, type],
     queryFn: () =>
-      listActivitiesByOrg(orgId, {
-        page,
-        size: pageSize,
-        status,
-        type,
-      } as ListActivitiesParams),
-    enabled: Boolean(orgId),
+      orgId
+        ? listActivitiesByOrg(orgId, {
+          page,
+          size: pageSize,
+          status,
+          type,
+        } as ListActivitiesParams)
+        : listAllActivities({
+          page,
+          size: pageSize,
+          status,
+          type,
+        } as ListActivitiesParams),
   })
 
   // Mobile: useInfiniteQuery for infinite scroll
@@ -83,15 +84,21 @@ function ActivitiesPageInner() {
     hasNextPage,
     isFetchingNextPage,
   } = useInfiniteQuery({
-    queryKey: ['activities-infinite', orgId, status, type],
+    queryKey: ['activities-infinite', orgId || 'all', status, type],
     queryFn: ({ pageParam = 1 }) =>
-      listActivitiesByOrg(orgId, {
-        page: pageParam,
-        size: 10,
-        status,
-        type,
-      } as ListActivitiesParams),
-    enabled: Boolean(orgId),
+      orgId
+        ? listActivitiesByOrg(orgId, {
+          page: pageParam,
+          size: 10,
+          status,
+          type,
+        } as ListActivitiesParams)
+        : listAllActivities({
+          page: pageParam,
+          size: 10,
+          status,
+          type,
+        } as ListActivitiesParams),
     initialPageParam: 1,
     getNextPageParam: (lastPage, allPages) => {
       const totalItems = lastPage.total ?? 0
@@ -106,7 +113,8 @@ function ActivitiesPageInner() {
   const { mutateAsync: create, isPending: isCreating } = useMutation({
     mutationFn: createActivity,
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['activities', orgId] })
+      await queryClient.invalidateQueries({ queryKey: ['activities'] })
+      await queryClient.invalidateQueries({ queryKey: ['activities-infinite'] })
     },
   })
 
@@ -133,6 +141,10 @@ function ActivitiesPageInner() {
 
   const handleCreate = async (values: ActivityFormValues) => {
     await create(values)
+    // Switch list filter to the org used in the create form so new activity is visible
+    if (values.org_id && values.org_id !== orgId) {
+      setOrgId(values.org_id)
+    }
   }
 
   const handleSubmit = async (id: string) => {
@@ -289,11 +301,10 @@ function ActivitiesPageInner() {
             <TabsContent value="create" className="space-y-6">
               <div className="grid gap-6 lg:grid-cols-2">
                 <ActivityCreateForm
-                  orgId={orgId}
                   onCreate={handleCreate}
                   isLoading={isCreating}
                 />
-                <ActivityProposalUploadCard orgId={orgId} />
+                <ActivityProposalUploadCard />
               </div>
             </TabsContent>
 

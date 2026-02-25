@@ -6,23 +6,25 @@ import (
 	"errors"
 	"time"
 
-	"github.com/google/uuid"
-	"gorm.io/datatypes"
 	"simawa-backend/internal/model"
 	"simawa-backend/internal/repository"
+
+	"github.com/google/uuid"
+	"gorm.io/datatypes"
 )
 
 type ActivityService struct {
 	repo    repository.ActivityRepository
 	org     repository.OrganizationRepository
+	member  repository.OrgMemberRepository
 	history repository.ActivityHistoryRepository
 	rbac    *RBACService
 	notify  *NotificationService
 	audit   *AuditService
 }
 
-func NewActivityService(repo repository.ActivityRepository, org repository.OrganizationRepository, history repository.ActivityHistoryRepository, rbac *RBACService, notify *NotificationService, audit *AuditService) *ActivityService {
-	return &ActivityService{repo: repo, org: org, history: history, rbac: rbac, notify: notify, audit: audit}
+func NewActivityService(repo repository.ActivityRepository, org repository.OrganizationRepository, member repository.OrgMemberRepository, history repository.ActivityHistoryRepository, rbac *RBACService, notify *NotificationService, audit *AuditService) *ActivityService {
+	return &ActivityService{repo: repo, org: org, member: member, history: history, rbac: rbac, notify: notify, audit: audit}
 }
 
 type CreateActivityInput struct {
@@ -48,7 +50,7 @@ func (s *ActivityService) Create(ctx context.Context, in *CreateActivityInput) (
 	if in.Title == "" || in.OrgID == uuid.Nil {
 		return nil, errors.New("title/org required")
 	}
-	
+
 	// Check if user can manage this org
 	org, err := s.org.GetByID(ctx, in.OrgID)
 	if err != nil {
@@ -58,7 +60,7 @@ func (s *ActivityService) Create(ctx context.Context, in *CreateActivityInput) (
 	if err != nil || !ok {
 		return nil, errors.New("forbidden: you don't have permission to create activity for this organization")
 	}
-	
+
 	collabType := in.CollabType
 	if collabType == "" {
 		collabType = "INTERNAL"
@@ -91,6 +93,28 @@ func (s *ActivityService) Create(ctx context.Context, in *CreateActivityInput) (
 		return nil, err
 	}
 	s.appendHistory(ctx, a, in.CreatedBy, "CREATE", in.Description)
+
+	// Notify collaborator org admins
+	if len(in.CollaboratorOrgIDs) > 0 && s.member != nil && s.notify != nil {
+		for _, collabOrgIDStr := range in.CollaboratorOrgIDs {
+			collabOrgID, parseErr := uuid.Parse(collabOrgIDStr)
+			if parseErr != nil {
+				continue
+			}
+			members, listErr := s.member.ListByOrg(ctx, collabOrgID)
+			if listErr != nil {
+				continue
+			}
+			for _, m := range members {
+				if m.Role == "ADMIN" || m.Role == "KETUA" || m.Role == "WAKIL_KETUA" {
+					_ = s.notify.Push(ctx, m.UserID, "Undangan Kolaborasi",
+						"Organisasi Anda diundang berkolaborasi dalam kegiatan: "+a.Title,
+						map[string]any{"activity_id": a.ID, "type": "collab_invite"})
+				}
+			}
+		}
+	}
+
 	return a, nil
 }
 
@@ -162,6 +186,10 @@ func (s *ActivityService) ListByOrg(ctx context.Context, orgID uuid.UUID, status
 	return s.repo.List(ctx, orgID, status, actType, publicOnly, page, size, start, end)
 }
 
+func (s *ActivityService) ListAll(ctx context.Context, status, actType string, page, size int) ([]model.Activity, int64, error) {
+	return s.repo.ListAll(ctx, status, actType, page, size)
+}
+
 func (s *ActivityService) ListPublic(ctx context.Context, from time.Time) ([]model.Activity, error) {
 	return s.repo.ListPublic(ctx, from)
 }
@@ -197,20 +225,20 @@ func (s *ActivityService) AddGalleryPhoto(ctx context.Context, userID uuid.UUID,
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Check permission via RBAC or ownership (simple check here, RBAC in middleware usually)
 	// But service should probably enforce or assume caller checked.
 	// We'll append to GalleryURLs
-	
+
 	var urls []string
 	if len(a.GalleryURLs) > 0 {
 		_ = json.Unmarshal(a.GalleryURLs, &urls)
 	}
 	urls = append(urls, url)
-	
+
 	b, _ := json.Marshal(urls)
 	a.GalleryURLs = datatypes.JSON(b)
-	
+
 	if err := s.repo.Update(ctx, a); err != nil {
 		return nil, err
 	}
@@ -228,7 +256,7 @@ func (s *ActivityService) RemoveGalleryPhoto(ctx context.Context, userID uuid.UU
 	if len(a.GalleryURLs) > 0 {
 		_ = json.Unmarshal(a.GalleryURLs, &urls)
 	}
-	
+
 	newURLs := make([]string, 0, len(urls))
 	found := false
 	for _, u := range urls {
@@ -238,7 +266,7 @@ func (s *ActivityService) RemoveGalleryPhoto(ctx context.Context, userID uuid.UU
 		}
 		newURLs = append(newURLs, u)
 	}
-	
+
 	if !found {
 		return a, nil // No change
 	}

@@ -18,7 +18,7 @@ import {
   TabsTrigger,
   Spinner,
 } from '@/components/ui'
-import { Calendar, Building2, Image as ImageIcon, ExternalLink, LogIn } from 'lucide-react'
+import { Calendar, Building2, Image as ImageIcon, ExternalLink, LogIn, CalendarPlus, Rss } from 'lucide-react'
 import { api } from '@/lib/http-client'
 
 type Organization = {
@@ -100,8 +100,8 @@ export default function PublicOrganizationsPage() {
 
   const displayedActivities =
     calendarTab === 'upcoming' ? upcomingActivities
-    : calendarTab === 'past' ? pastActivities
-    : allActivitiesSorted
+      : calendarTab === 'past' ? pastActivities
+        : allActivitiesSorted
 
   return (
     <div className="min-h-screen bg-neutral-50">
@@ -116,6 +116,15 @@ export default function PublicOrganizationsPage() {
               <span className="font-bold text-xl tracking-tight text-neutral-900">
                 SIMAWA
               </span>
+            </Link>
+            <Link href="/login">
+              <Button
+                size="sm"
+                className="bg-neutral-900 hover:bg-neutral-800 text-white rounded-full px-5"
+              >
+                <LogIn className="mr-2 h-4 w-4" />
+                Login
+              </Button>
             </Link>
           </div>
         </Container>
@@ -242,6 +251,40 @@ export default function PublicOrganizationsPage() {
 
             {/* Calendar Tab */}
             <TabsContent value="calendar" className="space-y-6">
+              {/* Export buttons */}
+              <div className="flex gap-2 justify-end">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="bg-white hover:bg-neutral-50 text-neutral-600 border-neutral-200 h-9"
+                  onClick={() =>
+                    window.open(
+                      `${process.env.NEXT_PUBLIC_API_BASE_PATH || '/api/simawa'}/public/activities.ics`,
+                      '_blank',
+                      'noreferrer',
+                    )
+                  }
+                >
+                  <CalendarPlus className="mr-2 h-3.5 w-3.5" />
+                  Kalender
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="bg-white hover:bg-neutral-50 text-neutral-600 border-neutral-200 h-9"
+                  onClick={() =>
+                    window.open(
+                      `${process.env.NEXT_PUBLIC_API_BASE_PATH || '/api/simawa'}/public/activities.rss`,
+                      '_blank',
+                      'noreferrer',
+                    )
+                  }
+                >
+                  <Rss className="mr-2 h-3.5 w-3.5" />
+                  RSS
+                </Button>
+              </div>
+
               {activitiesLoading && (
                 <div className="flex items-center justify-center py-12">
                   <Spinner size="lg" />
@@ -282,16 +325,14 @@ export default function PublicOrganizationsPage() {
                     <button
                       key={tab}
                       onClick={() => setCalendarTab(tab)}
-                      className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px ${
-                        calendarTab === tab
+                      className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px ${calendarTab === tab
                           ? 'border-brand-600 text-brand-700'
                           : 'border-transparent text-neutral-500 hover:text-neutral-700'
-                      }`}
+                        }`}
                     >
                       {labels[tab]}
-                      <span className={`ml-1.5 text-xs px-1.5 py-0.5 rounded-full ${
-                        calendarTab === tab ? 'bg-brand-100 text-brand-700' : 'bg-neutral-100 text-neutral-500'
-                      }`}>
+                      <span className={`ml-1.5 text-xs px-1.5 py-0.5 rounded-full ${calendarTab === tab ? 'bg-brand-100 text-brand-700' : 'bg-neutral-100 text-neutral-500'
+                        }`}>
                         {counts[tab]}
                       </span>
                     </button>

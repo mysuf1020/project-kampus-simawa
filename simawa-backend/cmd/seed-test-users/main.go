@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -113,6 +114,7 @@ func main() {
 	}
 
 	// 3. Seed Users
+	now := time.Now()
 	for _, u := range users {
 		var user model.User
 		// Check if user exists
@@ -120,13 +122,14 @@ func main() {
 			if err == gorm.ErrRecordNotFound {
 				// Create User
 				user = model.User{
-					Username:     u.Username,
-					Email:        u.Email,
-					FirstName:    u.FirstName,
-					PasswordHash: hashedPassword,
-					NIM:          fmt.Sprintf("NIM-%s", u.Username), // Dummy NIM
-					Jurusan:      "Teknik Informatika",
-					Phone:        "081234567890",
+					Username:        u.Username,
+					Email:           u.Email,
+					FirstName:       u.FirstName,
+					PasswordHash:    hashedPassword,
+					NIM:             fmt.Sprintf("NIM-%s", u.Username), // Dummy NIM
+					Jurusan:         "Teknik Informatika",
+					Phone:           "081234567890",
+					EmailVerifiedAt: &now,
 				}
 				if err := db.Create(&user).Error; err != nil {
 					log.Printf("Failed to create user %s: %v", u.Username, err)
@@ -138,10 +141,13 @@ func main() {
 				continue
 			}
 		} else {
-			// Update password if exists
+			// Update password and verification if exists
 			user.PasswordHash = hashedPassword
+			if user.EmailVerifiedAt == nil {
+				user.EmailVerifiedAt = &now
+			}
 			db.Save(&user)
-			log.Printf("Updated password for user: %s", u.Username)
+			log.Printf("Updated password/verification for user: %s", u.Username)
 		}
 
 		// 4. Assign Roles

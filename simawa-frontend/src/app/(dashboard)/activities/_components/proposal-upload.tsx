@@ -1,8 +1,8 @@
 'use client'
 
 import { FormEvent, useState } from 'react'
-import { useMutation } from '@tanstack/react-query'
-import { FileUp, Loader2 } from 'lucide-react'
+import { useMutation, useQuery } from '@tanstack/react-query'
+import { FileUp, Loader2, Building2 } from 'lucide-react'
 
 import {
   Button,
@@ -13,16 +13,21 @@ import {
   CardTitle,
   Input,
   Label,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from '@/components/ui'
 import { uploadActivityProposal } from '@/lib/apis/activity'
+import { listOrganizations } from '@/lib/apis/org'
 
-type Props = {
-  orgId: string
-}
-
-export function ActivityProposalUploadCard({ orgId }: Props) {
+export function ActivityProposalUploadCard() {
   const [file, setFile] = useState<File | null>(null)
   const [uploadedKey, setUploadedKey] = useState<string | null>(null)
+  const [selectedOrgId, setSelectedOrgId] = useState('')
+
+  const { data: orgs } = useQuery({ queryKey: ['orgs'], queryFn: listOrganizations })
 
   const { mutateAsync, isPending } = useMutation({
     mutationFn: uploadActivityProposal,
@@ -30,7 +35,7 @@ export function ActivityProposalUploadCard({ orgId }: Props) {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
-    if (!file) return
+    if (!file || !selectedOrgId) return
     const key = await mutateAsync(file)
     setUploadedKey(key)
   }
@@ -56,6 +61,25 @@ export function ActivityProposalUploadCard({ orgId }: Props) {
         <form className="space-y-4" onSubmit={handleSubmit}>
           <div className="space-y-1.5">
             <Label className="text-xs font-medium text-neutral-700">
+              <Building2 className="inline h-3.5 w-3.5 mr-1 -mt-0.5" />
+              Organisasi Pembuat
+            </Label>
+            <Select value={selectedOrgId || undefined} onValueChange={setSelectedOrgId}>
+              <SelectTrigger className="h-9 text-sm">
+                <SelectValue placeholder="— Pilih organisasi —" />
+              </SelectTrigger>
+              <SelectContent>
+                {(orgs ?? []).map((org) => (
+                  <SelectItem key={org.id} value={org.id} className="text-sm">
+                    {org.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-xs font-medium text-neutral-700">
               File Proposal (PDF)
             </Label>
             <Input
@@ -71,12 +95,12 @@ export function ActivityProposalUploadCard({ orgId }: Props) {
 
           <div className="rounded-lg bg-blue-50 p-3 border border-blue-100">
             <p className="text-xs text-blue-700 leading-relaxed">
-              <strong>Keterangan:</strong> File proposal yang diunggah akan masuk ke BEM untuk ditinjau. 
+              <strong>Keterangan:</strong> File proposal yang diunggah akan masuk ke BEM untuk ditinjau.
               Proposal diperlukan untuk kegiatan besar seperti seminar, workshop, atau lomba.
             </p>
           </div>
 
-          {orgId ? null : (
+          {!selectedOrgId && (
             <div className="rounded-lg bg-amber-50 p-3 border border-amber-100">
               <p className="text-xs text-amber-700">
                 Pilih organisasi terlebih dahulu sebelum mengunggah proposal.
@@ -87,7 +111,7 @@ export function ActivityProposalUploadCard({ orgId }: Props) {
           <Button
             type="submit"
             className="w-full bg-brand-600 hover:bg-brand-700 text-white"
-            disabled={!file || isPending}
+            disabled={!file || isPending || !selectedOrgId}
           >
             {isPending ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -110,3 +134,4 @@ export function ActivityProposalUploadCard({ orgId }: Props) {
     </Card>
   )
 }
+

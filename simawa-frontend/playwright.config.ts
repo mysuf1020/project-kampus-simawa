@@ -13,7 +13,7 @@ export default defineConfig({
     baseURL: process.env.BASE_URL || 'http://localhost:3000',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
-    storageState: 'e2e/storageState.json',
+    // storageState: 'e2e/storageState.json',
   },
   projects: [
     {

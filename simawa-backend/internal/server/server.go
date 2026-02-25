@@ -185,7 +185,7 @@ func (s *Server) initServices() {
 	s.Services.Auth = service.NewAuthService(s.Config, s.Repositories.User, s.Repositories.UserRole, s.Repositories.RefreshToken, s.Repositories.OTP, s.Redis, emailSvc, s.Services.Audit)
 	s.Services.Surat = service.NewSuratServiceWithRepo(s.Repositories.Surat, s.Repositories.Org, s.Services.Audit, s.Services.Notify)
 	s.Services.Org = service.NewOrganizationService(s.Repositories.Org, s.Services.RBAC, s.Services.Audit)
-	s.Services.Activity = service.NewActivityService(s.Repositories.Activity, s.Repositories.Org, s.Repositories.ActHistory, s.Services.RBAC, s.Services.Notify, s.Services.Audit)
+	s.Services.Activity = service.NewActivityService(s.Repositories.Activity, s.Repositories.Org, s.Repositories.OrgMember, s.Repositories.ActHistory, s.Services.RBAC, s.Services.Notify, s.Services.Audit)
 	s.Services.LPJ = service.NewLPJService(s.Repositories.LPJ, s.Repositories.Activity, s.Repositories.Org, s.Services.RBAC, s.Services.Notify, s.Repositories.LPJHistory, s.Services.Audit)
 	s.Services.Member = service.NewOrgMemberService(s.Repositories.OrgMember, s.Repositories.Org, s.Services.RBAC, s.Services.Audit)
 	s.Services.JoinReq = service.NewOrgJoinRequestService(s.Repositories.OrgJoinReq, s.Repositories.Org, s.Repositories.User, s.Repositories.OrgMember, s.Services.RBAC, s.Services.Audit)
