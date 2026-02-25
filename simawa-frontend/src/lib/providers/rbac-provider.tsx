@@ -71,7 +71,14 @@ export function RBACProvider({ children }: Props) {
     const hasAnyRole = (required: string[]): boolean => {
       if (!required || required.length === 0) return true
       if (roles.length === 0) return false
-      return required.some((role) => roles.includes(role))
+      return required.some((role) => {
+        // Support prefix matching: 'ORG_*' matches any role starting with 'ORG_'
+        if (role.endsWith('*')) {
+          const prefix = role.slice(0, -1)
+          return roles.some((r) => r.startsWith(prefix))
+        }
+        return roles.includes(role)
+      })
     }
 
     return {
