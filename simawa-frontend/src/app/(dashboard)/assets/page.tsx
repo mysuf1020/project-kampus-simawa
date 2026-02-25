@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   Package,
@@ -36,7 +36,7 @@ import { Page } from '@/components/commons'
 import { listOrganizations } from '@/lib/apis/org'
 import { useRBAC } from '@/lib/providers/rbac-provider'
 import { ADMIN_ROLES } from '@/components/guards/role-guard'
-import { AdminGuard } from '@/components/guards/admin-guard'
+import { RoleGuard } from '@/components/guards/role-guard'
 import {
   listAssets,
   listAllAssets,
@@ -70,9 +70,9 @@ const emptyBorrowForm: BorrowFormData = {
 
 export default function AssetManagementPage() {
   return (
-    <AdminGuard>
+    <RoleGuard allowedRoles={ADMIN_ROLES}>
       <AssetManagementPageContent />
-    </AdminGuard>
+    </RoleGuard>
   )
 }
 
@@ -115,43 +115,40 @@ function AssetManagementPageContent() {
     enabled: !!orgId,
   })
 
-  // Admin roles see all orgs, regular users only see orgs they can manage
-  const filteredOrgs = useMemo(() => {
-    if (!orgs) return []
-    if (isAdmin) return orgs
-    return orgs.filter((o) => o.can_manage)
+  // Manageable orgs (user can CRUD assets in these)
+  const manageableOrgIds = useMemo(() => {
+    if (!orgs) return new Set<string>()
+    if (isAdmin) return new Set(orgs.map((o) => o.id))
+    return new Set(orgs.filter((o) => o.can_manage).map((o) => o.id))
   }, [orgs, isAdmin])
 
-  useEffect(() => {
-    if (!orgId && filteredOrgs.length) setOrgId(filteredOrgs[0].id)
-  }, [orgId, filteredOrgs])
+  const canManageSelectedOrg = orgId ? manageableOrgIds.has(orgId) : false
 
   const invalidateAll = () => {
     queryClient.invalidateQueries({ queryKey: ['assets', orgId] })
     queryClient.invalidateQueries({ queryKey: ['borrowings', orgId] })
+    queryClient.invalidateQueries({ queryKey: ['all-assets'] })
   }
 
+  // Fetch ALL assets across all orgs (for default view + borrow tab)
+  const { data: allAssets, isLoading: allAssetsLoading } = useQuery({
+    queryKey: ['all-assets'],
+    queryFn: listAllAssets,
+  })
+
   const filteredAssets = useMemo(() => {
-    if (!assets) return []
-    if (!search.trim()) return assets
+    const source = orgId ? assets : allAssets
+    if (!source) return []
+    if (!search.trim()) return source
     const q = search.toLowerCase()
-    return assets.filter(
+    return source.filter(
       (a) =>
         a.name.toLowerCase().includes(q) ||
         a.description?.toLowerCase().includes(q),
     )
-  }, [assets, search])
+  }, [assets, allAssets, orgId, search])
 
-  const availableAssets = useMemo(
-    () => assets?.filter((a) => a.status === 'AVAILABLE') ?? [],
-    [assets],
-  )
-
-  // Fetch ALL assets across all orgs for borrow tab
-  const { data: allAssets } = useQuery({
-    queryKey: ['all-assets'],
-    queryFn: listAllAssets,
-  })
+  const isLoadingAssets = orgId ? assetsLoading : allAssetsLoading
 
   const allAvailableAssets = useMemo(
     () => allAssets?.filter((a) => a.status === 'AVAILABLE') ?? [],
@@ -322,7 +319,7 @@ function AssetManagementPageContent() {
       <Page.Body>
         <Container>
           <div className="max-w-4xl mx-auto space-y-6">
-            {/* Org Picker */}
+            {/* Org Picker / Filter */}
             <div className="space-y-2">
               <Label className="text-sm font-medium text-neutral-700">Organisasi</Label>
               <select
@@ -334,7 +331,8 @@ function AssetManagementPageContent() {
                   setBorrowForm(emptyBorrowForm)
                 }}
               >
-                {filteredOrgs.map((org) => (
+                <option value="">Semua Organisasi</option>
+                {(orgs ?? []).map((org) => (
                   <option key={org.id} value={org.id}>
                     {org.name}
                   </option>
@@ -348,11 +346,10 @@ function AssetManagementPageContent() {
                 <button
                   key={t.key}
                   onClick={() => setTab(t.key)}
-                  className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
-                    tab === t.key
-                      ? 'border-brand-500 text-brand-700'
-                      : 'border-transparent text-neutral-500 hover:text-neutral-700'
-                  }`}
+                  className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${tab === t.key
+                    ? 'border-brand-500 text-brand-700'
+                    : 'border-transparent text-neutral-500 hover:text-neutral-700'
+                    }`}
                 >
                   {t.label}
                   {(t.count ?? 0) > 0 && (
@@ -378,7 +375,7 @@ function AssetManagementPageContent() {
                       className="pl-9"
                     />
                   </div>
-                  {!showForm && (
+                  {!showForm && canManageSelectedOrg && (
                     <Button
                       size="sm"
                       onClick={() => {
@@ -493,12 +490,12 @@ function AssetManagementPageContent() {
                     </div>
                   </CardHeader>
                   <CardContent className="p-0">
-                    {assetsLoading && (
+                    {isLoadingAssets && (
                       <div className="flex items-center justify-center gap-2 py-12 text-sm text-neutral-500">
                         <Spinner size="sm" /> Memuat aset...
                       </div>
                     )}
-                    {!assetsLoading && filteredAssets.length === 0 && (
+                    {!isLoadingAssets && filteredAssets.length === 0 && (
                       <div className="text-center py-12 text-neutral-400">
                         <Box className="h-10 w-10 mx-auto mb-2 opacity-50" />
                         <p className="text-sm">
@@ -552,29 +549,31 @@ function AssetManagementPageContent() {
                                 </div>
                               </div>
                             </div>
-                            <div className="flex items-center gap-1.5">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => startEdit(asset)}
-                                className="h-8 w-8 p-0"
-                              >
-                                <Pencil className="h-3.5 w-3.5 text-neutral-500" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => {
-                                  if (confirm(`Hapus aset "${asset.name}"?`)) {
-                                    deleteMut.mutate(asset.id)
-                                  }
-                                }}
-                                disabled={deleteMut.isPending}
-                                className="h-8 w-8 p-0 text-red-500 hover:text-red-700"
-                              >
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </Button>
-                            </div>
+                            {manageableOrgIds.has(asset.org_id) && (
+                              <div className="flex items-center gap-1.5">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => startEdit(asset)}
+                                  className="h-8 w-8 p-0"
+                                >
+                                  <Pencil className="h-3.5 w-3.5 text-neutral-500" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    if (confirm(`Hapus aset "${asset.name}"?`)) {
+                                      deleteMut.mutate(asset.id)
+                                    }
+                                  }}
+                                  disabled={deleteMut.isPending}
+                                  className="h-8 w-8 p-0 text-red-500 hover:text-red-700"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </Button>
+                              </div>
+                            )}
                           </div>
                         ))}
                       </div>
