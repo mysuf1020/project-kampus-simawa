@@ -7,24 +7,26 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
-	"github.com/minio/minio-go/v7"
 	"simawa-backend/internal/service"
 	"simawa-backend/internal/util/storage"
 	"simawa-backend/pkg/response"
+
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+	"github.com/minio/minio-go/v7"
 )
 
 type AssetHandler struct {
 	svc                *service.AssetService
+	orgSvc             *service.OrganizationService
 	rbac               *service.RBACService
 	minio              *minio.Client
 	bucket             string
 	minioPublicBaseURL string
 }
 
-func NewAssetHandler(svc *service.AssetService, rbac *service.RBACService, mc *minio.Client, bucket, minioPublicBaseURL string) *AssetHandler {
-	return &AssetHandler{svc: svc, rbac: rbac, minio: mc, bucket: bucket, minioPublicBaseURL: minioPublicBaseURL}
+func NewAssetHandler(svc *service.AssetService, orgSvc *service.OrganizationService, rbac *service.RBACService, mc *minio.Client, bucket, minioPublicBaseURL string) *AssetHandler {
+	return &AssetHandler{svc: svc, orgSvc: orgSvc, rbac: rbac, minio: mc, bucket: bucket, minioPublicBaseURL: minioPublicBaseURL}
 }
 
 func (h *AssetHandler) currentUser(c *gin.Context) (uuid.UUID, error) {
@@ -61,6 +63,20 @@ func (h *AssetHandler) Create(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, response.Err("invalid org_id"))
 		return
 	}
+
+	// Fetch Org struct to check permissions
+	org, err := h.orgSvc.Get(c.Request.Context(), orgID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, response.Err("organization not found"))
+		return
+	}
+
+	ok, err := h.rbac.CanManageOrg(c.Request.Context(), userID, org)
+	if err != nil || !ok {
+		c.JSON(http.StatusForbidden, response.Err("forbidden: you do not have manage access to this org"))
+		return
+	}
+
 	a, err := h.svc.CreateAsset(c.Request.Context(), userID, orgID, req.Name, req.Description, req.Quantity, req.ImageURL)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, response.Err(err.Error()))
@@ -83,6 +99,26 @@ func (h *AssetHandler) Update(c *gin.Context) {
 		return
 	}
 	id, _ := strconv.Atoi(c.Param("id"))
+
+	// Fetch asset first to check org
+	existingAsset, err := h.svc.GetAsset(c.Request.Context(), uint(id))
+	if err != nil {
+		c.JSON(http.StatusNotFound, response.Err("asset not found"))
+		return
+	}
+
+	org, err := h.orgSvc.Get(c.Request.Context(), existingAsset.OrgID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, response.Err("organization not found"))
+		return
+	}
+
+	ok, err := h.rbac.CanManageOrg(c.Request.Context(), userID, org)
+	if err != nil || !ok {
+		c.JSON(http.StatusForbidden, response.Err("forbidden: you do not have manage access to this org's assets"))
+		return
+	}
+
 	var req updateAssetRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, response.Err(err.Error()))
@@ -103,6 +139,25 @@ func (h *AssetHandler) Delete(c *gin.Context) {
 		return
 	}
 	id, _ := strconv.Atoi(c.Param("id"))
+
+	existingAsset, err := h.svc.GetAsset(c.Request.Context(), uint(id))
+	if err != nil {
+		c.JSON(http.StatusNotFound, response.Err("asset not found"))
+		return
+	}
+
+	org, err := h.orgSvc.Get(c.Request.Context(), existingAsset.OrgID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, response.Err("organization not found"))
+		return
+	}
+
+	ok, err := h.rbac.CanManageOrg(c.Request.Context(), userID, org)
+	if err != nil || !ok {
+		c.JSON(http.StatusForbidden, response.Err("forbidden: you do not have manage access to this org's assets"))
+		return
+	}
+
 	if err := h.svc.DeleteAsset(c.Request.Context(), userID, uint(id)); err != nil {
 		c.JSON(http.StatusBadRequest, response.Err(err.Error()))
 		return

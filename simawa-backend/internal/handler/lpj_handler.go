@@ -7,17 +7,19 @@ import (
 	"strings"
 	"time"
 
+	"simawa-backend/internal/model"
+	"simawa-backend/internal/service"
+	"simawa-backend/pkg/response"
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/minio/minio-go/v7"
 	"gorm.io/gorm"
-	"simawa-backend/internal/model"
-	"simawa-backend/internal/service"
-	"simawa-backend/pkg/response"
 )
 
 type LPJHandler struct {
 	svc    *service.LPJService
+	orgSvc *service.OrganizationService
 	minio  *minio.Client
 	bucket string
 	rbac   *service.RBACService
@@ -28,8 +30,8 @@ func NewLPJHandler(svc *service.LPJService, minio *minio.Client, bucket string) 
 	return &LPJHandler{svc: svc, minio: minio, bucket: bucket}
 }
 
-func NewLPJHandlerWithRBAC(svc *service.LPJService, minio *minio.Client, bucket string, rbac *service.RBACService, db *gorm.DB) *LPJHandler {
-	return &LPJHandler{svc: svc, minio: minio, bucket: bucket, rbac: rbac, db: db}
+func NewLPJHandlerWithRBAC(svc *service.LPJService, orgSvc *service.OrganizationService, minio *minio.Client, bucket string, rbac *service.RBACService, db *gorm.DB) *LPJHandler {
+	return &LPJHandler{svc: svc, orgSvc: orgSvc, minio: minio, bucket: bucket, rbac: rbac, db: db}
 }
 
 type submitLPJRequest struct {
@@ -60,6 +62,19 @@ func (h *LPJHandler) Submit(c *gin.Context) {
 	}
 	orgID, _ := uuid.Parse(req.OrgID)
 	userID, _ := uuid.Parse(c.GetString("sub"))
+
+	if h.rbac != nil && h.orgSvc != nil {
+		org, err := h.orgSvc.Get(c.Request.Context(), orgID)
+		if err != nil {
+			c.JSON(http.StatusNotFound, response.Err("organization not found"))
+			return
+		}
+		ok, err := h.rbac.CanManageOrg(c.Request.Context(), userID, org)
+		if err != nil || !ok {
+			c.JSON(http.StatusForbidden, response.Err("forbidden: you do not have manage access to this org"))
+			return
+		}
+	}
 	lpj, err := h.svc.Submit(c.Request.Context(), &service.SubmitLPJInput{
 		ActivityID: activityID,
 		OrgID:      orgID,
@@ -225,7 +240,7 @@ func (h *LPJHandler) enrichWithUsernames(rows []model.LPJ) []gin.H {
 			"report_key": r.ReportKey, "file_size": r.FileSize, "photos": r.Photos,
 			"status": r.Status, "note": r.Note, "submitted_by": r.SubmittedBy,
 			"submitted_by_name": name,
-			"revision_no": r.RevisionNo, "reviewed_by": r.ReviewedBy,
+			"revision_no":       r.RevisionNo, "reviewed_by": r.ReviewedBy,
 			"reviewed_at": r.ReviewedAt, "created_at": r.CreatedAt, "updated_at": r.UpdatedAt,
 		}
 	}
