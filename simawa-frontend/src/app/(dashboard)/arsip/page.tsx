@@ -142,7 +142,7 @@ function SuratCard({ surat, onView, onDownload }: { surat: Surat; onView?: () =>
   )
 }
 
-function SuratDetailCard({ surat, orgs, onApprove }: { surat: Surat; orgs?: { id: string; name: string }[]; onApprove?: () => void }) {
+function SuratDetailCard({ surat, orgs, onApprove, isInbox = false }: { surat: Surat; orgs?: { id: string; name: string }[]; onApprove?: () => void; isInbox?: boolean }) {
   const [approvalAction, setApprovalAction] = useState<'approve' | 'reject' | 'revise' | null>(null)
   const orgName = orgs?.find((o) => o.id === surat.org_id)?.name || 'Organisasi'
   const targetOrgName = surat.target_org_id ? orgs?.find((o) => o.id === surat.target_org_id)?.name : null
@@ -251,7 +251,7 @@ function SuratDetailCard({ surat, orgs, onApprove }: { surat: Surat; orgs?: { id
               <Download className="w-4 h-4" />
               Download
             </Button>
-            {surat.status === 'PENDING' && (
+            {surat.status === 'PENDING' && isInbox && (
               <>
                 <Button
                   size="sm"
@@ -453,6 +453,8 @@ export default function ArsipPage() {
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-10"
                   />
+                </div>
+                <div className="flex flex-wrap gap-2">
                   <select
                     value={orgId}
                     onChange={(e) => setOrgId(e.target.value)}
@@ -543,6 +545,7 @@ export default function ArsipPage() {
                       surat={surat}
                       orgs={orgs}
                       onApprove={refetchAll}
+                      isInbox={true}
                     />
                   ))}
                 </div>
@@ -576,6 +579,7 @@ export default function ArsipPage() {
                       surat={surat}
                       orgs={orgs}
                       onApprove={refetchAll}
+                      isInbox={false}
                     />
                   ))}
                 </div>

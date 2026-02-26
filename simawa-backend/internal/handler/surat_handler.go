@@ -162,7 +162,7 @@ func (h *SuratHandler) Create(c *gin.Context) {
 	req.Payload.Meta.ToRole = sanitize.String(req.Payload.Meta.ToRole)
 	req.Payload.Meta.ToPlace = sanitize.String(req.Payload.Meta.ToPlace)
 	req.Payload.Meta.ToCity = sanitize.String(req.Payload.Meta.ToCity)
-	
+
 	if req.Payload.Header != nil {
 		for i, t := range req.Payload.Header.Title {
 			req.Payload.Header.Title[i] = sanitize.String(t)
@@ -216,11 +216,26 @@ func (h *SuratHandler) Approve(c *gin.Context) {
 		return
 	}
 
-	// Double-check: only BEM_ADMIN can approve surat
-	if h.rbac != nil {
-		canApprove, rbacErr := h.rbac.CanApproveSurat(c.Request.Context(), userID)
-		if rbacErr != nil || !canApprove {
-			c.JSON(http.StatusForbidden, response.Err("forbidden: only BEM Admin can approve surat"))
+	// Cek apakah user adalah eksekutif (BEM Admin)
+	isBEM, _ := h.rbac.IsBEMAdmin(c.Request.Context(), userID)
+
+	// Dapatkan detail surat
+	row, err := h.svc.Get(c.Request.Context(), uint(idNum))
+	if err != nil {
+		c.JSON(http.StatusNotFound, response.Err(err.Error()))
+		return
+	}
+
+	// Jika bukan BEM Admin, pastikan dia berhak manage TargetOrgID (organisasi penerima)
+	if !isBEM {
+		if row.TargetOrgID == nil {
+			c.JSON(http.StatusForbidden, response.Err("forbidden: no target organization defined for approval unless you are BEM Admin"))
+			return
+		}
+
+		canManageTarget, err := h.rbac.IsAdminForOrg(c.Request.Context(), userID, *row.TargetOrgID)
+		if err != nil || !canManageTarget {
+			c.JSON(http.StatusForbidden, response.Err("forbidden: only BEM Admin or Target Organization Admin can approve this surat"))
 			return
 		}
 	}
@@ -231,12 +246,7 @@ func (h *SuratHandler) Approve(c *gin.Context) {
 		return
 	}
 
-	// authorization per target
-	row, err := h.svc.Get(c.Request.Context(), uint(idNum))
-	if err != nil {
-		c.JSON(http.StatusNotFound, response.Err(err.Error()))
-		return
-	}
+	// Authorization per target already handled above, but keeping generic access check just in case
 	if ok := h.canAccessSurat(c, userID, row); !ok {
 		c.JSON(http.StatusForbidden, response.Err("forbidden"))
 		return
@@ -439,11 +449,26 @@ func (h *SuratHandler) Revise(c *gin.Context) {
 		return
 	}
 
-	// Double-check: only BEM_ADMIN can revise surat
-	if h.rbac != nil {
-		canApprove, rbacErr := h.rbac.CanApproveSurat(c.Request.Context(), userID)
-		if rbacErr != nil || !canApprove {
-			c.JSON(http.StatusForbidden, response.Err("forbidden: only BEM Admin can revise surat"))
+	// Cek apakah user adalah eksekutif (BEM Admin)
+	isBEM, _ := h.rbac.IsBEMAdmin(c.Request.Context(), userID)
+
+	// Dapatkan detail surat
+	row, err := h.svc.Get(c.Request.Context(), uint(idNum))
+	if err != nil {
+		c.JSON(http.StatusNotFound, response.Err(err.Error()))
+		return
+	}
+
+	// Jika bukan BEM Admin, pastikan dia berhak manage TargetOrgID (organisasi penerima)
+	if !isBEM {
+		if row.TargetOrgID == nil {
+			c.JSON(http.StatusForbidden, response.Err("forbidden: no target organization defined for revision unless you are BEM Admin"))
+			return
+		}
+
+		canManageTarget, err := h.rbac.IsAdminForOrg(c.Request.Context(), userID, *row.TargetOrgID)
+		if err != nil || !canManageTarget {
+			c.JSON(http.StatusForbidden, response.Err("forbidden: only BEM Admin or Target Organization Admin can revise this surat"))
 			return
 		}
 	}
@@ -454,12 +479,7 @@ func (h *SuratHandler) Revise(c *gin.Context) {
 		return
 	}
 
-	// authorization per target
-	row, err := h.svc.Get(c.Request.Context(), uint(idNum))
-	if err != nil {
-		c.JSON(http.StatusNotFound, response.Err(err.Error()))
-		return
-	}
+	// Authorization per target already handled above, but keeping generic access check just in case
 	if ok := h.canAccessSurat(c, userID, row); !ok {
 		c.JSON(http.StatusForbidden, response.Err("forbidden"))
 		return

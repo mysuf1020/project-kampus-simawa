@@ -181,10 +181,14 @@ func (s *RBACService) CanManageOrg(ctx context.Context, userID uuid.UUID, org *m
 			return true, nil
 		}
 	}
-	// ORG_ADMIN scoped (via user_roles.org_id).
 	ok, err := s.userRoles.HasRoleForOrg(ctx, userID, model.RoleOrgAdmin, org.ID)
 	if err != nil {
 		return false, err
 	}
 	return ok, nil
+}
+
+// IsAdminForOrg determines if a user is an ORG_ADMIN for a specific organization ID without needing the full struct.
+func (s *RBACService) IsAdminForOrg(ctx context.Context, userID uuid.UUID, orgID uuid.UUID) (bool, error) {
+	return s.userRoles.HasRoleForOrg(ctx, userID, model.RoleOrgAdmin, orgID)
 }
