@@ -15,7 +15,7 @@ export const ROLE_USER = 'USER'
 export const ADMIN_ROLES = [ROLE_ADMIN, ROLE_BEM_ADMIN, ROLE_DEMA_ADMIN, ROLE_ORG_ADMIN]
 
 // Roles that can approve (BEM only)
-export const APPROVE_ROLES = [ROLE_ADMIN, ROLE_BEM_ADMIN]
+export const APPROVE_ROLES = [ROLE_ADMIN, ROLE_BEM_ADMIN, ROLE_DEMA_ADMIN]
 
 type RoleGuardProps = {
   children: ReactNode

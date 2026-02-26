@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useQuery, useInfiniteQuery } from '@tanstack/react-query'
 import {
   RefreshCcw,
@@ -43,6 +43,7 @@ import { Page } from '@/components/commons'
 import { listInboxSurat, listOutboxSurat, listArchiveSurat, downloadSurat, approveSurat, type Surat } from '@/lib/apis/surat'
 import { listOrganizations } from '@/lib/apis/org'
 import { SuratApprovalDialog } from '../surat/_components/approval-dialog'
+import { useCanApprove } from '@/components/guards/role-guard'
 
 type StatusType = 'PENDING' | 'APPROVED' | 'REJECTED' | 'DRAFT' | 'REVISION'
 
@@ -308,17 +309,13 @@ export default function ArsipPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [variantFilter, setVariantFilter] = useState('')
+  const isApprover = useCanApprove()
 
   const { data: orgs } = useQuery({ queryKey: ['orgs'], queryFn: listOrganizations })
   const manageableOrgs = useMemo(() => {
     return (orgs ?? []).filter((o) => o.can_manage)
   }, [orgs])
 
-  useEffect(() => {
-    if (!orgId && manageableOrgs?.length > 0) {
-      setOrgId(manageableOrgs[0].id)
-    }
-  }, [orgId, manageableOrgs])
 
   const inboxQuery = useQuery({
     queryKey: ['surat-inbox'],
@@ -460,6 +457,7 @@ export default function ArsipPage() {
                     onChange={(e) => setOrgId(e.target.value)}
                     className="h-10 rounded-lg border border-neutral-200 bg-white px-3 text-sm outline-none focus:border-brand-500 min-w-[180px]"
                   >
+                    <option value="">Semua Organisasi</option>
                     {manageableOrgs.map((org) => (
                       <option key={org.id} value={org.id}>
                         {org.name}
@@ -606,6 +604,7 @@ export default function ArsipPage() {
                       surat={surat}
                       orgs={orgs}
                       onApprove={refetchAll}
+                      isInbox={isApprover}
                     />
                   ))}
                 </div>
