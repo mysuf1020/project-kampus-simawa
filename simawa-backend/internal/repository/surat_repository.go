@@ -87,7 +87,7 @@ func (r *suratRepository) List(ctx context.Context, q ListSuratQuery) ([]model.S
 			first := true
 			if len(q.ForOrgIDs) > 0 {
 				if q.InboxOnly {
-					sub = sub.Where("target_org_id IN ?", q.ForOrgIDs)
+					sub = sub.Where("target_org_id IN ? OR target_org_id IS NULL", q.ForOrgIDs)
 				} else {
 					sub = sub.Where("org_id IN ? OR target_org_id IN ?", q.ForOrgIDs, q.ForOrgIDs)
 				}

@@ -56,6 +56,7 @@ export function OrgCard({ org, canManage, isPending, onSubmit, onDelete, isAdmin
   const [formData, setFormData] = useState({
     name: org.name || '',
     slug: org.slug || '',
+    type: org.type || '',
     description: org.description || '',
     website_url: org.website_url || '',
     instagram_url: org.instagram_url || '',
@@ -70,6 +71,7 @@ export function OrgCard({ org, canManage, isPending, onSubmit, onDelete, isAdmin
     setFormData({
       name: org.name || '',
       slug: org.slug || '',
+      type: org.type || '',
       description: org.description || '',
       website_url: org.website_url || '',
       instagram_url: org.instagram_url || '',
@@ -352,6 +354,27 @@ export function OrgCard({ org, canManage, isPending, onSubmit, onDelete, isAdmin
                         />
                       </div>
                     </div>
+
+                    {isAdmin && (
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium text-neutral-600">
+                          Tipe Organisasi
+                        </Label>
+                        <select
+                          value={formData.type}
+                          onChange={(e) =>
+                            setFormData({ ...formData, type: e.target.value })
+                          }
+                          className="flex h-9 w-full items-center justify-between whitespace-nowrap rounded-md border border-neutral-200 bg-transparent px-3 py-2 text-sm shadow-sm ring-offset-white placeholder:text-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-950 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          <option value="UKM">UKM</option>
+                          <option value="HMJ">HMJ</option>
+                          <option value="BEM">BEM</option>
+                          <option value="DEMA">DEMA</option>
+                        </select>
+                      </div>
+                    )}
+
                     <div className="space-y-2">
                       <Label className="text-xs font-medium text-neutral-600">
                         Deskripsi

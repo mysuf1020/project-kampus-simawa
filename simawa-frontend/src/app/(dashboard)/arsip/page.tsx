@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useQuery, useInfiniteQuery } from '@tanstack/react-query'
 import {
   RefreshCcw,
@@ -87,10 +87,10 @@ function StatusBadge({ status }: { status: string }) {
 function SuratCard({ surat, onView, onDownload }: { surat: Surat; onView?: () => void; onDownload?: () => void }) {
   const formattedDate = surat.created_at
     ? new Date(surat.created_at).toLocaleDateString('id-ID', {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric',
-      })
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    })
     : '-'
 
   return (
@@ -149,11 +149,11 @@ function SuratDetailCard({ surat, orgs, onApprove }: { surat: Surat; orgs?: { id
 
   const formattedDate = surat.created_at
     ? new Date(surat.created_at).toLocaleDateString('id-ID', {
-        weekday: 'long',
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-      })
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    })
     : '-'
 
   const handleDownload = async () => {
@@ -310,6 +310,15 @@ export default function ArsipPage() {
   const [variantFilter, setVariantFilter] = useState('')
 
   const { data: orgs } = useQuery({ queryKey: ['orgs'], queryFn: listOrganizations })
+  const manageableOrgs = useMemo(() => {
+    return (orgs ?? []).filter((o) => o.can_manage)
+  }, [orgs])
+
+  useEffect(() => {
+    if (!orgId && manageableOrgs?.length > 0) {
+      setOrgId(manageableOrgs[0].id)
+    }
+  }, [orgId, manageableOrgs])
 
   const inboxQuery = useQuery({
     queryKey: ['surat-inbox'],
@@ -327,7 +336,7 @@ export default function ArsipPage() {
     queryFn: () => listArchiveSurat({ page: '1', size: '50' }),
   })
 
-  const filterSurat = (items: Surat[] | undefined) => {
+  const filterSurat = (items: Surat[] | undefined, isOutbox = false) => {
     if (!items) return []
     return items.filter((item) => {
       const matchesSearch =
@@ -337,13 +346,13 @@ export default function ArsipPage() {
         item.to_role?.toLowerCase().includes(searchQuery.toLowerCase())
       const matchesStatus = !statusFilter || item.status === statusFilter
       const matchesVariant = !variantFilter || item.variant === variantFilter
-      const matchesOrg = !orgId || item.org_id === orgId || item.target_org_id === orgId
+      const matchesOrg = !orgId || (isOutbox ? item.org_id === orgId : (item.org_id === orgId || item.target_org_id === orgId))
       return matchesSearch && matchesStatus && matchesVariant && matchesOrg
     })
   }
 
   const filteredInbox = filterSurat(inboxQuery.data)
-  const filteredOutbox = filterSurat(outboxQuery.data)
+  const filteredOutbox = filterSurat(outboxQuery.data, true)
   const filteredArchive = filterSurat(archiveQuery.data)
 
   const pendingCount = (inboxQuery.data || []).filter((s) => s.status === 'PENDING').length
@@ -444,15 +453,12 @@ export default function ArsipPage() {
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-10"
                   />
-                </div>
-                <div className="flex flex-wrap gap-2">
                   <select
                     value={orgId}
                     onChange={(e) => setOrgId(e.target.value)}
-                    className="px-3 py-2 rounded-lg border border-neutral-200 text-sm bg-white focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 outline-none"
+                    className="h-10 rounded-lg border border-neutral-200 bg-white px-3 text-sm outline-none focus:border-brand-500 min-w-[180px]"
                   >
-                    <option value="">Semua Organisasi</option>
-                    {(orgs || []).map((org) => (
+                    {manageableOrgs.map((org) => (
                       <option key={org.id} value={org.id}>
                         {org.name}
                       </option>
@@ -548,6 +554,13 @@ export default function ArsipPage() {
                 <div className="flex items-center justify-center py-12">
                   <Spinner size="lg" />
                 </div>
+              ) : !orgId ? (
+                <Card className="border-dashed border-neutral-300 bg-neutral-50/50">
+                  <CardContent className="py-12 text-center">
+                    <Send className="w-12 h-12 mx-auto text-neutral-300 mb-4" />
+                    <p className="text-neutral-500">Pilih organisasi spesifik terlebih dahulu untuk melihat Surat Keluar</p>
+                  </CardContent>
+                </Card>
               ) : filteredOutbox.length === 0 ? (
                 <Card className="border-dashed border-neutral-300 bg-neutral-50/50">
                   <CardContent className="py-12 text-center">

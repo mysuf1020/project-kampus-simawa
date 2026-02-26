@@ -73,14 +73,14 @@ function buildPayload(form: SuratCreateForm): CreateSuratPayload | null {
 
   const header = hasHeader
     ? {
-        title: [] as string[],
-        left_logo: leftLogo || '',
-        right_logo: rightLogo || '',
-        org_name: orgName,
-        org_unit: orgUnit,
-        org_address: orgAddress,
-        org_phone: orgPhone,
-      }
+      title: [] as string[],
+      left_logo: leftLogo || '',
+      right_logo: rightLogo || '',
+      org_name: orgName,
+      org_unit: orgUnit,
+      org_address: orgAddress,
+      org_phone: orgPhone,
+    }
     : undefined
 
   return {
@@ -205,6 +205,9 @@ function SuratCreatePageInner() {
   })
 
   const { data: orgs } = useQuery({ queryKey: ['orgs'], queryFn: listOrganizations })
+  const manageableOrgs = useMemo(() => {
+    return (orgs ?? []).filter((o) => o.can_manage)
+  }, [orgs])
 
   const { step, form, setForm, errors, goNext, goPrev, reset } = useSuratCreateState()
 
@@ -254,13 +257,13 @@ function SuratCreatePageInner() {
   })
 
   useEffect(() => {
-    if (!form.orgId && orgs?.length) {
-      setForm({ ...form, orgId: orgs[0].id })
+    if (!form.orgId && manageableOrgs?.length) {
+      setForm({ ...form, orgId: manageableOrgs[0].id })
     }
-    if (!uploadForm.orgId && orgs?.length) {
-      setUploadForm((prev) => ({ ...prev, orgId: orgs[0].id }))
+    if (!uploadForm.orgId && manageableOrgs?.length) {
+      setUploadForm((prev) => ({ ...prev, orgId: manageableOrgs[0].id }))
     }
-  }, [form, orgs, setForm, uploadForm.orgId])
+  }, [form, manageableOrgs, setForm, uploadForm.orgId])
 
   const hasSigner = form.signers?.some((s) => s.role || s.name || s.nip) ?? false
 
@@ -310,6 +313,14 @@ function SuratCreatePageInner() {
       toast.error('Pilih file PDF untuk diupload')
       return
     }
+
+    // Validate file size (max 5MB to match common backend/proxy limits)
+    const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
+    if (uploadForm.file.size > MAX_FILE_SIZE) {
+      toast.error('Ukuran file terlalu besar. Maksimal 5MB.')
+      return
+    }
+
     await uploadMutation.mutateAsync({
       org_id: uploadForm.orgId,
       target_org_id: uploadForm.targetOrgId || undefined,
@@ -385,193 +396,193 @@ function SuratCreatePageInner() {
           <div className="max-w-2xl mx-auto">
             <Card className="border-neutral-200 shadow-sm">
               <CardContent className="space-y-6 p-6">
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium text-neutral-700">
-                        Organisasi Pengirim <span className="text-red-500">*</span>
-                      </Label>
-                      <select
-                        className="w-full h-10 rounded-lg border border-neutral-200 bg-white px-3 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all"
-                        value={uploadForm.orgId}
-                        onChange={(e) => setUploadForm({ ...uploadForm, orgId: e.target.value })}
-                      >
-                        {(orgs ?? []).map((org) => (
-                          <option key={org.id} value={org.id}>
-                            {org.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium text-neutral-700">
-                        Organisasi Tujuan
-                      </Label>
-                      <select
-                        className="w-full h-10 rounded-lg border border-neutral-200 bg-white px-3 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all"
-                        value={uploadForm.targetOrgId}
-                        onChange={(e) => setUploadForm({ ...uploadForm, targetOrgId: e.target.value })}
-                      >
-                        <option value="">— Tidak ditentukan —</option>
-                        {(orgs ?? []).filter((o) => o.id !== uploadForm.orgId).map((org) => (
-                          <option key={org.id} value={org.id}>
-                            {org.name}
-                          </option>
-                        ))}
-                      </select>
-                      <p className="text-[11px] text-neutral-400">Kosongkan jika surat bersifat umum</p>
-                    </div>
-                  </div>
-
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium text-neutral-700">
-                        Jenis Surat <span className="text-red-500">*</span>
-                      </Label>
-                      <select
-                        className="w-full h-10 rounded-lg border border-neutral-200 bg-white px-3 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all"
-                        value={uploadForm.variant}
-                        onChange={(e) => setUploadForm({ ...uploadForm, variant: e.target.value as SuratVariant })}
-                      >
-                        {SURAT_VARIANTS.map((v) => (
-                          <option key={v.value} value={v.value}>
-                            {v.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium text-neutral-700">
-                        Perihal Surat <span className="text-red-500">*</span>
-                      </Label>
-                      <Input
-                        placeholder="Contoh: Undangan Rapat Koordinasi"
-                        value={uploadForm.subject}
-                        onChange={(e) => setUploadForm({ ...uploadForm, subject: e.target.value })}
-                      />
-                    </div>
-                  </div>
-
+                <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
                     <Label className="text-sm font-medium text-neutral-700">
-                      Nomor Surat
+                      Organisasi Pengirim <span className="text-red-500">*</span>
+                    </Label>
+                    <select
+                      className="w-full h-10 rounded-lg border border-neutral-200 bg-white px-3 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all"
+                      value={uploadForm.orgId}
+                      onChange={(e) => setUploadForm({ ...uploadForm, orgId: e.target.value })}
+                    >
+                      {manageableOrgs.map((org) => (
+                        <option key={org.id} value={org.id}>
+                          {org.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-neutral-700">
+                      Organisasi Tujuan
+                    </Label>
+                    <select
+                      className="w-full h-10 rounded-lg border border-neutral-200 bg-white px-3 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all"
+                      value={uploadForm.targetOrgId}
+                      onChange={(e) => setUploadForm({ ...uploadForm, targetOrgId: e.target.value })}
+                    >
+                      <option value="">-- Semua Organisasi --</option>
+                      {(orgs ?? []).filter((o) => o.id !== uploadForm.orgId).map((org) => (
+                        <option key={org.id} value={org.id}>
+                          {org.name}
+                        </option>
+                      ))}
+                    </select>
+                    <p className="text-[11px] text-neutral-400">Kosongkan (Semua Organisasi) jika surat bersifat umum atau broadcast</p>
+                  </div>
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-neutral-700">
+                      Jenis Surat <span className="text-red-500">*</span>
+                    </Label>
+                    <select
+                      className="w-full h-10 rounded-lg border border-neutral-200 bg-white px-3 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all"
+                      value={uploadForm.variant}
+                      onChange={(e) => setUploadForm({ ...uploadForm, variant: e.target.value as SuratVariant })}
+                    >
+                      {SURAT_VARIANTS.map((v) => (
+                        <option key={v.value} value={v.value}>
+                          {v.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-neutral-700">
+                      Perihal Surat <span className="text-red-500">*</span>
                     </Label>
                     <Input
-                      placeholder="001/BEM/XII/2025"
-                      value={uploadForm.number}
-                      onChange={(e) => setUploadForm({ ...uploadForm, number: e.target.value })}
+                      placeholder="Contoh: Undangan Rapat Koordinasi"
+                      value={uploadForm.subject}
+                      onChange={(e) => setUploadForm({ ...uploadForm, subject: e.target.value })}
                     />
                   </div>
+                </div>
 
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium text-neutral-700">
-                        Jabatan Penerima
-                      </Label>
-                      <Input
-                        placeholder="Contoh: Rektor"
-                        value={uploadForm.toRole}
-                        onChange={(e) => setUploadForm({ ...uploadForm, toRole: e.target.value })}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium text-neutral-700">
-                        Nama Penerima
-                      </Label>
-                      <Input
-                        placeholder="Bapak/Ibu Nama Lengkap"
-                        value={uploadForm.toName}
-                        onChange={(e) => setUploadForm({ ...uploadForm, toName: e.target.value })}
-                      />
-                    </div>
-                  </div>
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-neutral-700">
+                    Nomor Surat
+                  </Label>
+                  <Input
+                    placeholder="001/BEM/XII/2025"
+                    value={uploadForm.number}
+                    onChange={(e) => setUploadForm({ ...uploadForm, number: e.target.value })}
+                  />
+                </div>
 
+                <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
                     <Label className="text-sm font-medium text-neutral-700">
-                      File Surat (PDF) <span className="text-red-500">*</span>
+                      Jabatan Penerima
                     </Label>
-                    <div className="border-2 border-dashed border-neutral-200 rounded-xl p-6 hover:border-brand-300 transition-colors">
-                      <input
-                        type="file"
-                        accept=".pdf"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0] || null
-                          setUploadForm({ ...uploadForm, file })
-                        }}
-                        className="hidden"
-                        id="surat-file-upload"
-                      />
-                      <label
-                        htmlFor="surat-file-upload"
-                        className="flex flex-col items-center gap-3 cursor-pointer"
-                      >
-                        {uploadForm.file ? (
-                          <>
-                            <div className="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center">
-                              <FileText className="w-6 h-6 text-green-600" />
-                            </div>
-                            <div className="text-center">
-                              <p className="font-medium text-neutral-900">{uploadForm.file.name}</p>
-                              <p className="text-xs text-neutral-500 mt-1">
-                                {(uploadForm.file.size / 1024 / 1024).toFixed(2)} MB
-                              </p>
-                            </div>
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={(e) => {
-                                e.preventDefault()
-                                setUploadForm({ ...uploadForm, file: null })
-                              }}
-                            >
-                              Ganti File
-                            </Button>
-                          </>
-                        ) : (
-                          <>
-                            <div className="w-12 h-12 rounded-xl bg-neutral-100 flex items-center justify-center">
-                              <Upload className="w-6 h-6 text-neutral-400" />
-                            </div>
-                            <div className="text-center">
-                              <p className="font-medium text-neutral-700">Klik untuk upload</p>
-                              <p className="text-xs text-neutral-500 mt-1">
-                                Format: PDF (Maks. 10MB)
-                              </p>
-                            </div>
-                          </>
-                        )}
-                      </label>
-                    </div>
+                    <Input
+                      placeholder="Contoh: Rektor"
+                      value={uploadForm.toRole}
+                      onChange={(e) => setUploadForm({ ...uploadForm, toRole: e.target.value })}
+                    />
                   </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-neutral-700">
+                      Nama Penerima
+                    </Label>
+                    <Input
+                      placeholder="Bapak/Ibu Nama Lengkap"
+                      value={uploadForm.toName}
+                      onChange={(e) => setUploadForm({ ...uploadForm, toName: e.target.value })}
+                    />
+                  </div>
+                </div>
 
-                  <div className="flex items-center justify-between pt-4 border-t border-neutral-100">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      onClick={() => setMode('select')}
-                      className="text-neutral-600"
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-neutral-700">
+                    File Surat (PDF) <span className="text-red-500">*</span>
+                  </Label>
+                  <div className="border-2 border-dashed border-neutral-200 rounded-xl p-6 hover:border-brand-300 transition-colors">
+                    <input
+                      type="file"
+                      accept=".pdf"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0] || null
+                        setUploadForm({ ...uploadForm, file })
+                      }}
+                      className="hidden"
+                      id="surat-file-upload"
+                    />
+                    <label
+                      htmlFor="surat-file-upload"
+                      className="flex flex-col items-center gap-3 cursor-pointer"
                     >
-                      <ArrowLeft className="mr-2 h-4 w-4" /> Kembali
-                    </Button>
-                    <Button
-                      type="button"
-                      onClick={handleUploadSubmit}
-                      disabled={!uploadForm.file || !uploadForm.subject || uploadMutation.isPending}
-                      className="bg-green-600 hover:bg-green-700 text-white min-w-[140px]"
-                    >
-                      {uploadMutation.isPending ? (
-                        <Spinner className="mr-2 h-4 w-4 text-white" />
+                      {uploadForm.file ? (
+                        <>
+                          <div className="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center">
+                            <FileText className="w-6 h-6 text-green-600" />
+                          </div>
+                          <div className="text-center">
+                            <p className="font-medium text-neutral-900">{uploadForm.file.name}</p>
+                            <p className="text-xs text-neutral-500 mt-1">
+                              {(uploadForm.file.size / 1024 / 1024).toFixed(2)} MB
+                            </p>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={(e) => {
+                              e.preventDefault()
+                              setUploadForm({ ...uploadForm, file: null })
+                            }}
+                          >
+                            Ganti File
+                          </Button>
+                        </>
                       ) : (
-                        <SendHorizonal className="mr-2 h-4 w-4" />
+                        <>
+                          <div className="w-12 h-12 rounded-xl bg-neutral-100 flex items-center justify-center">
+                            <Upload className="w-6 h-6 text-neutral-400" />
+                          </div>
+                          <div className="text-center">
+                            <p className="font-medium text-neutral-700">Klik untuk upload</p>
+                            <p className="text-xs text-neutral-500 mt-1">
+                              Format: PDF (Maks. 10MB)
+                            </p>
+                          </div>
+                        </>
                       )}
-                      Kirim Surat
-                    </Button>
+                    </label>
                   </div>
-                </CardContent>
-              </Card>
-            </div>
-          </Container>
-        </div>
+                </div>
+
+                <div className="flex items-center justify-between pt-4 border-t border-neutral-100">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => setMode('select')}
+                    className="text-neutral-600"
+                  >
+                    <ArrowLeft className="mr-2 h-4 w-4" /> Kembali
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={handleUploadSubmit}
+                    disabled={!uploadForm.file || !uploadForm.subject || uploadMutation.isPending}
+                    className="bg-green-600 hover:bg-green-700 text-white min-w-[140px]"
+                  >
+                    {uploadMutation.isPending ? (
+                      <Spinner className="mr-2 h-4 w-4 text-white" />
+                    ) : (
+                      <SendHorizonal className="mr-2 h-4 w-4" />
+                    )}
+                    Kirim Surat
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </Container>
+      </div>
     )
   }
 
@@ -644,7 +655,7 @@ function SuratCreatePageInner() {
                       value={form.orgId}
                       onChange={(e) => setForm({ ...form, orgId: e.target.value })}
                     >
-                      {(orgs ?? []).map((org) => (
+                      {manageableOrgs.map((org) => (
                         <option key={org.id} value={org.id}>
                           {org.name}
                         </option>
@@ -663,14 +674,14 @@ function SuratCreatePageInner() {
                       value={form.targetOrgId}
                       onChange={(e) => setForm({ ...form, targetOrgId: e.target.value })}
                     >
-                      <option value="">— Tidak ditentukan —</option>
+                      <option value="">-- Semua Organisasi --</option>
                       {(orgs ?? []).filter((o) => o.id !== form.orgId).map((org) => (
                         <option key={org.id} value={org.id}>
                           {org.name}
                         </option>
                       ))}
                     </select>
-                    <p className="text-[11px] text-neutral-400">Kosongkan jika surat bersifat umum</p>
+                    <p className="text-[11px] text-neutral-400">Kosongkan (Semua Organisasi) jika surat bersifat umum atau broadcast</p>
                   </div>
                 </div>
                 <div className="grid gap-4 sm:grid-cols-3">
