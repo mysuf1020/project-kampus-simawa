@@ -322,18 +322,18 @@ export default function ArsipPage() {
 
   const inboxQuery = useQuery({
     queryKey: ['surat-inbox'],
-    queryFn: () => listInboxSurat(),
+    queryFn: () => listInboxSurat({ size: 200 }),
   })
 
   const outboxQuery = useQuery({
     queryKey: ['surat-outbox', orgId],
-    queryFn: () => listOutboxSurat(orgId, { page: '1', size: '50' }),
+    queryFn: () => listOutboxSurat(orgId, { page: '1', size: '200' }),
     enabled: Boolean(orgId),
   })
 
   const archiveQuery = useQuery({
     queryKey: ['surat-archive'],
-    queryFn: () => listArchiveSurat({ page: '1', size: '50' }),
+    queryFn: () => listArchiveSurat({ page: '1', size: '200' }),
   })
 
   const filterSurat = (items: Surat[] | undefined, isOutbox = false) => {

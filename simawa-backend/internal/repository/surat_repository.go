@@ -112,7 +112,7 @@ func (r *suratRepository) List(ctx context.Context, q ListSuratQuery) ([]model.S
 		page = 1
 	}
 	size := q.Size
-	if size <= 0 || size > 100 {
+	if size <= 0 || size > 200 {
 		size = 10
 	}
 	offset := (page - 1) * size

@@ -506,14 +506,26 @@ func (h *SuratHandler) ListArchive(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	size, _ := strconv.Atoi(c.DefaultQuery("size", "10"))
 
+	// Check if user is admin (BEM/DEMA/ADMIN) to show all surat
+	isAdmin := false
 	orgIDs := make([]uuid.UUID, 0)
 	for _, a := range assignments {
+		rc := strings.ToUpper(a.RoleCode)
+		if rc == model.RoleAdmin || rc == model.RoleBEMAdmin || rc == model.RoleDEMAAdmin {
+			isAdmin = true
+		}
 		if a.OrgID != nil {
 			orgIDs = append(orgIDs, *a.OrgID)
 		}
 	}
 
-	rows, total, err := h.svc.ListArchive(c.Request.Context(), orgIDs, page, size)
+	// Admin sees all, ORG_ADMIN sees only their org's surat
+	var queryOrgIDs []uuid.UUID
+	if !isAdmin {
+		queryOrgIDs = orgIDs
+	}
+
+	rows, total, err := h.svc.ListArchive(c.Request.Context(), queryOrgIDs, page, size)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, response.Err(err.Error()))
 		return
